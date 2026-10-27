@@ -1,0 +1,8 @@
+name = "quotekit"
+main = "src/server.ts"
+compatibility_date = "2025-09-02"
+compatibility_flags = ["nodejs_compat"]
+upload_source_maps = true
+
+[observability]
+enabled = true

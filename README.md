@@ -24,3 +24,26 @@ Check the setup with:
 node -v
 bunx wrangler whoami
 ```
+
+## Development
+
+```bash
+bun install
+bun run dev
+```
+
+The dev server runs on http://localhost:3000. Run it with `bun run dev`, not `bun --bun run dev`, which breaks the Cloudflare plugin. Trigger the scheduled handler locally with:
+
+```bash
+curl "http://localhost:3000/cdn-cgi/handler/scheduled?cron=*+*+*+*+*"
+```
+
+Other scripts: `bun run build`, `bun run deploy`, and `bun run cf-typegen` to regenerate `worker-configuration.d.ts` after editing `wrangler.toml`.
+
+## Project layout
+
+Routes are directory based. Each route folder under `src/routes` owns its components, for example `src/routes/calculator/components/footer.tsx`. Any folder named `components` is skipped by the route generator (`routeFileIgnorePattern` in `vite.config.ts`). Components shared across routes go in `src/components/common`.
+
+## UI components
+
+The UI uses shadcn/ui on Base UI (`components.json`, preset `nova`). Add components with `bunx --bun shadcn@latest add <name>`; they land in `src/components/ui`. Custom components are written only when shadcn has no equivalent.
