@@ -15,7 +15,11 @@
     "test": "vitest run",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:seed": "wrangler d1 execute DB --local --file=src/db/seed.sql"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -53,6 +57,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
+    "miniflare": "^4.20260730.0",
     "prettier": "^3.9.10",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.72.1",

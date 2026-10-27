@@ -48,6 +48,17 @@ Routes are directory based. Each route folder under `src/routes` owns its compon
 
 Other folders: `src/db` (Drizzle schema), `src/lib` (shared helpers), `src/server` (server-only code), `src/jobs` (scheduled jobs).
 
+## Database
+
+D1 (binding `DB`, database `quotekit`) is accessed through Drizzle. The schema lives in `src/db/schema.ts`. Money is stored in cents, tax rates and percentage price modifiers in basis points (1500 = 15%), and dates as ISO 8601 text.
+
+```bash
+bun run db:generate        # write a new migration to drizzle/ after editing the schema
+bun run db:migrate:local   # apply migrations to the local database
+bun run db:migrate:remote  # apply migrations to the remote database
+bun run db:seed            # insert sample data locally (safe to run twice)
+```
+
 ## UI components
 
 The UI uses shadcn/ui on Base UI (`components.json`, preset `nova`). Add components with `bunx --bun shadcn@latest add <name>`; they land in `src/components/ui`. Custom components are written only when shadcn has no equivalent.
