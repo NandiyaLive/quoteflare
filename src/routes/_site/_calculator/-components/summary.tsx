@@ -1,3 +1,6 @@
+import { Link, useLocation } from '@tanstack/react-router'
+import { ArrowRightIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { bpsToPercent, formatMinor } from '#/lib/decimal'
@@ -35,6 +38,8 @@ export function Summary({
   const money = (minor: number) => formatMinor(minor, currency)
   const { recurring } = breakdown
   const hasRecurring = recurring.lines.length > 0
+  const { pathname } = useLocation()
+  const onScope = pathname.replace(/(.)\/$/, '$1') === '/scope'
 
   return (
     <>
@@ -97,6 +102,12 @@ export function Summary({
                   <Row label="Recurring total" value={money(recurring.total)} />
                 </dl>
               </>
+            )}
+            {onScope && (
+              <Button nativeButton={false} render={<Link to="/review" />}>
+                Review quote
+                <ArrowRightIcon />
+              </Button>
             )}
           </CardContent>
         </Card>
