@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { decimalToMinor } from '#/lib/decimal'
 import { quoteDetailsSchema } from '#/lib/quotes'
 import { submitQuoteAction } from '#/server/quote-actions'
 import { useCalculator } from '../../-components/calculator-context'
@@ -40,9 +39,6 @@ export function QuoteForm({ turnstileSiteKey }: { turnstileSiteKey: string }) {
         serviceId: service.id,
         quantity: Number(choice.quantity),
         optionIds: choice.optionIds,
-        ...(service.pricingMode === 'custom'
-          ? { priceOverride: decimalToMinor(choice.price) }
-          : {}),
       },
     ]
   })

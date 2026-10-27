@@ -69,13 +69,6 @@ describe('selectService', () => {
     expect(dependentsOf(chain, state, 'c').map((s) => s.id)).toEqual(['b'])
     expect(Object.keys(deselectService(state, 'a'))).not.toContain('a')
   })
-
-  it('prefills the default price of a custom service', () => {
-    const custom = catalog([
-      { ...base, pricingMode: 'custom', unitPrice: 4999 },
-    ])
-    expect(selectService(custom, {}, 'a').a.price).toBe('49.99')
-  })
 })
 
 describe('evaluate', () => {
@@ -138,18 +131,12 @@ describe('evaluate', () => {
         ...base,
         id: 'k',
         pricingMode: 'custom',
-        unitPrice: 0,
+        unitPrice: 1000,
         minQuantity: 2,
         quantityStep: 2,
       },
     ])
     const state = selectService(custom, {}, 'k')
-    expect(evaluate(custom, state).problems.k).toEqual(['Enter a price.'])
-    state.k.price = '10.999'
-    expect(evaluate(custom, state).problems.k).toEqual([
-      'Enter a price like 49.99.',
-    ])
-    state.k.price = '10'
     state.k.quantity = '3'
     expect(evaluate(custom, state).problems.k).toEqual([
       'The quantity does not fit the allowed steps.',

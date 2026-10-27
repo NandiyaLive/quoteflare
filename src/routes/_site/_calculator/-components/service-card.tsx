@@ -98,9 +98,8 @@ export function ServiceCard({
             >
               <span className="font-medium">{service.name}</span>
               <span className="text-sm text-muted-foreground">
-                {service.pricingMode === 'custom'
-                  ? 'Custom price'
-                  : `${formatMinor(service.unitPrice, currency)} / ${service.unitLabel}`}
+                {service.pricingMode === 'custom' && 'From '}
+                {`${formatMinor(service.unitPrice, currency)} / ${service.unitLabel}`}
                 {recurring &&
                   `, ${BILLING_LABELS[service.billing].toLowerCase()}`}
               </span>
@@ -154,22 +153,6 @@ export function ServiceCard({
                   {service.quantityStep > 1 &&
                     `, in steps of ${service.quantityStep}`}
                 </FieldDescription>
-              </Field>
-            )}
-
-            {service.pricingMode === 'custom' && (
-              <Field>
-                <FieldLabel htmlFor={`${id}-price`}>
-                  Price per {service.unitLabel}
-                </FieldLabel>
-                <Input
-                  id={`${id}-price`}
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={choice.price}
-                  onChange={(e) => onChange({ price: e.target.value })}
-                  className="w-40"
-                />
               </Field>
             )}
 

@@ -28,7 +28,6 @@ import { Route as AdminServicesIndexRouteImport } from './routes/admin/services/
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as FilesLogoIndexRouteImport } from './routes/files/logo/index'
 import { Route as ITokenIndexRouteImport } from './routes/i/$token/index'
-import { Route as SiteCalculatorOptionsIndexRouteImport } from './routes/_site/_calculator/options/index'
 import { Route as SiteCalculatorReviewIndexRouteImport } from './routes/_site/_calculator/review/index'
 import { Route as SiteCalculatorScopeIndexRouteImport } from './routes/_site/_calculator/scope/index'
 import { Route as AdminClientsClientIdIndexRouteImport } from './routes/admin/clients/$clientId/index'
@@ -131,12 +130,6 @@ const ITokenIndexRoute = ITokenIndexRouteImport.update({
   path: '/i/$token/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SiteCalculatorOptionsIndexRoute =
-  SiteCalculatorOptionsIndexRouteImport.update({
-    id: '/options/',
-    path: '/options/',
-    getParentRoute: () => SiteCalculatorRouteRoute,
-  } as any)
 const SiteCalculatorReviewIndexRoute =
   SiteCalculatorReviewIndexRouteImport.update({
     id: '/review/',
@@ -201,7 +194,6 @@ export interface FileRoutesByFullPath {
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
   '/i/$token/': typeof ITokenIndexRoute
-  '/options/': typeof SiteCalculatorOptionsIndexRoute
   '/review/': typeof SiteCalculatorReviewIndexRoute
   '/scope/': typeof SiteCalculatorScopeIndexRoute
   '/admin/clients/$clientId/': typeof AdminClientsClientIdIndexRoute
@@ -223,7 +215,6 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/files/logo': typeof FilesLogoIndexRoute
   '/i/$token': typeof ITokenIndexRoute
-  '/options': typeof SiteCalculatorOptionsIndexRoute
   '/review': typeof SiteCalculatorReviewIndexRoute
   '/scope': typeof SiteCalculatorScopeIndexRoute
   '/admin/clients/$clientId': typeof AdminClientsClientIdIndexRoute
@@ -254,7 +245,6 @@ export interface FileRoutesById {
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
   '/i/$token/': typeof ITokenIndexRoute
-  '/_site/_calculator/options/': typeof SiteCalculatorOptionsIndexRoute
   '/_site/_calculator/review/': typeof SiteCalculatorReviewIndexRoute
   '/_site/_calculator/scope/': typeof SiteCalculatorScopeIndexRoute
   '/admin/clients/$clientId/': typeof AdminClientsClientIdIndexRoute
@@ -284,7 +274,6 @@ export interface FileRouteTypes {
     | '/admin/settings/'
     | '/files/logo/'
     | '/i/$token/'
-    | '/options/'
     | '/review/'
     | '/scope/'
     | '/admin/clients/$clientId/'
@@ -306,7 +295,6 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/files/logo'
     | '/i/$token'
-    | '/options'
     | '/review'
     | '/scope'
     | '/admin/clients/$clientId'
@@ -336,7 +324,6 @@ export interface FileRouteTypes {
     | '/admin/settings/'
     | '/files/logo/'
     | '/i/$token/'
-    | '/_site/_calculator/options/'
     | '/_site/_calculator/review/'
     | '/_site/_calculator/scope/'
     | '/admin/clients/$clientId/'
@@ -489,13 +476,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ITokenIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_site/_calculator/options/': {
-      id: '/_site/_calculator/options/'
-      path: '/options'
-      fullPath: '/options/'
-      preLoaderRoute: typeof SiteCalculatorOptionsIndexRouteImport
-      parentRoute: typeof SiteCalculatorRouteRoute
-    }
     '/_site/_calculator/review/': {
       id: '/_site/_calculator/review/'
       path: '/review'
@@ -557,14 +537,12 @@ declare module '@tanstack/react-router' {
 
 interface SiteCalculatorRouteRouteChildren {
   SiteCalculatorIndexRoute: typeof SiteCalculatorIndexRoute
-  SiteCalculatorOptionsIndexRoute: typeof SiteCalculatorOptionsIndexRoute
   SiteCalculatorReviewIndexRoute: typeof SiteCalculatorReviewIndexRoute
   SiteCalculatorScopeIndexRoute: typeof SiteCalculatorScopeIndexRoute
 }
 
 const SiteCalculatorRouteRouteChildren: SiteCalculatorRouteRouteChildren = {
   SiteCalculatorIndexRoute: SiteCalculatorIndexRoute,
-  SiteCalculatorOptionsIndexRoute: SiteCalculatorOptionsIndexRoute,
   SiteCalculatorReviewIndexRoute: SiteCalculatorReviewIndexRoute,
   SiteCalculatorScopeIndexRoute: SiteCalculatorScopeIndexRoute,
 }

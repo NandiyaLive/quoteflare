@@ -1,4 +1,3 @@
-import { decimalToMinor, minorToDecimal } from '#/lib/decimal'
 import {
   calculatePrice,
   type PricingBreakdown,
@@ -35,21 +34,15 @@ export type CalculatorCatalog = {
 export type ChosenService = {
   quantity: string
   optionIds: string[]
-  price: string
 }
 
 export type CalculatorState = Record<string, ChosenService>
 
-const MONEY_PATTERN = /^\d{1,9}(\.\d{1,2})?$/
 const QUANTITY_PATTERN = /^\d{1,6}$/
 
 export const emptyChoice = (service: CalculatorService): ChosenService => ({
   quantity: String(service.minQuantity),
   optionIds: [],
-  price:
-    service.pricingMode === 'custom' && service.unitPrice > 0
-      ? minorToDecimal(service.unitPrice)
-      : '',
 })
 
 export function selectService(
@@ -126,9 +119,6 @@ const MESSAGES: Record<PricingErrorCode, string> = {
   quantity_below_minimum: 'The quantity is below the minimum.',
   quantity_above_maximum: 'The quantity is above the maximum.',
   quantity_step: 'The quantity does not fit the allowed steps.',
-  price_override_required: 'Enter a price.',
-  price_override_not_allowed: 'This service has a fixed price.',
-  invalid_price_override: 'Enter a price like 49.99.',
   unknown_option: 'This option is not available.',
   duplicate_option: 'This option is selected twice.',
   multiple_in_single_group: 'Choose only one option in this group.',
@@ -150,10 +140,6 @@ const toSelection = (
     quantity: Number(choice.quantity),
     optionIds: choice.optionIds,
   }
-  if (service.pricingMode === 'custom') {
-    if (!MONEY_PATTERN.test(choice.price)) return null
-    selection.priceOverride = decimalToMinor(choice.price)
-  }
   return selection
 }
 
@@ -169,16 +155,7 @@ export function evaluate(
     if (!choice) continue
     const selection = toSelection(service, choice)
     if (!selection) {
-      problems[service.id] = [
-        service.pricingMode === 'custom' &&
-        QUANTITY_PATTERN.test(choice.quantity)
-          ? MESSAGES[
-              choice.price === ''
-                ? 'price_override_required'
-                : 'invalid_price_override'
-            ]
-          : MESSAGES.invalid_quantity,
-      ]
+      problems[service.id] = [MESSAGES.invalid_quantity]
       continue
     }
     const single = calculatePrice({

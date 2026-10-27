@@ -308,18 +308,6 @@ describe('calculatePrice taxable lines and recurring lines', () => {
       total: 26400,
     })
   })
-
-  it('uses the price override for custom services', () => {
-    const result = price(
-      input({
-        services: [service({ pricingMode: 'custom', unitPrice: 5000 })],
-        selections: [
-          { serviceId: 'svc', quantity: 2, optionIds: [], priceOverride: 7500 },
-        ],
-      }),
-    )
-    expect(result.lines[0]).toMatchObject({ unitPrice: 7500, amount: 15000 })
-  })
 })
 
 describe('calculatePrice validation', () => {
@@ -385,29 +373,6 @@ describe('calculatePrice validation', () => {
         }),
       ),
     ).toEqual(['duplicate_service'])
-  })
-
-  it('requires an override for custom services and rejects it for fixed ones', () => {
-    const custom = service({ pricingMode: 'custom' })
-    const select = (priceOverride?: number) =>
-      input({
-        services: [custom],
-        selections: [
-          { serviceId: 'svc', quantity: 1, optionIds: [], priceOverride },
-        ],
-      })
-    expect(errorCodes(select())).toEqual(['price_override_required'])
-    expect(errorCodes(select(-1))).toEqual(['invalid_price_override'])
-    expect(errorCodes(select(10.5))).toEqual(['invalid_price_override'])
-    expect(
-      errorCodes(
-        input({
-          selections: [
-            { serviceId: 'svc', quantity: 1, optionIds: [], priceOverride: 1 },
-          ],
-        }),
-      ),
-    ).toEqual(['price_override_not_allowed'])
   })
 
   it('rejects an invalid tax rate or discount', () => {

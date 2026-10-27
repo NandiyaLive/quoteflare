@@ -13,16 +13,10 @@ export const QUOTE_STATUS_LABELS = {
 
 export const MAX_QUOTE_SERVICES = 100
 
-const selectionSchema = z.object({
+const selectionSchema = z.strictObject({
   serviceId: z.string().min(1).max(64),
   quantity: z.number().int().min(1).max(1_000_000),
   optionIds: z.array(z.string().min(1).max(64)).max(50),
-  priceOverride: z
-    .number()
-    .int()
-    .min(0)
-    .max(Number.MAX_SAFE_INTEGER)
-    .optional(),
 })
 
 const messageSchema = z

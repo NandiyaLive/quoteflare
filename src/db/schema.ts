@@ -61,7 +61,6 @@ export type QuoteSelection = {
   serviceId: string
   quantity: number
   optionIds: string[]
-  priceOverride?: number
 }[]
 
 export type RecurringItem = {

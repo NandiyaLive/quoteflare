@@ -112,29 +112,17 @@ describe('submitting a quote', () => {
     expect((await listQuotes(db, 'all'))[0].total).toBe(11000)
   })
 
-  it('uses current database prices, not client prices', async () => {
-    const id = await create('Web')
-    const price = {
-      serviceId: id,
-      quantity: 1,
-      optionIds: [],
-      priceOverride: 1,
+  it('rejects client prices and uses the catalog price', async () => {
+    const fixed = await create('Web')
+    const custom = await create('Custom', { pricingMode: 'custom' })
+    for (const serviceId of [fixed, custom]) {
+      const line = { serviceId, quantity: 1, optionIds: [] }
+      expect(() => request([{ ...line, priceOverride: 1 }])).toThrow()
+      await submitQuote(db, request([line]), human)
     }
-    const result = await submitQuote(db, request([price]), human)
-    expect(result.ok).toBe(false)
-    expect(await listQuotes(db, 'all')).toHaveLength(0)
-  })
-
-  it('accepts a price for custom services', async () => {
-    const id = await create('Custom', { pricingMode: 'custom' })
-    await submitQuote(
-      db,
-      request([
-        { serviceId: id, quantity: 1, optionIds: [], priceOverride: 5000 },
-      ]),
-      human,
-    )
-    expect((await listQuotes(db, 'all'))[0].total).toBe(5500)
+    expect((await listQuotes(db, 'all')).map((q) => q.total)).toEqual([
+      11000, 11000,
+    ])
   })
 
   it('rejects when the human check fails and stores nothing', async () => {

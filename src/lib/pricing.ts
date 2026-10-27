@@ -55,8 +55,6 @@ export type PricingSelection = {
   serviceId: string
   quantity: number
   optionIds: string[]
-  /** Unit price in minor units. Required for custom services, rejected for fixed ones. */
-  priceOverride?: number
 }
 
 export type PricingInput = {
@@ -93,9 +91,6 @@ export type PricingErrorCode =
   | 'quantity_below_minimum'
   | 'quantity_above_maximum'
   | 'quantity_step'
-  | 'price_override_required'
-  | 'price_override_not_allowed'
-  | 'invalid_price_override'
   | 'unknown_option'
   | 'duplicate_option'
   | 'multiple_in_single_group'
@@ -210,10 +205,7 @@ const priceLine = (
   selection: PricingSelection,
   chosen: PricingOption[],
 ): PricedLine => {
-  const unitPrice =
-    service.pricingMode === 'custom'
-      ? (selection.priceOverride as number)
-      : service.unitPrice
+  const unitPrice = service.unitPrice
   const baseAmount = unitPrice * selection.quantity
   const options = chosen.map((option) => ({
     optionId: option.id,
@@ -271,16 +263,6 @@ export const calculatePrice = (input: PricingInput): PricingResult => {
     const before = errors.length
     checkQuantity(service, selection.quantity, errors)
     const chosen = checkOptions(service, selection.optionIds, errors)
-
-    if (service.pricingMode === 'custom') {
-      if (selection.priceOverride === undefined) {
-        errors.push({ code: 'price_override_required', serviceId: service.id })
-      } else if (!isMinor(selection.priceOverride)) {
-        errors.push({ code: 'invalid_price_override', serviceId: service.id })
-      }
-    } else if (selection.priceOverride !== undefined) {
-      errors.push({ code: 'price_override_not_allowed', serviceId: service.id })
-    }
 
     if (errors.length === before) {
       lines.push(priceLine(service, selection, chosen))
