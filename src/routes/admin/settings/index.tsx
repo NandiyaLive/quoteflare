@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getSettings } from '#/server/settings-actions'
-import { LogoUpload } from './components/logo-upload'
-import { SettingsForm } from './components/settings-form'
+import { LogoUpload } from './-components/logo-upload'
+import { SettingsForm } from './-components/settings-form'
 
 export const Route = createFileRoute('/admin/settings/')({
   staticData: { breadcrumb: 'Settings' },
