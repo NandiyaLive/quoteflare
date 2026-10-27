@@ -38,7 +38,7 @@ export function Summary({
 
   return (
     <>
-      <aside id="summary" className="lg:sticky lg:top-20 lg:self-start">
+      <aside id="summary" className="lg:sticky lg:top-30 lg:self-start">
         <Card className="[--card-spacing:--spacing(5)]">
           <CardHeader>
             <CardTitle>Your estimate</CardTitle>

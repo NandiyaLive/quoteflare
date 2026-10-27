@@ -14,7 +14,6 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as SiteCalculatorRouteRouteImport } from './routes/_site/_calculator/route'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as SiteCalculatorIndexRouteImport } from './routes/_site/_calculator/index'
-import { Route as SiteAboutIndexRouteImport } from './routes/_site/about/index'
 import { Route as AdminServicesIndexRouteImport } from './routes/admin/services/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as FilesLogoIndexRouteImport } from './routes/files/logo/index'
@@ -44,11 +43,6 @@ const SiteCalculatorIndexRoute = SiteCalculatorIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SiteCalculatorRouteRoute,
-} as any)
-const SiteAboutIndexRoute = SiteAboutIndexRouteImport.update({
-  id: '/about/',
-  path: '/about/',
-  getParentRoute: () => SiteRouteRoute,
 } as any)
 const AdminServicesIndexRoute = AdminServicesIndexRouteImport.update({
   id: '/services/',
@@ -88,7 +82,6 @@ export interface FileRoutesByFullPath {
   '/': typeof SiteCalculatorIndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
-  '/about/': typeof SiteAboutIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
@@ -99,7 +92,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof SiteCalculatorIndexRoute
   '/admin': typeof AdminIndexRoute
-  '/about': typeof SiteAboutIndexRoute
   '/admin/services': typeof AdminServicesIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/files/logo': typeof FilesLogoIndexRoute
@@ -114,7 +106,6 @@ export interface FileRoutesById {
   '/_site/_calculator': typeof SiteCalculatorRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/_site/_calculator/': typeof SiteCalculatorIndexRoute
-  '/_site/about/': typeof SiteAboutIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
@@ -128,7 +119,6 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/admin/'
-    | '/about/'
     | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
@@ -139,7 +129,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
-    | '/about'
     | '/admin/services'
     | '/admin/settings'
     | '/files/logo'
@@ -153,7 +142,6 @@ export interface FileRouteTypes {
     | '/_site/_calculator'
     | '/admin/'
     | '/_site/_calculator/'
-    | '/_site/about/'
     | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
@@ -204,13 +192,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof SiteCalculatorIndexRouteImport
       parentRoute: typeof SiteCalculatorRouteRoute
-    }
-    '/_site/about/': {
-      id: '/_site/about/'
-      path: '/about'
-      fullPath: '/about/'
-      preLoaderRoute: typeof SiteAboutIndexRouteImport
-      parentRoute: typeof SiteRouteRoute
     }
     '/admin/services/': {
       id: '/admin/services/'
@@ -276,12 +257,10 @@ const SiteCalculatorRouteRouteWithChildren =
 
 interface SiteRouteRouteChildren {
   SiteCalculatorRouteRoute: typeof SiteCalculatorRouteRouteWithChildren
-  SiteAboutIndexRoute: typeof SiteAboutIndexRoute
 }
 
 const SiteRouteRouteChildren: SiteRouteRouteChildren = {
   SiteCalculatorRouteRoute: SiteCalculatorRouteRouteWithChildren,
-  SiteAboutIndexRoute: SiteAboutIndexRoute,
 }
 
 const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
