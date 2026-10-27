@@ -5,14 +5,22 @@ import { ImportError, importServices } from '#/server/services-import'
 
 const args = process.argv.slice(2)
 const dryRun = args.includes('--dry-run')
+const remote = args.includes('--remote')
 const file = args.find((a) => !a.startsWith('--'))
 
 if (!file) {
-  console.error('Usage: bun run services:import <file.json> [--dry-run]')
+  console.error('Usage: bun run services:import <file.json> [--dry-run] [--remote]')
   process.exit(1)
 }
 
-const { env, dispose } = await getPlatformProxy<{ DB: D1Database }>()
+const { env, dispose } = await getPlatformProxy<{ DB: D1Database }>(
+  remote
+    ? {
+        configPath: 'scripts/wrangler.remote.toml',
+        experimental: { remoteBindings: true },
+      }
+    : {},
+)
 try {
   const report = await importServices(
     createDb(env.DB),
