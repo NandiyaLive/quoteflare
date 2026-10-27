@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useConfirm } from '@/components/common/confirm-dialog'
 import { useRouter } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
@@ -62,6 +63,8 @@ export function ServicesManager({
     }
   }
 
+  const { confirm, dialog } = useConfirm()
+
   const move = (index: number, offset: -1 | 1) => {
     const ids = services.map((s) => s.id)
     const [moved] = ids.splice(index, 1)
@@ -69,12 +72,23 @@ export function ServicesManager({
     return run(() => reorderServicesAction({ data: { ids } }))
   }
 
-  const toggle = (service: ServiceRow) =>
-    run(() =>
+  const toggle = async (service: ServiceRow) => {
+    if (
+      service.active &&
+      !(await confirm({
+        title: `Archive ${service.name}?`,
+        description:
+          'Archived services no longer appear in the calculator. Existing quotes and invoices keep them.',
+        confirmLabel: 'Archive service',
+      }))
+    )
+      return
+    await run(() =>
       setServiceActiveAction({
         data: { id: service.id, active: !service.active },
       }),
     )
+  }
 
   const columns = useMemo<ColumnDef<DataTableFeatures, ServiceRow>[]>(
     () => [
@@ -315,6 +329,7 @@ export function ServicesManager({
         currency={currency}
         onClose={() => setEditing(null)}
       />
+      {dialog}
     </>
   )
 }

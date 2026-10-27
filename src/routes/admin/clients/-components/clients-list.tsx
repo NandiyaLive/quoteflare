@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useConfirm } from '@/components/common/confirm-dialog'
 import { Link, useRouter } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
@@ -30,7 +31,19 @@ export function ClientsList({ clients }: { clients: ClientRow[] }) {
     client: ClientFormValues | null
   }>({ open: false, client: null })
 
+  const { confirm, dialog: confirmDialog } = useConfirm()
+
   const toggleArchived = async (client: ClientRow) => {
+    if (
+      !client.archived &&
+      !(await confirm({
+        title: `Archive ${client.name}?`,
+        description:
+          'Archived clients are hidden from the active list and cannot be picked for new invoices.',
+        confirmLabel: 'Archive client',
+      }))
+    )
+      return
     await setClientArchivedAction({
       data: { id: client.id, archived: !client.archived },
     })
@@ -173,6 +186,7 @@ export function ClientsList({ clients }: { clients: ClientRow[] }) {
         client={dialog.client}
         onClose={() => setDialog({ open: false, client: null })}
       />
+      {confirmDialog}
     </>
   )
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useConfirm } from '@/components/common/confirm-dialog'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import BackButton from '@/components/common/back-button'
 import PageHeader from '@/components/common/page-header'
@@ -89,7 +90,18 @@ export function QuoteDetail({
   const [error, setError] = useState<string | null>(null)
   const { breakdown, currency } = quote
 
+  const { confirm, dialog } = useConfirm()
+
   const change = async (status: 'new' | 'dismissed') => {
+    if (
+      status === 'dismissed' &&
+      !(await confirm({
+        title: 'Dismiss this quote?',
+        description: 'You can reopen it later from the quote page.',
+        confirmLabel: 'Dismiss quote',
+      }))
+    )
+      return
     setBusy(true)
     setError(null)
     try {
@@ -257,6 +269,7 @@ export function QuoteDetail({
           </CardContent>
         </Card>
       </div>
+      {dialog}
     </>
   )
 }

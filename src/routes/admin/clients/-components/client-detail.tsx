@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useConfirm } from '@/components/common/confirm-dialog'
 import { Link, useRouter } from '@tanstack/react-router'
 import BackButton from '@/components/common/back-button'
 import PageHeader from '@/components/common/page-header'
@@ -29,7 +30,19 @@ export function ClientDetail({
   const router = useRouter()
   const [editing, setEditing] = useState(false)
 
+  const { confirm, dialog } = useConfirm()
+
   const toggleArchived = async () => {
+    if (
+      !client.archived &&
+      !(await confirm({
+        title: `Archive ${client.name}?`,
+        description:
+          'Archived clients are hidden from the active list and cannot be picked for new invoices.',
+        confirmLabel: 'Archive client',
+      }))
+    )
+      return
     await setClientArchivedAction({
       data: { id: client.id, archived: !client.archived },
     })
@@ -147,6 +160,7 @@ export function ClientDetail({
         client={toClientFormValues(client)}
         onClose={() => setEditing(false)}
       />
+      {dialog}
     </>
   )
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useConfirm } from '@/components/common/confirm-dialog'
 import { useRouter } from '@tanstack/react-router'
 import {
   ArchiveIcon,
@@ -32,6 +33,8 @@ export function PackagesManager({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const { confirm, dialog } = useConfirm()
+
   const run = async (
     action: () => Promise<{ ok: boolean; error?: string }>,
   ) => {
@@ -51,6 +54,22 @@ export function PackagesManager({
     const [moved] = ids.splice(index, 1)
     ids.splice(index + offset, 0, moved)
     return run(() => reorderPackagesAction({ data: { ids } }))
+  }
+
+  const toggle = async (pkg: PackageRow) => {
+    if (
+      pkg.active &&
+      !(await confirm({
+        title: `Archive ${pkg.name}?`,
+        description:
+          'Archived packages no longer appear in the calculator. Existing quotes and invoices keep them.',
+        confirmLabel: 'Archive package',
+      }))
+    )
+      return
+    await run(() =>
+      setPackageActiveAction({ data: { id: pkg.id, active: !pkg.active } }),
+    )
   }
 
   return (
@@ -132,13 +151,7 @@ export function PackagesManager({
                     size="icon-sm"
                     aria-label={`${pkg.active ? 'Archive' : 'Restore'} ${pkg.name}`}
                     disabled={busy}
-                    onClick={() =>
-                      void run(() =>
-                        setPackageActiveAction({
-                          data: { id: pkg.id, active: !pkg.active },
-                        }),
-                      )
-                    }
+                    onClick={() => void toggle(pkg)}
                   >
                     {pkg.active ? <ArchiveIcon /> : <ArchiveRestoreIcon />}
                   </Button>
@@ -154,6 +167,7 @@ export function PackagesManager({
         services={services}
         onClose={() => setEditing(null)}
       />
+      {dialog}
     </>
   )
 }

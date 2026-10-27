@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useConfirm } from '@/components/common/confirm-dialog'
 import { Link, useRouter } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
@@ -26,7 +27,19 @@ import { setScheduleActiveAction } from '#/server/recurring-actions'
 export function RecurringList({ schedules }: { schedules: RecurringRow[] }) {
   const router = useRouter()
 
+  const { confirm, dialog } = useConfirm()
+
   const toggleActive = async (schedule: RecurringRow) => {
+    if (
+      schedule.active &&
+      !(await confirm({
+        title: `Pause schedule for ${schedule.clientName}?`,
+        description:
+          'No invoices are created for this schedule until you resume it.',
+        confirmLabel: 'Pause schedule',
+      }))
+    )
+      return
     await setScheduleActiveAction({
       data: { id: schedule.id, active: !schedule.active },
     })
@@ -186,6 +199,7 @@ export function RecurringList({ schedules }: { schedules: RecurringRow[] }) {
       <DataTable table={table}>
         <DataTableToolbar table={table} />
       </DataTable>
+      {dialog}
     </>
   )
 }
