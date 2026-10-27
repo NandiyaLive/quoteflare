@@ -9,16 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as SiteRouteRouteImport } from './routes/_site/route'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
-import { Route as AboutIndexRouteImport } from './routes/about/index'
+import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as SiteAboutIndexRouteImport } from './routes/_site/about/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as FilesLogoIndexRouteImport } from './routes/files/logo/index'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SiteRouteRoute = SiteRouteRouteImport.update({
+  id: '/_site',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRouteRoute = AdminRouteRouteImport.update({
@@ -26,15 +26,20 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AboutIndexRoute = AboutIndexRouteImport.update({
-  id: '/about/',
-  path: '/about/',
-  getParentRoute: () => rootRouteImport,
+const SiteIndexRoute = SiteIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SiteRouteRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const SiteAboutIndexRoute = SiteAboutIndexRouteImport.update({
+  id: '/about/',
+  path: '/about/',
+  getParentRoute: () => SiteRouteRoute,
 } as any)
 const AdminSettingsIndexRoute = AdminSettingsIndexRouteImport.update({
   id: '/settings/',
@@ -48,59 +53,60 @@ const FilesLogoIndexRoute = FilesLogoIndexRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof SiteIndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
-  '/about/': typeof AboutIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/about/': typeof SiteAboutIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutIndexRoute
+  '/': typeof SiteIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/about': typeof SiteAboutIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/files/logo': typeof FilesLogoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_site': typeof SiteRouteRouteWithChildren
   '/admin': typeof AdminRouteRouteWithChildren
-  '/about/': typeof AboutIndexRoute
+  '/_site/': typeof SiteIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/_site/about/': typeof SiteAboutIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/admin' | '/about/' | '/admin/' | '/admin/settings/' | '/files/logo/'
+    '/' | '/admin' | '/admin/' | '/about/' | '/admin/settings/' | '/files/logo/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/admin' | '/admin/settings' | '/files/logo'
+  to: '/' | '/admin' | '/about' | '/admin/settings' | '/files/logo'
   id:
     | '__root__'
-    | '/'
+    | '/_site'
     | '/admin'
-    | '/about/'
+    | '/_site/'
     | '/admin/'
+    | '/_site/about/'
     | '/admin/settings/'
     | '/files/logo/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  SiteRouteRoute: typeof SiteRouteRouteWithChildren
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
-  AboutIndexRoute: typeof AboutIndexRoute
   FilesLogoIndexRoute: typeof FilesLogoIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_site': {
+      id: '/_site'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof SiteRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -110,12 +116,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about/': {
-      id: '/about/'
-      path: '/about'
-      fullPath: '/about/'
-      preLoaderRoute: typeof AboutIndexRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_site/': {
+      id: '/_site/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof SiteIndexRouteImport
+      parentRoute: typeof SiteRouteRoute
     }
     '/admin/': {
       id: '/admin/'
@@ -123,6 +129,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/_site/about/': {
+      id: '/_site/about/'
+      path: '/about'
+      fullPath: '/about/'
+      preLoaderRoute: typeof SiteAboutIndexRouteImport
+      parentRoute: typeof SiteRouteRoute
     }
     '/admin/settings/': {
       id: '/admin/settings/'
@@ -141,6 +154,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SiteRouteRouteChildren {
+  SiteIndexRoute: typeof SiteIndexRoute
+  SiteAboutIndexRoute: typeof SiteAboutIndexRoute
+}
+
+const SiteRouteRouteChildren: SiteRouteRouteChildren = {
+  SiteIndexRoute: SiteIndexRoute,
+  SiteAboutIndexRoute: SiteAboutIndexRoute,
+}
+
+const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
+  SiteRouteRouteChildren,
+)
+
 interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
@@ -156,9 +183,8 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  SiteRouteRoute: SiteRouteRouteWithChildren,
   AdminRouteRoute: AdminRouteRouteWithChildren,
-  AboutIndexRoute: AboutIndexRoute,
   FilesLogoIndexRoute: FilesLogoIndexRoute,
 }
 export const routeTree = rootRouteImport

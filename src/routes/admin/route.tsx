@@ -1,5 +1,7 @@
-import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
+import { AdminLayout } from '@/components/admin/admin-layout'
+import '#/lib/breadcrumbs'
 import { requireAdmin } from '#/server/admin-middleware'
 
 const getAdminIdentity = createServerFn()
@@ -9,5 +11,11 @@ const getAdminIdentity = createServerFn()
 export const Route = createFileRoute('/admin')({
   beforeLoad: async () => ({ admin: await getAdminIdentity() }),
   head: () => ({ meta: [{ name: 'robots', content: 'noindex' }] }),
-  component: Outlet,
+  staticData: { breadcrumb: 'Admin' },
+  component: AdminRoute,
 })
+
+function AdminRoute() {
+  const { admin } = Route.useRouteContext()
+  return <AdminLayout email={admin.email} />
+}

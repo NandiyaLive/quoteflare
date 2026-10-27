@@ -112,16 +112,17 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
         }}
       >
         <CardContent>
-          <FieldGroup>
+          <FieldGroup className="md:grid md:grid-cols-2">
             {text('businessName', 'Business name', {
               autoComplete: 'organization',
             })}
+            {text('email', 'Email', { type: 'email', autoComplete: 'email' })}
             <form.Field name="address">
               {(field) => {
                 const errors = fieldErrors(field.name, field.state.meta.errors)
                 const invalid = errors.length > 0
                 return (
-                  <Field data-invalid={invalid}>
+                  <Field data-invalid={invalid} className="md:col-span-2">
                     <FieldLabel htmlFor="address">Address</FieldLabel>
                     <Textarea
                       id="address"
@@ -137,7 +138,6 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                 )
               }}
             </form.Field>
-            {text('email', 'Email', { type: 'email', autoComplete: 'email' })}
             <form.Field name="currency">
               {(field) => (
                 <Field>
@@ -146,7 +146,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                     value={field.state.value}
                     onValueChange={(v) => v && field.handleChange(v)}
                   >
-                    <SelectTrigger id="currency" className="w-40">
+                    <SelectTrigger id="currency" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -163,14 +163,14 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
             {text(
               'taxRate',
               'Tax rate (%)',
-              { inputMode: 'decimal', className: 'w-40' },
+              { inputMode: 'decimal' },
               'Default for new invoices, for example 15 or 7.5.',
             )}
-            {text('invoicePrefix', 'Invoice prefix', { className: 'w-40' })}
+            {text('invoicePrefix', 'Invoice prefix', {})}
             {text(
               'nextInvoiceNumber',
               'Next invoice number',
-              { inputMode: 'numeric', className: 'w-40' },
+              { inputMode: 'numeric' },
               'Lowering this below a number already issued will cause a duplicate.',
             )}
             <form.Field name="paymentInstructions">
@@ -178,7 +178,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                 const errors = fieldErrors(field.name, field.state.meta.errors)
                 const invalid = errors.length > 0
                 return (
-                  <Field data-invalid={invalid}>
+                  <Field data-invalid={invalid} className="md:col-span-2">
                     <FieldLabel htmlFor="paymentInstructions">
                       Payment instructions
                     </FieldLabel>
