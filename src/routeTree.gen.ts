@@ -15,6 +15,7 @@ import { Route as SiteCalculatorRouteRouteImport } from './routes/_site/_calcula
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as SiteCalculatorIndexRouteImport } from './routes/_site/_calculator/index'
 import { Route as AdminClientsIndexRouteImport } from './routes/admin/clients/index'
+import { Route as AdminInvoicesIndexRouteImport } from './routes/admin/invoices/index'
 import { Route as AdminQuotesIndexRouteImport } from './routes/admin/quotes/index'
 import { Route as AdminServicesIndexRouteImport } from './routes/admin/services/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
@@ -23,6 +24,8 @@ import { Route as SiteCalculatorOptionsIndexRouteImport } from './routes/_site/_
 import { Route as SiteCalculatorReviewIndexRouteImport } from './routes/_site/_calculator/review/index'
 import { Route as SiteCalculatorScopeIndexRouteImport } from './routes/_site/_calculator/scope/index'
 import { Route as AdminClientsClientIdIndexRouteImport } from './routes/admin/clients/$clientId/index'
+import { Route as AdminInvoicesInvoiceIdIndexRouteImport } from './routes/admin/invoices/$invoiceId/index'
+import { Route as AdminInvoicesNewIndexRouteImport } from './routes/admin/invoices/new/index'
 import { Route as AdminQuotesQuoteIdIndexRouteImport } from './routes/admin/quotes/$quoteId/index'
 
 const SiteRouteRoute = SiteRouteRouteImport.update({
@@ -51,6 +54,11 @@ const SiteCalculatorIndexRoute = SiteCalculatorIndexRouteImport.update({
 const AdminClientsIndexRoute = AdminClientsIndexRouteImport.update({
   id: '/clients/',
   path: '/clients/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminInvoicesIndexRoute = AdminInvoicesIndexRouteImport.update({
+  id: '/invoices/',
+  path: '/invoices/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminQuotesIndexRoute = AdminQuotesIndexRouteImport.update({
@@ -97,6 +105,17 @@ const AdminClientsClientIdIndexRoute =
     path: '/clients/$clientId/',
     getParentRoute: () => AdminRouteRoute,
   } as any)
+const AdminInvoicesInvoiceIdIndexRoute =
+  AdminInvoicesInvoiceIdIndexRouteImport.update({
+    id: '/invoices/$invoiceId/',
+    path: '/invoices/$invoiceId/',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminInvoicesNewIndexRoute = AdminInvoicesNewIndexRouteImport.update({
+  id: '/invoices/new/',
+  path: '/invoices/new/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminQuotesQuoteIdIndexRoute = AdminQuotesQuoteIdIndexRouteImport.update({
   id: '/quotes/$quoteId/',
   path: '/quotes/$quoteId/',
@@ -108,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/admin/clients/': typeof AdminClientsIndexRoute
+  '/admin/invoices/': typeof AdminInvoicesIndexRoute
   '/admin/quotes/': typeof AdminQuotesIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
@@ -116,12 +136,15 @@ export interface FileRoutesByFullPath {
   '/review/': typeof SiteCalculatorReviewIndexRoute
   '/scope/': typeof SiteCalculatorScopeIndexRoute
   '/admin/clients/$clientId/': typeof AdminClientsClientIdIndexRoute
+  '/admin/invoices/$invoiceId/': typeof AdminInvoicesInvoiceIdIndexRoute
+  '/admin/invoices/new/': typeof AdminInvoicesNewIndexRoute
   '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof SiteCalculatorIndexRoute
   '/admin': typeof AdminIndexRoute
   '/admin/clients': typeof AdminClientsIndexRoute
+  '/admin/invoices': typeof AdminInvoicesIndexRoute
   '/admin/quotes': typeof AdminQuotesIndexRoute
   '/admin/services': typeof AdminServicesIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
@@ -130,6 +153,8 @@ export interface FileRoutesByTo {
   '/review': typeof SiteCalculatorReviewIndexRoute
   '/scope': typeof SiteCalculatorScopeIndexRoute
   '/admin/clients/$clientId': typeof AdminClientsClientIdIndexRoute
+  '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdIndexRoute
+  '/admin/invoices/new': typeof AdminInvoicesNewIndexRoute
   '/admin/quotes/$quoteId': typeof AdminQuotesQuoteIdIndexRoute
 }
 export interface FileRoutesById {
@@ -140,6 +165,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/_site/_calculator/': typeof SiteCalculatorIndexRoute
   '/admin/clients/': typeof AdminClientsIndexRoute
+  '/admin/invoices/': typeof AdminInvoicesIndexRoute
   '/admin/quotes/': typeof AdminQuotesIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
@@ -148,6 +174,8 @@ export interface FileRoutesById {
   '/_site/_calculator/review/': typeof SiteCalculatorReviewIndexRoute
   '/_site/_calculator/scope/': typeof SiteCalculatorScopeIndexRoute
   '/admin/clients/$clientId/': typeof AdminClientsClientIdIndexRoute
+  '/admin/invoices/$invoiceId/': typeof AdminInvoicesInvoiceIdIndexRoute
+  '/admin/invoices/new/': typeof AdminInvoicesNewIndexRoute
   '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -157,6 +185,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/'
     | '/admin/clients/'
+    | '/admin/invoices/'
     | '/admin/quotes/'
     | '/admin/services/'
     | '/admin/settings/'
@@ -165,12 +194,15 @@ export interface FileRouteTypes {
     | '/review/'
     | '/scope/'
     | '/admin/clients/$clientId/'
+    | '/admin/invoices/$invoiceId/'
+    | '/admin/invoices/new/'
     | '/admin/quotes/$quoteId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/admin/clients'
+    | '/admin/invoices'
     | '/admin/quotes'
     | '/admin/services'
     | '/admin/settings'
@@ -179,6 +211,8 @@ export interface FileRouteTypes {
     | '/review'
     | '/scope'
     | '/admin/clients/$clientId'
+    | '/admin/invoices/$invoiceId'
+    | '/admin/invoices/new'
     | '/admin/quotes/$quoteId'
   id:
     | '__root__'
@@ -188,6 +222,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/_site/_calculator/'
     | '/admin/clients/'
+    | '/admin/invoices/'
     | '/admin/quotes/'
     | '/admin/services/'
     | '/admin/settings/'
@@ -196,6 +231,8 @@ export interface FileRouteTypes {
     | '/_site/_calculator/review/'
     | '/_site/_calculator/scope/'
     | '/admin/clients/$clientId/'
+    | '/admin/invoices/$invoiceId/'
+    | '/admin/invoices/new/'
     | '/admin/quotes/$quoteId/'
   fileRoutesById: FileRoutesById
 }
@@ -247,6 +284,13 @@ declare module '@tanstack/react-router' {
       path: '/clients'
       fullPath: '/admin/clients/'
       preLoaderRoute: typeof AdminClientsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/invoices/': {
+      id: '/admin/invoices/'
+      path: '/invoices'
+      fullPath: '/admin/invoices/'
+      preLoaderRoute: typeof AdminInvoicesIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/quotes/': {
@@ -305,6 +349,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminClientsClientIdIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/invoices/$invoiceId/': {
+      id: '/admin/invoices/$invoiceId/'
+      path: '/invoices/$invoiceId'
+      fullPath: '/admin/invoices/$invoiceId/'
+      preLoaderRoute: typeof AdminInvoicesInvoiceIdIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/invoices/new/': {
+      id: '/admin/invoices/new/'
+      path: '/invoices/new'
+      fullPath: '/admin/invoices/new/'
+      preLoaderRoute: typeof AdminInvoicesNewIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/quotes/$quoteId/': {
       id: '/admin/quotes/$quoteId/'
       path: '/quotes/$quoteId'
@@ -347,20 +405,26 @@ const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
 interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AdminClientsIndexRoute: typeof AdminClientsIndexRoute
+  AdminInvoicesIndexRoute: typeof AdminInvoicesIndexRoute
   AdminQuotesIndexRoute: typeof AdminQuotesIndexRoute
   AdminServicesIndexRoute: typeof AdminServicesIndexRoute
   AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
   AdminClientsClientIdIndexRoute: typeof AdminClientsClientIdIndexRoute
+  AdminInvoicesInvoiceIdIndexRoute: typeof AdminInvoicesInvoiceIdIndexRoute
+  AdminInvoicesNewIndexRoute: typeof AdminInvoicesNewIndexRoute
   AdminQuotesQuoteIdIndexRoute: typeof AdminQuotesQuoteIdIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   AdminClientsIndexRoute: AdminClientsIndexRoute,
+  AdminInvoicesIndexRoute: AdminInvoicesIndexRoute,
   AdminQuotesIndexRoute: AdminQuotesIndexRoute,
   AdminServicesIndexRoute: AdminServicesIndexRoute,
   AdminSettingsIndexRoute: AdminSettingsIndexRoute,
   AdminClientsClientIdIndexRoute: AdminClientsClientIdIndexRoute,
+  AdminInvoicesInvoiceIdIndexRoute: AdminInvoicesInvoiceIdIndexRoute,
+  AdminInvoicesNewIndexRoute: AdminInvoicesNewIndexRoute,
   AdminQuotesQuoteIdIndexRoute: AdminQuotesQuoteIdIndexRoute,
 }
 

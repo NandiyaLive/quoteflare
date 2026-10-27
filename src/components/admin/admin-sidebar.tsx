@@ -3,6 +3,7 @@ import {
   ChevronsUpDownIcon,
   FileTextIcon,
   InboxIcon,
+  ReceiptTextIcon,
   LayoutDashboardIcon,
   PackageIcon,
   UsersIcon,
@@ -39,6 +40,7 @@ type NavItem = {
   to:
     | '/admin'
     | '/admin/clients'
+    | '/admin/invoices'
     | '/admin/quotes'
     | '/admin/services'
     | '/admin/settings'
@@ -57,6 +59,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
         exact: true,
       },
       { title: 'Quotes', to: '/admin/quotes', icon: InboxIcon },
+      { title: 'Invoices', to: '/admin/invoices', icon: ReceiptTextIcon },
       { title: 'Clients', to: '/admin/clients', icon: UsersIcon },
     ],
   },
