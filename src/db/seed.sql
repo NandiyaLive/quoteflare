@@ -1,5 +1,5 @@
 insert or ignore into settings (id, business_name, address, email, currency, tax_rate_bps, invoice_prefix, next_invoice_number, payment_instructions)
-values ('main', 'QuoteKit Studio', '12 Example Street, Colombo', 'billing@example.com', 'LKR', 1000, 'INV', 2, 'Bank transfer to the account listed on your invoice.');
+values ('main', 'Quoteflare Studio', '12 Example Street, Colombo', 'billing@example.com', 'LKR', 1000, 'INV', 2, 'Bank transfer to the account listed on your invoice.');
 
 insert or ignore into clients (id, name, company, email, address, notes, archived) values
   ('gkkxqliw9j8wo4ghgpjspx26', 'Jane Perera', 'Acme Ltd', 'jane@acme.example', '1 Acme Road, Colombo', '', 0),

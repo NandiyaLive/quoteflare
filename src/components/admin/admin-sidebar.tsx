@@ -10,6 +10,7 @@ import {
   SettingsIcon,
   type LucideIcon,
 } from 'lucide-react'
+import Logo from '@/components/common/logo'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -81,15 +82,14 @@ export function AdminSidebar({ email }: { email: string }) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link to="/admin" />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <FileTextIcon className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">QuoteKit</span>
-                <span className="truncate text-xs">Admin</span>
-              </div>
-            </SidebarMenuButton>
+            <div className="flex h-12 items-center px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+              <Logo
+                variant="mark"
+                role="img"
+                aria-label="Quoteflare"
+                className="h-auto w-8 shrink-0 group-data-[collapsible=icon]:w-4"
+              />
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

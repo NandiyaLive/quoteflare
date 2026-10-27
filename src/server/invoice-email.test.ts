@@ -64,7 +64,7 @@ const stubFetch = (response: Response) => {
 
 const deps = (fetcher: typeof fetch) => ({
   apiKey: 're_key' as string | undefined,
-  from: 'QuoteKit <invoices@example.com>',
+  from: 'Quoteflare <invoices@example.com>',
   origin: 'https://invoices.example.com',
   fetcher,
 })

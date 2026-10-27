@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "quotekit",
+      "name": "quoteflare",
       "dependencies": {
         "@base-ui/react": "^1.9.0",
         "@base-ui/utils": "^0.5.0",

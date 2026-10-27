@@ -1,4 +1,4 @@
-# QuoteKit
+# Quoteflare
 
 A single-user invoicing platform on Cloudflare's free tier. It has a public pricing calculator, a private dashboard for services, clients and invoices, email through Resend, and scheduled jobs. It has no payment gateways.
 
@@ -6,7 +6,7 @@ A single-user invoicing platform on Cloudflare's free tier. It has a public pric
 
 | Setting               | Value                                        |
 | --------------------- | -------------------------------------------- |
-| Business name         | QuoteKit                                     |
+| Business name         | Quoteflare                                   |
 | Default currency      | LKR                                          |
 | Invoice number format | `INV-YYYY-NNNN`, for example `INV-2026-0001` |
 
@@ -50,7 +50,7 @@ Other folders: `src/db` (Drizzle schema), `src/lib` (shared helpers), `src/serve
 
 ## Database
 
-D1 (binding `DB`, database `quotekit`) is accessed through Drizzle. The schema lives in `src/db/schema.ts`. Money is stored in cents, tax rates and percentage price modifiers in basis points (1500 = 15%), and dates as ISO 8601 text.
+D1 (binding `DB`, database `quoteflare`) is accessed through Drizzle. The schema lives in `src/db/schema.ts`. Money is stored in cents, tax rates and percentage price modifiers in basis points (1500 = 15%), and dates as ISO 8601 text.
 
 ```bash
 bun run db:generate        # write a new migration to drizzle/ after editing the schema
@@ -79,10 +79,10 @@ The Access application covers `invoices.neranjana.me/admin/*` with a single Allo
 
 ## Files and business settings
 
-Business details are edited at `/admin/settings`. The logo is stored in the R2 bucket `quotekit-files` (binding `FILES`) under `logo/<random>.<ext>`, limited to PNG, JPG or SVG and 1 MB. `/files/logo` streams the current logo and is public so invoices can show it. Create the bucket once with:
+Business details are edited at `/admin/settings`. The logo is stored in the R2 bucket `quoteflare-files` (binding `FILES`) under `logo/<random>.<ext>`, limited to PNG, JPG or SVG and 1 MB. `/files/logo` streams the current logo and is public so invoices can show it. Create the bucket once with:
 
 ```bash
-bunx wrangler r2 bucket create quotekit-files
+bunx wrangler r2 bucket create quoteflare-files
 ```
 
 ## Services

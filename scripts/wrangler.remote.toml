@@ -1,9 +1,9 @@
 # Used by `services:import --remote`. Points the DB binding at the deployed D1 database.
-name = "quotekit"
+name = "quoteflare"
 compatibility_date = "2025-09-02"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "quotekit"
+database_name = "quoteflare"
 database_id = "e8527523-f135-403c-8325-ea1f32a8a519"
 remote = true

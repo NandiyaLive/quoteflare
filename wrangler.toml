@@ -1,4 +1,4 @@
-name = "quotekit"
+name = "quoteflare"
 main = "src/server.ts"
 compatibility_date = "2025-09-02"
 compatibility_flags = ["nodejs_compat"]
@@ -33,10 +33,10 @@ EMAIL_FROM = "Invoices <invoices@neranjana.me>"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "quotekit"
+database_name = "quoteflare"
 database_id = "e8527523-f135-403c-8325-ea1f32a8a519"
 migrations_dir = "drizzle"
 
 [[r2_buckets]]
 binding = "FILES"
-bucket_name = "quotekit-files"
+bucket_name = "quoteflare-files"
