@@ -33,6 +33,8 @@
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@paralleldrive/cuid2": "^3.3.0",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.1",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "0.10.13",
     "@tanstack/react-form": "^1.33.5",

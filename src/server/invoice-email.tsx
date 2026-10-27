@@ -1,9 +1,17 @@
 import { eq } from 'drizzle-orm'
+import { render } from '@react-email/render'
 import { z } from 'zod'
 import type { Db } from '#/db'
 import { schema } from '#/db'
 import type { InvoiceStatus } from '#/db/schema'
 import { formatMinor } from '#/lib/decimal'
+import {
+  fillTemplate,
+  withDefaults,
+  type InvoiceEmailTemplate,
+  type TemplateVariables,
+} from '#/lib/email-template'
+import { InvoiceEmail } from '#/emails/invoice-email'
 import { createId, createPublicToken } from '#/lib/id'
 import { EMAILABLE_STATUSES } from '#/lib/invoices'
 import { sendEmail } from './email'
@@ -11,40 +19,35 @@ import { changeInvoiceStatus, getInvoice } from './invoices'
 
 const { emailLog } = schema
 
-export type InvoiceEmailInput = {
-  businessName: string
-  number: string
-  total: string
-  dueDate: string
-  url: string
-}
+export type InvoiceEmailInput = TemplateVariables & { url: string }
 
 export type SendInvoiceResult =
   { ok: true; status: InvoiceStatus; to: string } | { ok: false; error: string }
 
-const escapeHtml = (value: string) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-
-export function buildInvoiceEmail(input: InvoiceEmailInput) {
-  const { businessName, number, total, dueDate, url } = input
-  const subject = `Invoice ${number} from ${businessName}`
-  const text = [
-    `Invoice ${number} from ${businessName} is ready.`,
-    '',
-    `Amount due: ${total}`,
-    `Due date: ${dueDate}`,
-    '',
-    `View the invoice: ${url}`,
-  ].join('\n')
-  const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#111">
-<p>Invoice <strong>${escapeHtml(number)}</strong> from ${escapeHtml(businessName)} is ready.</p>
-<p>Amount due: <strong>${escapeHtml(total)}</strong><br>Due date: ${escapeHtml(dueDate)}</p>
-<p><a href="${escapeHtml(url)}">View the invoice</a></p>
-</div>`
+export async function buildInvoiceEmail(
+  input: InvoiceEmailInput,
+  template: InvoiceEmailTemplate = withDefaults({
+    subject: '',
+    body: '',
+    button: '',
+  }),
+) {
+  const { url, ...vars } = input
+  const subject = fillTemplate(template.subject, vars).replace(/\s+/g, ' ')
+  const body = fillTemplate(template.body, vars)
+  const buttonLabel = fillTemplate(template.button, vars)
+  const element = (
+    <InvoiceEmail
+      body={body}
+      buttonLabel={buttonLabel}
+      url={url}
+      preview={subject}
+    />
+  )
+  const [html, text] = await Promise.all([
+    render(element),
+    render(element, { plainText: true }),
+  ])
   return { subject, text, html }
 }
 
@@ -89,13 +92,20 @@ export async function sendInvoiceEmail(
     from: deps.from,
     to,
     replyTo: settings?.replyToEmail || undefined,
-    ...buildInvoiceEmail({
-      businessName: settings?.businessName ?? '',
-      number: invoice.number,
-      total: formatMinor(totals.total, invoice.currency),
-      dueDate: invoice.dueDate,
-      url: `${deps.origin}/i/${token}`,
-    }),
+    ...(await buildInvoiceEmail(
+      {
+        businessName: settings?.businessName ?? '',
+        number: invoice.number,
+        total: formatMinor(totals.total, invoice.currency),
+        dueDate: invoice.dueDate,
+        url: `${deps.origin}/i/${token}`,
+      },
+      withDefaults({
+        subject: settings?.invoiceEmailSubject ?? '',
+        body: settings?.invoiceEmailBody ?? '',
+        button: settings?.invoiceEmailButton ?? '',
+      }),
+    )),
   }
 
   const logId = createId()

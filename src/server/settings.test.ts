@@ -1,8 +1,16 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { createDb, schema, type Db } from '#/db'
 import { createTestD1 } from '#/db/test-db'
+import { DEFAULT_INVOICE_EMAIL } from '#/lib/email-template'
 import { settingsSchema } from '#/lib/settings'
-import { loadSettings, readLogo, saveSettings, storeLogo } from './settings'
+import {
+  loadInvoiceEmailTemplate,
+  loadSettings,
+  readLogo,
+  saveInvoiceEmailTemplate,
+  saveSettings,
+  storeLogo,
+} from './settings'
 
 let db: Db
 let bucket: R2Bucket
@@ -157,5 +165,24 @@ describe('logo storage', () => {
       }),
     )
     expect(cached.status).toBe(304)
+  })
+})
+
+describe('invoice email template', () => {
+  const template = { subject: 'Hi {{number}}', body: 'Pay up', button: 'Open' }
+
+  it('loads the default text when nothing is saved', async () => {
+    expect(await loadInvoiceEmailTemplate(db)).toEqual(DEFAULT_INVOICE_EMAIL)
+  })
+
+  it('refuses to save before the settings row exists', async () => {
+    expect(await saveInvoiceEmailTemplate(db, template)).toBe(false)
+  })
+
+  it('saves and loads the template, and is untouched by business details saves', async () => {
+    await saveSettings(db, settingsSchema.parse(input))
+    expect(await saveInvoiceEmailTemplate(db, template)).toBe(true)
+    await saveSettings(db, settingsSchema.parse({ ...input, taxRate: '1' }))
+    expect(await loadInvoiceEmailTemplate(db)).toEqual(template)
   })
 })

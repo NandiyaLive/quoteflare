@@ -9,6 +9,7 @@ import {
 } from '#/lib/settings'
 import { bpsToPercent } from '#/lib/decimal'
 import { createId } from '#/lib/id'
+import { withDefaults, type InvoiceEmailTemplate } from '#/lib/email-template'
 
 const { settings } = schema
 
@@ -132,4 +133,32 @@ export async function readLogo(db: Db, bucket: R2Bucket, request: Request) {
     return new Response(null, { status: 304, headers })
   }
   return new Response(object.body, { headers })
+}
+
+export async function loadInvoiceEmailTemplate(
+  db: Db,
+): Promise<InvoiceEmailTemplate> {
+  const row = await db.query.settings.findFirst()
+  return withDefaults({
+    subject: row?.invoiceEmailSubject ?? '',
+    body: row?.invoiceEmailBody ?? '',
+    button: row?.invoiceEmailButton ?? '',
+  })
+}
+
+/** Needs an existing settings row, which the business details form creates. */
+export async function saveInvoiceEmailTemplate(
+  db: Db,
+  template: InvoiceEmailTemplate,
+): Promise<boolean> {
+  const updated = await db
+    .update(settings)
+    .set({
+      invoiceEmailSubject: template.subject,
+      invoiceEmailBody: template.body,
+      invoiceEmailButton: template.button,
+    })
+    .where(eq(settings.id, 'main'))
+    .returning({ id: settings.id })
+  return updated.length > 0
 }

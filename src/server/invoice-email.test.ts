@@ -79,18 +79,31 @@ const invoiceRow = async () =>
   )[0]
 
 describe('buildInvoiceEmail', () => {
-  it('escapes HTML in the business name and keeps the link in both bodies', () => {
-    const email = buildInvoiceEmail({
-      businessName: '<b>Studio</b>',
-      number: 'INV-1',
-      total: 'LKR 110.00',
-      dueDate: '2026-03-24',
-      url: 'https://x.test/i/abc',
-    })
+  const input = {
+    businessName: '<b>Studio</b>',
+    number: 'INV-1',
+    total: 'LKR 110.00',
+    dueDate: '2026-03-24',
+    url: 'https://x.test/i/abc',
+  }
+
+  it('escapes HTML in the business name and keeps the link in both bodies', async () => {
+    const email = await buildInvoiceEmail(input)
     expect(email.html).not.toContain('<b>Studio</b>')
     expect(email.html).toContain('&lt;b&gt;Studio&lt;/b&gt;')
     expect(email.text).toContain('https://x.test/i/abc')
     expect(email.html).toContain('href="https://x.test/i/abc"')
+  })
+
+  it('fills placeholders in a custom template', async () => {
+    const email = await buildInvoiceEmail(input, {
+      subject: 'Pay {{total}} by {{dueDate}}',
+      body: 'Hello from {{number}}.\n\nThanks!',
+      button: 'Pay {{number}}',
+    })
+    expect(email.subject).toBe('Pay LKR 110.00 by 2026-03-24')
+    expect(email.html).toContain('Hello from INV-1.')
+    expect(email.html).toContain('Pay INV-1')
   })
 })
 

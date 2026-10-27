@@ -97,6 +97,9 @@ export const settings = sqliteTable(
     nextInvoiceNumber: integer('next_invoice_number').notNull().default(1),
     paymentInstructions: text('payment_instructions').notNull().default(''),
     logoKey: text('logo_key'),
+    invoiceEmailSubject: text('invoice_email_subject').notNull().default(''),
+    invoiceEmailBody: text('invoice_email_body').notNull().default(''),
+    invoiceEmailButton: text('invoice_email_button').notNull().default(''),
   },
   (t) => [
     check('settings_single_row', sql`${t.id} = 'main'`),

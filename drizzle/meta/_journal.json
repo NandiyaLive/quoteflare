@@ -43,6 +43,13 @@
       "when": 1793093727388,
       "tag": "0005_add_reply_to_email",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793095391845,
+      "tag": "0006_add_invoice_email_template",
+      "breakpoints": true
     }
   ]
 }

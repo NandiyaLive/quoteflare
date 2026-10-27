@@ -1,17 +1,21 @@
 import { createFileRoute } from '@tanstack/react-router'
 import PageHeader from '@/components/common/page-header'
-import { getSettings } from '#/server/settings-actions'
+import { getInvoiceEmailTemplate, getSettings } from '#/server/settings-actions'
+import { InvoiceEmailEditor } from './-components/invoice-email-editor'
 import { LogoUpload } from './-components/logo-upload'
 import { SettingsForm } from './-components/settings-form'
 
 export const Route = createFileRoute('/admin/settings/')({
   staticData: { breadcrumb: 'Settings' },
-  loader: () => getSettings(),
+  loader: async () => ({
+    settings: await getSettings(),
+    emailTemplate: await getInvoiceEmailTemplate(),
+  }),
   component: SettingsPage,
 })
 
 function SettingsPage() {
-  const settings = Route.useLoaderData()
+  const { settings, emailTemplate } = Route.useLoaderData()
   return (
     <>
       <PageHeader
@@ -23,6 +27,9 @@ function SettingsPage() {
           <SettingsForm initial={settings.values} />
         </div>
         <LogoUpload logoKey={settings.logoKey} />
+        <div className="xl:col-span-2">
+          <InvoiceEmailEditor initial={emailTemplate} />
+        </div>
       </div>
     </>
   )
