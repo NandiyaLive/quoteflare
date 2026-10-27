@@ -30,6 +30,7 @@ export type InvoiceItemRow = {
   description: string
   quantity: number
   unitPrice: number
+  taxable: boolean
 }
 
 export type InvoiceDetail = {
@@ -67,7 +68,7 @@ export type ChangeStatusResult =
 export type SaveInvoiceResult =
   { ok: true; id: string; number: string } | { ok: false; error: string }
 
-const batch = (db: Db, statements: BatchItem<'sqlite'>[]) =>
+export const batch = (db: Db, statements: BatchItem<'sqlite'>[]) =>
   db.batch(statements as [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]])
 
 export async function listInvoices(db: Db): Promise<InvoiceListRow[]> {
@@ -94,11 +95,15 @@ export async function listInvoices(db: Db): Promise<InvoiceListRow[]> {
         invoiceId: invoiceItems.invoiceId,
         quantity: invoiceItems.quantity,
         unitPrice: invoiceItems.unitPrice,
+        taxable: invoiceItems.taxable,
       })
       .from(invoiceItems),
   ])
 
-  const byInvoice = new Map<string, { quantity: number; unitPrice: number }[]>()
+  const byInvoice = new Map<
+    string,
+    { quantity: number; unitPrice: number; taxable: boolean }[]
+  >()
   for (const item of items) {
     const list = byInvoice.get(item.invoiceId) ?? []
     list.push(item)
@@ -137,6 +142,7 @@ export async function getInvoice(
         description: invoiceItems.description,
         quantity: invoiceItems.quantity,
         unitPrice: invoiceItems.unitPrice,
+        taxable: invoiceItems.taxable,
       })
       .from(invoiceItems)
       .where(eq(invoiceItems.invoiceId, id))
@@ -162,7 +168,7 @@ async function checkClient(db: Db, clientId: string, currentClientId?: string) {
   return null
 }
 
-const isDuplicateNumber = (error: unknown) =>
+export const isDuplicateNumber = (error: unknown) =>
   String((error as { cause?: unknown })?.cause ?? error).includes(
     'UNIQUE constraint failed: invoices.number',
   )
@@ -205,6 +211,7 @@ export async function createInvoice(
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           sortOrder: index,
+          taxable: item.taxable,
         }),
       ),
       db
@@ -268,7 +275,7 @@ export async function updateInvoice(
       db
         .insert(invoiceItems)
         .select(
-          sql`select ${createId()}, ${id}, ${item.description}, ${item.quantity}, ${item.unitPrice}, ${index} where ${stillDraft}`,
+          sql`select ${createId()}, ${id}, ${item.description}, ${item.quantity}, ${item.unitPrice}, ${index}, ${item.taxable ? 1 : 0} where ${stillDraft}`,
         ),
     ),
   ])
@@ -344,6 +351,7 @@ export async function getPublicInvoice(
         description: invoiceItems.description,
         quantity: invoiceItems.quantity,
         unitPrice: invoiceItems.unitPrice,
+        taxable: invoiceItems.taxable,
       })
       .from(invoiceItems)
       .where(eq(invoiceItems.invoiceId, invoice.id))

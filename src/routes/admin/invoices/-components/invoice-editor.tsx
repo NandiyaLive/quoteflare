@@ -18,6 +18,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -74,6 +75,7 @@ const initialValues = (
       description: item.description,
       quantity: String(item.quantity),
       unitPrice: minorToDecimal(item.unitPrice),
+      taxable: item.taxable,
     })),
   }
 }
@@ -393,6 +395,27 @@ export function InvoiceEditor({
                               <Trash2Icon />
                             </Button>
                           </Field>
+                          <form.Field name={`items[${index}].taxable`}>
+                            {(field) => (
+                              <Field
+                                orientation="horizontal"
+                                className="col-span-full"
+                              >
+                                <Checkbox
+                                  id={`invoice-item-${index}-taxable`}
+                                  checked={field.state.value ?? true}
+                                  onCheckedChange={(checked) =>
+                                    field.handleChange(checked)
+                                  }
+                                />
+                                <FieldLabel
+                                  htmlFor={`invoice-item-${index}-taxable`}
+                                >
+                                  Taxable
+                                </FieldLabel>
+                              </Field>
+                            )}
+                          </form.Field>
                         </div>
                       ))}
                       {listErrors.length > 0 && (
@@ -421,6 +444,7 @@ export function InvoiceEditor({
                               description: service.name,
                               quantity: String(service.minQuantity),
                               unitPrice: minorToDecimal(service.unitPrice),
+                              taxable: service.taxable,
                             })
                           }}
                         >

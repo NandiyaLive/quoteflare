@@ -257,6 +257,9 @@ export const invoices = sqliteTable(
     taxRateBps: integer('tax_rate_bps').notNull().default(0),
     discount: integer('discount').notNull().default(0),
     publicToken: text('public_token').unique(),
+    sourceQuoteId: text('source_quote_id')
+      .unique()
+      .references(() => quotes.id),
     sentAt: text('sent_at'),
     lastReminderAt: text('last_reminder_at'),
     createdAt: createdAt(),
@@ -281,6 +284,7 @@ export const invoiceItems = sqliteTable(
     quantity: integer('quantity').notNull(),
     unitPrice: integer('unit_price').notNull(),
     sortOrder: integer('sort_order').notNull().default(0),
+    taxable: integer('taxable', { mode: 'boolean' }).notNull().default(true),
   },
   (t) => [
     check('invoice_items_quantity_positive', sql`${t.quantity} >= 1`),

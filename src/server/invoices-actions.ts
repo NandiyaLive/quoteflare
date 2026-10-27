@@ -47,6 +47,7 @@ export const getInvoiceFormContext = createServerFn()
         name: s.name,
         unitPrice: s.unitPrice,
         minQuantity: s.minQuantity,
+        taxable: s.taxable,
       })),
       currency: settings?.currency ?? 'LKR',
       taxRateBps: settings?.taxRateBps ?? 0,

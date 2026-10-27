@@ -4,12 +4,15 @@ import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
 import {
   quoteFilterSchema,
+  quoteIdSchema,
   quoteRequestSchema,
   quoteStatusUpdateSchema,
 } from '#/lib/quotes'
 import { requireAdmin } from './admin-middleware'
 import {
+  convertQuoteToInvoice,
   getQuote,
+  getQuoteInvoice,
   listQuotes,
   setQuoteStatus,
   submitQuote,
@@ -47,7 +50,9 @@ export const getQuoteDetail = createServerFn()
   .middleware([requireAdmin])
   .handler(async ({ data }) => {
     const db = createDb(env.DB)
-    return (await getQuote(db, data)) ?? null
+    const quote = await getQuote(db, data)
+    if (!quote) return null
+    return { quote, invoice: (await getQuoteInvoice(db, data)) ?? null }
   })
 
 export const setQuoteStatusAction = createServerFn({ method: 'POST' })
@@ -56,3 +61,14 @@ export const setQuoteStatusAction = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => ({
     ok: await setQuoteStatus(createDb(env.DB), data.id, data.status),
   }))
+
+export const convertQuoteAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => quoteIdSchema.parse(input))
+  .middleware([requireAdmin])
+  .handler(({ data }) =>
+    convertQuoteToInvoice(
+      createDb(env.DB),
+      data.id,
+      new Date().toISOString().slice(0, 10),
+    ),
+  )

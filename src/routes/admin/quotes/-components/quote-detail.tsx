@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useRouter } from '@tanstack/react-router'
+import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import BackButton from '@/components/common/back-button'
 import PageHeader from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,10 @@ import { formatDate } from '@/lib/format'
 import { formatMinor } from '#/lib/decimal'
 import type { PricedLine } from '#/lib/pricing'
 import { BILLING_LABELS } from '#/lib/services'
-import { setQuoteStatusAction } from '#/server/quote-actions'
+import {
+  convertQuoteAction,
+  setQuoteStatusAction,
+} from '#/server/quote-actions'
 import type { QuoteRow } from '#/server/quotes'
 import { QuoteStatusBadge } from './quote-status-badge'
 
@@ -73,8 +76,15 @@ function LinesTable({
   )
 }
 
-export function QuoteDetail({ quote }: { quote: QuoteRow }) {
+export function QuoteDetail({
+  quote,
+  invoice,
+}: {
+  quote: QuoteRow
+  invoice: { id: string; number: string } | null
+}) {
   const router = useRouter()
+  const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { breakdown, currency } = quote
@@ -88,6 +98,24 @@ export function QuoteDetail({ quote }: { quote: QuoteRow }) {
       })
       if (!result.ok) setError('This quote can no longer be changed.')
       await router.invalidate()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const createInvoice = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      const result = await convertQuoteAction({ data: { id: quote.id } })
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      await navigate({
+        to: '/admin/invoices/$invoiceId',
+        params: { invoiceId: result.invoiceId },
+      })
     } finally {
       setBusy(false)
     }
@@ -111,14 +139,33 @@ export function QuoteDetail({ quote }: { quote: QuoteRow }) {
           </span>
         }
       >
-        {quote.status === 'new' && (
+        {invoice && (
           <Button
             variant="outline"
-            disabled={busy}
-            onClick={() => void change('dismissed')}
+            nativeButton={false}
+            render={
+              <Link
+                to="/admin/invoices/$invoiceId"
+                params={{ invoiceId: invoice.id }}
+              />
+            }
           >
-            Dismiss
+            View invoice {invoice.number}
           </Button>
+        )}
+        {!invoice && quote.status === 'new' && (
+          <>
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => void change('dismissed')}
+            >
+              Dismiss
+            </Button>
+            <Button disabled={busy} onClick={() => void createInvoice()}>
+              Create invoice
+            </Button>
+          </>
         )}
         {quote.status === 'dismissed' && (
           <Button

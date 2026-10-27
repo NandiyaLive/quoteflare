@@ -1,0 +1,1 @@
+ALTER TABLE `invoice_items` ADD `taxable` integer DEFAULT true NOT NULL;

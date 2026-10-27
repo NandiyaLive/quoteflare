@@ -22,6 +22,20 @@
       "when": 1793081657998,
       "tag": "0002_add_quote_details",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793089452122,
+      "tag": "0003_link_invoice_to_quote",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793089905353,
+      "tag": "0004_add_invoice_item_taxable",
+      "breakpoints": true
     }
   ]
 }

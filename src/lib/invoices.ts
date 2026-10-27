@@ -70,6 +70,7 @@ export const invoiceItemSchema = z.strictObject({
     .transform(Number)
     .refine((n) => n >= 1, 'Must be 1 or higher'),
   unitPrice: moneySchema(8, 'Unit price'),
+  taxable: z.boolean().default(true),
 })
 
 export const invoiceSchema = z
@@ -105,6 +106,7 @@ export const emptyInvoiceItem: InvoiceFormValues['items'][number] = {
   description: '',
   quantity: '1',
   unitPrice: '',
+  taxable: true,
 }
 
 export type InvoiceTotals = {
@@ -121,9 +123,9 @@ export const zeroTotals: InvoiceTotals = {
   total: 0,
 }
 
-type TotalsItem = { quantity: number; unitPrice: number }
+type TotalsItem = { quantity: number; unitPrice: number; taxable?: boolean }
 
-/** Prices invoice lines with the shared pricing function. Every line is a taxable, one-time, fixed-price line. */
+/** Prices invoice lines with the shared pricing function. Every line is a one-time, fixed-price line, taxable unless flagged otherwise. */
 export function computeInvoiceTotals(
   items: TotalsItem[],
   taxRateBps: number,
@@ -138,7 +140,7 @@ export function computeInvoiceTotals(
     minQuantity: 1,
     maxQuantity: null,
     quantityStep: 1,
-    taxable: true,
+    taxable: item.taxable ?? true,
     groups: [],
     options: [],
   }))
@@ -169,7 +171,13 @@ export function previewTotals(values: InvoiceFormValues): InvoiceTotals {
       item.unitPrice,
     )
     return quantity.success && unitPrice.success
-      ? [{ quantity: quantity.data, unitPrice: unitPrice.data }]
+      ? [
+          {
+            quantity: quantity.data,
+            unitPrice: unitPrice.data,
+            taxable: item.taxable ?? true,
+          },
+        ]
       : []
   })
   const taxRate = invoiceSchema.shape.taxRate.safeParse(values.taxRate)

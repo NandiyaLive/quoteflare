@@ -139,6 +139,34 @@ describe('invoice totals', () => {
     ).toMatchObject({ discountAmount: 1000, taxAmount: 0, total: 0 })
   })
 
+  it('leaves non-taxable lines out of the tax base', () => {
+    expect(
+      computeInvoiceTotals(
+        [
+          { quantity: 1, unitPrice: 10000, taxable: true },
+          { quantity: 1, unitPrice: 10000, taxable: false },
+        ],
+        1000,
+        0,
+      ),
+    ).toMatchObject({ subtotal: 20000, taxAmount: 1000, total: 21000 })
+    expect(
+      previewTotals(
+        form({
+          items: [
+            { description: 'A', quantity: '1', unitPrice: '100' },
+            {
+              description: 'B',
+              quantity: '1',
+              unitPrice: '100',
+              taxable: false,
+            },
+          ],
+        }),
+      ),
+    ).toMatchObject({ taxAmount: 1000, total: 21000 })
+  })
+
   it('previews a half-filled form without throwing', () => {
     expect(
       previewTotals(
@@ -250,6 +278,37 @@ describe('creating an invoice', () => {
       total: 49500,
     })
     expect(detail?.totals).toMatchObject({ subtotal: 48100, total: 49500 })
+  })
+})
+
+describe('taxable lines', () => {
+  const mixed = {
+    items: [
+      { description: 'Taxed', quantity: '1', unitPrice: '100' },
+      {
+        description: 'Exempt',
+        quantity: '1',
+        unitPrice: '100',
+        taxable: false,
+      },
+    ],
+  }
+
+  it('defaults to taxable and keeps the flag through create and edit', async () => {
+    expect(data().items.every((i) => i.taxable)).toBe(true)
+    const created = await createInvoice(db, data(mixed))
+    if (!created.ok) throw new Error(created.error)
+
+    let detail = await getInvoice(db, created.id)
+    expect(detail?.items.map((i) => i.taxable)).toEqual([true, false])
+    expect(detail?.totals).toMatchObject({ taxAmount: 1000, total: 21000 })
+
+    await updateInvoice(db, created.id, data(mixed))
+    detail = await getInvoice(db, created.id)
+    expect(detail?.items.map((i) => i.taxable)).toEqual([true, false])
+    expect(detail?.totals.total).toBe(21000)
+    const listed = (await listInvoices(db)).find((i) => i.id === created.id)
+    expect(listed?.total).toBe(21000)
   })
 })
 
