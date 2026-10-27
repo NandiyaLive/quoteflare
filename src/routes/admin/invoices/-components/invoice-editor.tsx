@@ -102,7 +102,7 @@ export function InvoiceEditor({
   const form = useForm({
     defaultValues: initialValues(context, invoice),
     validators: { onSubmit: invoiceSchema },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       setServerErrors({})
       const result = await saveInvoiceAction({ data: value })
       if (!result.ok) {
@@ -111,6 +111,7 @@ export function InvoiceEditor({
         return
       }
       if (invoice) {
+        formApi.reset(value)
         toast.success('Invoice saved.')
         await router.invalidate()
         return
