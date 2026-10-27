@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { clientSchema, emptyClient, type ClientFormValues } from '#/lib/clients'
 import { saveClientAction } from '#/server/clients-actions'
+import { toast } from 'sonner'
 
 export function ClientDialog({
   open,
@@ -58,11 +59,13 @@ function ClientForm({
       setServerErrors({})
       const result = await saveClientAction({ data: value })
       if (result.ok) {
+        toast.success('Client saved.')
         await router.invalidate()
         onDone()
         return
       }
       setServerErrors(result.errors)
+      if (result.errors.form) toast.error(result.errors.form)
     },
   })
 
@@ -130,11 +133,6 @@ function ClientForm({
         {text('address', 'Address', {}, true)}
         {text('notes', 'Notes', {}, true)}
       </FieldGroup>
-      {serverErrors.form && (
-        <p role="alert" className="text-sm text-destructive">
-          {serverErrors.form}
-        </p>
-      )}
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
           Cancel

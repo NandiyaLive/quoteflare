@@ -42,6 +42,7 @@ import {
 } from '#/lib/services'
 import type { CategoryRow, ServiceRow } from '#/server/services'
 import { saveServiceAction } from '#/server/services-actions'
+import { toast } from 'sonner'
 
 export type ServiceChoice = { id: string; name: string; active: boolean }
 
@@ -175,11 +176,13 @@ function ServiceForm({
       setServerErrors({})
       const result = await saveServiceAction({ data: value })
       if (result.ok) {
+        toast.success('Service saved.')
         await router.invalidate()
         onDone()
         return
       }
       setServerErrors(result.errors)
+      if (result.errors.form) toast.error(result.errors.form)
     },
   })
 
@@ -723,12 +726,6 @@ function ServiceForm({
               )
             }}
           </form.Field>
-        )}
-
-        {serverErrors.form && (
-          <p role="alert" className="text-sm text-destructive">
-            {serverErrors.form}
-          </p>
         )}
       </FieldGroup>
 

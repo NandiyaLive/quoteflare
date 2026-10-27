@@ -40,6 +40,7 @@ import {
 } from '#/server/invoices-actions'
 import { InvoiceStatusActions } from './invoice-status-actions'
 import { InvoiceTotalsList } from '@/components/common/invoice-totals-list'
+import { toast } from 'sonner'
 
 type Context = Awaited<ReturnType<typeof getInvoiceFormContext>>
 
@@ -83,7 +84,6 @@ export function InvoiceEditor({
 }) {
   const router = useRouter()
   const navigate = useNavigate()
-  const [saved, setSaved] = useState(false)
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({})
   const currency = invoice?.invoice.currency ?? context.currency
   const money = (minor: number) => formatMinor(minor, currency)
@@ -98,15 +98,15 @@ export function InvoiceEditor({
     defaultValues: initialValues(context, invoice),
     validators: { onSubmit: invoiceSchema },
     onSubmit: async ({ value }) => {
-      setSaved(false)
       setServerErrors({})
       const result = await saveInvoiceAction({ data: value })
       if (!result.ok) {
         setServerErrors(result.errors)
+        if (result.errors.form) toast.error(result.errors.form)
         return
       }
       if (invoice) {
-        setSaved(true)
+        toast.success('Invoice saved.')
         await router.invalidate()
         return
       }
@@ -192,17 +192,6 @@ export function InvoiceEditor({
           )}
         </form.Subscribe>
       </PageHeader>
-
-      {serverErrors.form && (
-        <p role="alert" className="text-sm text-destructive">
-          {serverErrors.form}
-        </p>
-      )}
-      {saved && (
-        <p role="status" className="text-sm text-muted-foreground">
-          Invoice saved.
-        </p>
-      )}
 
       <div className="grid items-start gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">

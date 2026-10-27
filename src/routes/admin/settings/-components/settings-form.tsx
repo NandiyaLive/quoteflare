@@ -35,27 +35,29 @@ import {
   type SettingsFormValues,
 } from '#/lib/settings'
 import { updateSettings } from '#/server/settings-actions'
+import { toast } from 'sonner'
 
 type FieldName = Exclude<keyof SettingsFormValues, 'sendReminders'>
 
 export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
   const router = useRouter()
-  const [saved, setSaved] = useState(false)
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({})
 
   const form = useForm({
     defaultValues: initial,
     validators: { onSubmit: settingsSchema },
     onSubmit: async ({ value }) => {
-      setSaved(false)
       setServerErrors({})
       const result = await updateSettings({ data: value })
       if (result.ok) {
-        setSaved(true)
+        toast.success('Settings saved.')
         await router.invalidate()
         return
       }
       setServerErrors(result.errors)
+      toast.error(
+        result.errors.form ?? 'Fix the highlighted fields and try again.',
+      )
     },
   })
 
@@ -306,11 +308,6 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
               </Button>
             )}
           </form.Subscribe>
-          {saved && (
-            <p role="status" className="text-sm text-muted-foreground">
-              Settings saved.
-            </p>
-          )}
         </CardFooter>
       </form>
     </Card>

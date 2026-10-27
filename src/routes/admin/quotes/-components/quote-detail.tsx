@@ -24,6 +24,7 @@ import {
 } from '#/server/quote-actions'
 import type { QuoteRow } from '#/server/quotes'
 import { QuoteStatusBadge } from './quote-status-badge'
+import { toast } from 'sonner'
 
 function LinesTable({
   lines,
@@ -87,7 +88,6 @@ export function QuoteDetail({
   const router = useRouter()
   const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const { breakdown, currency } = quote
 
   const { confirm, dialog } = useConfirm()
@@ -103,12 +103,13 @@ export function QuoteDetail({
     )
       return
     setBusy(true)
-    setError(null)
     try {
       const result = await setQuoteStatusAction({
         data: { id: quote.id, status },
       })
-      if (!result.ok) setError('This quote can no longer be changed.')
+      if (result.ok)
+        toast.success(status === 'new' ? 'Quote reopened.' : 'Quote dismissed.')
+      else toast.error('This quote can no longer be changed.')
       await router.invalidate()
     } finally {
       setBusy(false)
@@ -117,11 +118,10 @@ export function QuoteDetail({
 
   const createInvoice = async () => {
     setBusy(true)
-    setError(null)
     try {
       const result = await convertQuoteAction({ data: { id: quote.id } })
       if (!result.ok) {
-        setError(result.error)
+        toast.error(result.error)
         return
       }
       await navigate({
@@ -189,11 +189,6 @@ export function QuoteDetail({
           </Button>
         )}
       </PageHeader>
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
       <div className="grid items-start gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>

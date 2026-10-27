@@ -31,6 +31,7 @@ import {
 } from '#/server/services-actions'
 import { CategoriesDialog } from './categories-dialog'
 import { ServiceDialog, type ServiceChoice } from './service-dialog'
+import { toast } from 'sonner'
 
 export function ServicesManager({
   services,
@@ -47,16 +48,14 @@ export function ServicesManager({
   const [editing, setEditing] = useState<ServiceRow | 'new' | null>(null)
   const [editingCategories, setEditingCategories] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const run = async (
     action: () => Promise<{ ok: boolean; error?: string }>,
   ) => {
     setBusy(true)
-    setError(null)
     try {
       const result = await action()
-      if (!result.ok) setError(result.error ?? 'Something went wrong.')
+      if (!result.ok) toast.error(result.error ?? 'Something went wrong.')
       await router.invalidate()
     } finally {
       setBusy(false)
@@ -306,12 +305,6 @@ export function ServicesManager({
           New service
         </Button>
       </PageHeader>
-
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
 
       <DataTable table={table}>
         <DataTableToolbar table={table} />

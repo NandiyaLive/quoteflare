@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { CheckCircle2Icon } from 'lucide-react'
+import { toast } from 'sonner'
 import { Turnstile } from '@/components/common/turnstile'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -28,7 +29,6 @@ export function QuoteForm({ turnstileSiteKey }: { turnstileSiteKey: string }) {
   const { catalog, state, evaluation } = useCalculator()
   const [token, setToken] = useState('')
   const [widgetKey, setWidgetKey] = useState(0)
-  const [formError, setFormError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
 
   const selections = catalog.services.flatMap((service) => {
@@ -48,19 +48,19 @@ export function QuoteForm({ turnstileSiteKey }: { turnstileSiteKey: string }) {
     defaultValues: { name: '', email: '', message: '' },
     validators: { onSubmit: quoteDetailsSchema },
     onSubmit: async ({ value }) => {
-      setFormError(null)
       if (!token) {
-        setFormError('Complete the spam check.')
+        toast.error('Complete the spam check.')
         return
       }
       const result = await submitQuoteAction({
         data: { ...value, turnstileToken: token, selections },
       })
       if (result.ok) {
+        toast.success('Quote request sent.')
         setSent(true)
         return
       }
-      setFormError(result.error)
+      toast.error(result.error)
       setToken('')
       setWidgetKey((key) => key + 1)
     },
@@ -179,11 +179,6 @@ export function QuoteForm({ turnstileSiteKey }: { turnstileSiteKey: string }) {
                   Quote requests are unavailable right now.
                 </AlertDescription>
               </Alert>
-            )}
-            {formError && (
-              <FieldError role="alert" data-testid="quote-error">
-                {formError}
-              </FieldError>
             )}
           </FieldGroup>
         </CardContent>

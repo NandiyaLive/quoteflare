@@ -29,6 +29,7 @@ import {
   previewInvoiceEmail,
   updateInvoiceEmailTemplate,
 } from '#/server/settings-actions'
+import { toast } from 'sonner'
 
 export function InvoiceEmailEditor({
   initial,
@@ -36,7 +37,6 @@ export function InvoiceEmailEditor({
   initial: InvoiceEmailTemplate
 }) {
   const router = useRouter()
-  const [saved, setSaved] = useState(false)
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({})
   const [preview, setPreview] = useState<{
     subject: string
@@ -47,15 +47,17 @@ export function InvoiceEmailEditor({
     defaultValues: initial,
     validators: { onSubmit: invoiceEmailTemplateSchema },
     onSubmit: async ({ value }) => {
-      setSaved(false)
       setServerErrors({})
       const result = await updateInvoiceEmailTemplate({ data: value })
       if (result.ok) {
-        setSaved(true)
+        toast.success('Template saved.')
         await router.invalidate()
         return
       }
       setServerErrors(result.errors)
+      toast.error(
+        result.errors.form ?? 'Fix the highlighted fields and try again.',
+      )
     },
   })
 
@@ -159,11 +161,6 @@ export function InvoiceEmailEditor({
                 />
               </Field>
             )}
-            {serverErrors.form && (
-              <p role="alert" className="text-sm text-destructive">
-                {serverErrors.form}
-              </p>
-            )}
           </FieldGroup>
         </CardContent>
         <CardFooter className="gap-3">
@@ -181,11 +178,6 @@ export function InvoiceEmailEditor({
           >
             Reset to default
           </Button>
-          {saved && (
-            <p role="status" className="text-sm text-muted-foreground">
-              Template saved.
-            </p>
-          )}
         </CardFooter>
       </form>
     </Card>

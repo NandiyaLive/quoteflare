@@ -41,6 +41,7 @@ import {
   getRecurringFormContext,
   saveScheduleAction,
 } from '#/server/recurring-actions'
+import { toast } from 'sonner'
 
 type Context = Awaited<ReturnType<typeof getRecurringFormContext>>
 
@@ -53,7 +54,6 @@ export function RecurringEditor({
 }) {
   const router = useRouter()
   const navigate = useNavigate()
-  const [saved, setSaved] = useState(false)
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({})
 
   const form = useForm({
@@ -66,15 +66,15 @@ export function RecurringEditor({
     },
     validators: { onSubmit: recurringSchema },
     onSubmit: async ({ value }) => {
-      setSaved(false)
       setServerErrors({})
       const result = await saveScheduleAction({ data: value })
       if (!result.ok) {
         setServerErrors(result.errors)
+        if (result.errors.form) toast.error(result.errors.form)
         return
       }
       if (schedule) {
-        setSaved(true)
+        toast.success('Schedule saved.')
         await router.invalidate()
         return
       }
@@ -116,17 +116,6 @@ export function RecurringEditor({
           )}
         </form.Subscribe>
       </PageHeader>
-
-      {serverErrors.form && (
-        <p role="alert" className="text-sm text-destructive">
-          {serverErrors.form}
-        </p>
-      )}
-      {saved && (
-        <p role="status" className="text-sm text-muted-foreground">
-          Schedule saved.
-        </p>
-      )}
 
       <Card>
         <CardHeader>

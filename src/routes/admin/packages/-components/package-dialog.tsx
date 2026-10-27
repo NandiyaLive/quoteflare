@@ -30,6 +30,7 @@ import {
 } from '#/lib/packages'
 import type { PackageRow } from '#/server/packages'
 import { savePackageAction } from '#/server/packages-actions'
+import { toast } from 'sonner'
 
 export type ServiceChoice = {
   id: string
@@ -101,11 +102,13 @@ function PackageForm({
       setServerErrors({})
       const result = await savePackageAction({ data: value })
       if (result.ok) {
+        toast.success('Package saved.')
         await router.invalidate()
         onDone()
         return
       }
       setServerErrors(result.errors)
+      if (result.errors.form) toast.error(result.errors.form)
     },
   })
 
@@ -332,12 +335,6 @@ function PackageForm({
           )
         }}
       </form.Field>
-
-      {serverErrors.form && (
-        <p role="alert" className="text-sm text-destructive">
-          {serverErrors.form}
-        </p>
-      )}
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>

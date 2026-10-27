@@ -21,6 +21,7 @@ import {
 } from '#/lib/services'
 import type { CategoryRow } from '#/server/services'
 import { saveCategoriesAction } from '#/server/services-actions'
+import { toast } from 'sonner'
 
 export function CategoriesDialog({
   open,
@@ -64,11 +65,13 @@ function CategoriesForm({
       setServerErrors({})
       const result = await saveCategoriesAction({ data: value })
       if (result.ok) {
+        toast.success('Categories saved.')
         await router.invalidate()
         onDone()
         return
       }
       setServerErrors(result.errors)
+      if (result.errors.form) toast.error(result.errors.form)
     },
   })
 
@@ -167,12 +170,6 @@ function CategoriesForm({
           </FieldGroup>
         )}
       </form.Field>
-
-      {serverErrors.form && (
-        <p role="alert" className="text-sm text-destructive">
-          {serverErrors.form}
-        </p>
-      )}
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>

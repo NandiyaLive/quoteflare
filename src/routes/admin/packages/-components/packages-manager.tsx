@@ -20,6 +20,7 @@ import {
   setPackageActiveAction,
 } from '#/server/packages-actions'
 import { PackageDialog, type ServiceChoice } from './package-dialog'
+import { toast } from 'sonner'
 
 export function PackagesManager({
   packages,
@@ -31,7 +32,6 @@ export function PackagesManager({
   const router = useRouter()
   const [editing, setEditing] = useState<PackageRow | 'new' | null>(null)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const { confirm, dialog } = useConfirm()
 
@@ -39,10 +39,9 @@ export function PackagesManager({
     action: () => Promise<{ ok: boolean; error?: string }>,
   ) => {
     setBusy(true)
-    setError(null)
     try {
       const result = await action()
-      if (!result.ok) setError(result.error ?? 'Something went wrong.')
+      if (!result.ok) toast.error(result.error ?? 'Something went wrong.')
       await router.invalidate()
     } finally {
       setBusy(false)
@@ -83,12 +82,6 @@ export function PackagesManager({
           New package
         </Button>
       </PageHeader>
-
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
 
       {packages.length === 0 ? (
         <p className="text-muted-foreground">

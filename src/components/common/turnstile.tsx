@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 
 type TurnstileApi = {
   render: (
@@ -54,7 +55,6 @@ export function Turnstile({
 }) {
   const container = useRef<HTMLDivElement>(null)
   const onTokenRef = useRef(onToken)
-  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     onTokenRef.current = onToken
@@ -66,7 +66,6 @@ export function Turnstile({
     void loadTurnstile()
       .then((api) => {
         if (cancelled || !container.current) return
-        setFailed(false)
         widgetId = api.render(container.current, {
           sitekey: siteKey,
           callback: (token) => onTokenRef.current(token),
@@ -76,7 +75,9 @@ export function Turnstile({
       })
       .catch(() => {
         if (cancelled) return
-        setFailed(true)
+        toast.error(
+          'The spam check could not load. Reload the page and try again.',
+        )
         onTokenRef.current('')
       })
     return () => {
@@ -85,14 +86,5 @@ export function Turnstile({
     }
   }, [siteKey, resetKey])
 
-  return (
-    <>
-      <div ref={container} data-testid="turnstile" />
-      {failed && (
-        <p role="alert" className="text-sm text-destructive">
-          The spam check could not load. Reload the page and try again.
-        </p>
-      )}
-    </>
-  )
+  return <div ref={container} data-testid="turnstile" />
 }
