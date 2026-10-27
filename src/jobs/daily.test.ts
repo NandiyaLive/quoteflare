@@ -30,6 +30,13 @@ beforeEach(async () => {
 
 const now = new Date('2026-06-15T03:30:00Z')
 
+const env = () => ({
+  DB: d1,
+  RESEND_API_KEY: 're_test',
+  EMAIL_FROM: 'Invoices <invoices@example.test>',
+  APP_ORIGIN: 'https://invoices.example.test',
+})
+
 const addInvoice = async (
   number: string,
   status: (typeof schema.invoices.$inferInsert)['status'],
@@ -62,7 +69,7 @@ describe('runDailyJobs', () => {
     const late = await addInvoice('A-1', 'sent', '2026-06-14')
     const upcoming = await addInvoice('A-2', 'sent', '2026-06-16')
 
-    const result = await runDailyJobs({ DB: d1 }, now)
+    const result = await runDailyJobs(env(), now)
 
     expect(result.markedOverdue).toBe(1)
     expect(await statusOf(late)).toBe('overdue')
@@ -71,7 +78,7 @@ describe('runDailyJobs', () => {
 
   it('leaves invoices due today untouched', async () => {
     const dueToday = await addInvoice('A-1', 'sent', '2026-06-15')
-    await runDailyJobs({ DB: d1 }, now)
+    await runDailyJobs(env(), now)
     expect(await statusOf(dueToday)).toBe('sent')
   })
 
@@ -81,7 +88,7 @@ describe('runDailyJobs', () => {
       await addInvoice('A-2', 'paid', '2026-06-01'),
       await addInvoice('A-3', 'void', '2026-06-01'),
     ]
-    const result = await runDailyJobs({ DB: d1 }, now)
+    const result = await runDailyJobs(env(), now)
     expect(result.markedOverdue).toBe(0)
     expect(await Promise.all(ids.map(statusOf))).toEqual([
       'draft',
@@ -92,7 +99,7 @@ describe('runDailyJobs', () => {
 
   it('changes nothing on a second run', async () => {
     await addInvoice('A-1', 'sent', '2026-06-14')
-    expect((await runDailyJobs({ DB: d1 }, now)).markedOverdue).toBe(1)
-    expect((await runDailyJobs({ DB: d1 }, now)).markedOverdue).toBe(0)
+    expect((await runDailyJobs(env(), now)).markedOverdue).toBe(1)
+    expect((await runDailyJobs(env(), now)).markedOverdue).toBe(0)
   })
 })

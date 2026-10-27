@@ -143,8 +143,8 @@ export function AdminSidebar({ email }: { email: string }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 className="min-w-56"
-                side={isMobile ? 'bottom' : 'right'}
-                align="end"
+                side={isMobile ? 'bottom' : 'top'}
+                align="center"
               >
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>{email}</DropdownMenuLabel>

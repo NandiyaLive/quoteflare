@@ -39,6 +39,7 @@ const input = {
   invoicePrefix: 'ACM',
   nextInvoiceNumber: '5',
   paymentInstructions: 'IBAN 123',
+  sendReminders: false,
 }
 
 beforeEach(async () => {
@@ -70,6 +71,24 @@ describe('settings persistence', () => {
       nextInvoiceNumber: 5,
     })
     expect((await loadSettings(db)).values.taxRate).toBe('10')
+  })
+})
+
+describe('reminder toggle', () => {
+  it('defaults to off and persists when switched on', async () => {
+    await saveSettings(db, settingsSchema.parse(input))
+    expect((await loadSettings(db)).values.sendReminders).toBe(false)
+    await saveSettings(
+      db,
+      settingsSchema.parse({ ...input, sendReminders: true }),
+    )
+    expect((await loadSettings(db)).values.sendReminders).toBe(true)
+  })
+
+  it('rejects a non-boolean value', () => {
+    expect(
+      settingsSchema.safeParse({ ...input, sendReminders: 'yes' }).success,
+    ).toBe(false)
   })
 })
 

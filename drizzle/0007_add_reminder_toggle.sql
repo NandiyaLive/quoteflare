@@ -1,0 +1,1 @@
+ALTER TABLE `settings` ADD `send_reminders` integer DEFAULT false NOT NULL;

@@ -100,6 +100,9 @@ export const settings = sqliteTable(
     invoiceEmailSubject: text('invoice_email_subject').notNull().default(''),
     invoiceEmailBody: text('invoice_email_body').notNull().default(''),
     invoiceEmailButton: text('invoice_email_button').notNull().default(''),
+    sendReminders: integer('send_reminders', { mode: 'boolean' })
+      .notNull()
+      .default(false),
   },
   (t) => [
     check('settings_single_row', sql`${t.id} = 'main'`),

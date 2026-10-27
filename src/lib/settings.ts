@@ -74,6 +74,7 @@ export const settingsSchema = z.strictObject({
     .string()
     .trim()
     .max(2000, 'Payment instructions must be 2000 characters or fewer'),
+  sendReminders: z.boolean(),
 })
 
 export type SettingsFormValues = z.input<typeof settingsSchema>

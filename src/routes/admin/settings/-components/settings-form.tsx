@@ -17,6 +17,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -33,7 +34,7 @@ import {
 } from '#/lib/settings'
 import { updateSettings } from '#/server/settings-actions'
 
-type FieldName = keyof SettingsFormValues
+type FieldName = Exclude<keyof SettingsFormValues, 'sendReminders'>
 
 export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
   const router = useRouter()
@@ -205,6 +206,29 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                   </Field>
                 )
               }}
+            </form.Field>
+            <form.Field name="sendReminders">
+              {(field) => (
+                <Field orientation="horizontal" className="md:col-span-2">
+                  <Checkbox
+                    id="sendReminders"
+                    name="sendReminders"
+                    checked={field.state.value}
+                    onCheckedChange={(checked) =>
+                      field.handleChange(checked === true)
+                    }
+                  />
+                  <div className="flex flex-col gap-1">
+                    <FieldLabel htmlFor="sendReminders">
+                      Send automatic reminders
+                    </FieldLabel>
+                    <FieldDescription>
+                      Emails the client 3 days before the due date and 3 and 10
+                      days after it, once each.
+                    </FieldDescription>
+                  </div>
+                </Field>
+              )}
             </form.Field>
           </FieldGroup>
         </CardContent>

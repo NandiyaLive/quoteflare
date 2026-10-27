@@ -11,3 +11,7 @@ TURNSTILE_SECRET=1x0000000000000000000000000000000AA
 # Production uses `wrangler secret put RESEND_API_KEY`. EMAIL_FROM is a var in
 # wrangler.toml and must use a domain verified in Resend.
 RESEND_API_KEY=
+
+# Origin used for invoice links in emails sent by scheduled jobs, which have no
+# request to read it from. Production sets it as a var in wrangler.toml.
+APP_ORIGIN=http://localhost:3000

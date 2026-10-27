@@ -11,9 +11,10 @@ const valid = {
   invoicePrefix: 'INV',
   nextInvoiceNumber: '12',
   paymentInstructions: 'Pay by bank transfer.',
+  sendReminders: false,
 }
 
-const issuesFor = (patch: Record<string, string>) => {
+const issuesFor = (patch: Record<string, unknown>) => {
   const result = settingsSchema.safeParse({ ...valid, ...patch })
   return result.success ? [] : result.error.issues.map((i) => i.path[0])
 }

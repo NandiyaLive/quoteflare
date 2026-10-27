@@ -121,6 +121,18 @@ The Send to client button on an invoice emails the client a link to `/i/<token>`
 
 Each send writes an `email_log` row with status `pending` before the request, then `sent` with the Resend message ID or `failed` with the error text. The log row ID is also the idempotency key, so a retried request cannot deliver twice.
 
+### Automatic reminders
+
+The daily job (03:30 UTC) emails clients about unpaid invoices when "Send automatic reminders" is on in settings. It is off by default. The rules:
+
+- `due_soon`: a `sent` invoice due within the next 3 days.
+- `overdue_3`: an `overdue` invoice 3 to 9 days past due.
+- `overdue_10`: an `overdue` invoice 10 or more days past due.
+
+Each invoice gets each type once. A log row of that type that is not `failed` blocks a repeat, so a failed send is retried the next day but a `pending` row left by an interrupted run is not. A run sends at most 40 emails, oldest due date first, and the next run picks up the rest. Sending a reminder sets `invoices.last_reminder_at`.
+
+Links in these emails use `APP_ORIGIN` (a var in `wrangler.toml`, and in `.dev.vars` locally), because a cron run has no request to read the origin from.
+
 ## IDs
 
 Every database ID is a CUID (CUID2, 24 characters) created with `createId` from `src/lib/id.ts`. ESLint rejects `crypto.randomUUID`. The only fixed ID is `main`, the key of the single settings row.

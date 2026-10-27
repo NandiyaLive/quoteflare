@@ -1,8 +1,15 @@
 import { and, eq, lt } from 'drizzle-orm'
 import { createDb, schema, type Db } from '#/db'
+import { sendDueReminders } from './reminders'
+
+export type DailyEnv = Pick<Env, 'DB' | 'RESEND_API_KEY' | 'EMAIL_FROM'> & {
+  APP_ORIGIN: string
+}
 
 export interface DailyJobResult {
   markedOverdue: number
+  remindersSent: number
+  remindersFailed: number
 }
 
 export async function markOverdueInvoices(
@@ -23,8 +30,9 @@ export async function markOverdueInvoices(
 }
 
 export async function runDailyJobs(
-  env: Pick<Env, 'DB'>,
+  env: DailyEnv,
   now: Date = new Date(),
+  fetcher?: typeof fetch,
 ): Promise<DailyJobResult> {
   const db = createDb(env.DB)
   const today = now.toISOString().slice(0, 10)
@@ -32,5 +40,23 @@ export async function runDailyJobs(
   const markedOverdue = await markOverdueInvoices(db, today)
   console.log(`daily: marked ${markedOverdue} invoices overdue`)
 
-  return { markedOverdue }
+  const reminders = await sendDueReminders(
+    db,
+    {
+      apiKey: env.RESEND_API_KEY,
+      from: env.EMAIL_FROM,
+      origin: env.APP_ORIGIN,
+      fetcher,
+    },
+    now,
+  )
+  console.log(
+    `daily: sent ${reminders.sent} reminders, ${reminders.failed} failed`,
+  )
+
+  return {
+    markedOverdue,
+    remindersSent: reminders.sent,
+    remindersFailed: reminders.failed,
+  }
 }
