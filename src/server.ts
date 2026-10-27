@@ -1,8 +1,15 @@
 import handler from '@tanstack/react-start/server-entry'
+import { createApi } from '#/api/app'
 import { runDailyJobs } from '#/jobs/daily'
 
+const api = createApi()
+
 export default {
-  fetch(request) {
+  fetch(request, env, ctx) {
+    const { pathname } = new URL(request.url)
+    if (pathname === '/api' || pathname.startsWith('/api/')) {
+      return api.fetch(request, env, ctx)
+    }
     return handler.fetch(request)
   },
 

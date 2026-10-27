@@ -15,3 +15,10 @@ RESEND_API_KEY=
 # Origin used for invoice links in emails sent by scheduled jobs, which have no
 # request to read it from. Production sets it as a var in wrangler.toml.
 APP_ORIGIN=http://localhost:3000
+
+# Comma separated origins allowed to call /api/public/* from a browser.
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Signing secret of the Resend webhook for /api/webhooks/resend. Production
+# uses `wrangler secret put RESEND_WEBHOOK_SECRET`. Any whsec_ value works locally.
+RESEND_WEBHOOK_SECRET=whsec_bG9jYWwtd2ViaG9vay1zZWNyZXQtZm9yLXRlc3Rz

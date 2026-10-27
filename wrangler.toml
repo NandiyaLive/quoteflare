@@ -34,6 +34,7 @@ ACCESS_TEAM_DOMAIN = "neranjana.cloudflareaccess.com"
 TURNSTILE_SITE_KEY = "0x4AAAAAAFLs7TZo8Q7quaZ0"
 EMAIL_FROM = "Invoices <invoices@neranjana.me>"
 APP_ORIGIN = "https://invoices.neranjana.me"
+ALLOWED_ORIGINS = "https://invoices.neranjana.me"
 
 [[d1_databases]]
 binding = "DB"

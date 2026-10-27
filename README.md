@@ -141,6 +141,22 @@ The invoice, its lines, the invoice number and the new run date are written in o
 
 With auto send on, the invoice is emailed through the same function as the "Send to client" action, which marks it `sent` and writes an `email_log` row. If that send fails, the invoice stays a draft and the schedule still advances. Paused schedules and schedules whose client is archived are skipped. A run handles at most 5 schedules to stay within the free plan's subrequest limit, and the rest are picked up the next day.
 
+## HTTP API
+
+`src/server.ts` sends every path under `/api/` to a Hono app (`src/api/app.ts`). All other paths go to the TanStack Start app. Unknown `/api/` paths return a JSON 404 and unexpected errors return a generic JSON 500.
+
+- `POST /api/webhooks/resend` updates `email_log.status` to `delivered`, `bounced` or `complained` for the row whose `provider_id` matches the event's `email_id`. The request must carry valid `svix-id`, `svix-timestamp` and `svix-signature` headers, signed with `RESEND_WEBHOOK_SECRET` and at most 5 minutes old, or it gets a 401 and nothing changes. A `delivered` event only replaces `sent`, so it cannot hide a bounce or complaint. Other event types and unknown email IDs get a 200 and change nothing.
+- `GET /api/public/services` returns the same active catalog the calculator uses.
+- `POST /api/public/quote` takes the calculator's request (`name`, `email`, optional `message`, `turnstileToken`, `selections`), verifies Turnstile, recomputes the total from current prices and stores the quote. It returns 201 with `{ ok: true, id }`, or 400 with `{ ok: false, error }`.
+
+Browsers may call `/api/public/*` from the origins in `ALLOWED_ORIGINS`, a comma separated var in `wrangler.toml`. Other origins get no CORS headers. The webhook has no CORS headers.
+
+Setup for the webhook:
+
+- Add a webhook in the Resend dashboard that points at `https://<your domain>/api/webhooks/resend` and subscribes to `email.delivered`, `email.bounced` and `email.complained`.
+- Copy its signing secret (starts with `whsec_`) and store it with `bunx wrangler secret put RESEND_WEBHOOK_SECRET`. Locally put it in `.dev.vars`.
+- `/api/*` is not behind Cloudflare Access, so keep it off any Access policy that covers the whole domain.
+
 ## IDs
 
 Every database ID is a CUID (CUID2, 24 characters) created with `createId` from `src/lib/id.ts`. ESLint rejects `crypto.randomUUID`. The only fixed ID is `main`, the key of the single settings row.
