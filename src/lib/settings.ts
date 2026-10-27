@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { percentToBps } from './decimal'
 
 export const CURRENCIES = [
   'USD',
@@ -22,13 +23,6 @@ export const LOGO_TYPES = {
 } as const
 
 export const LOGO_ACCEPT = Object.keys(LOGO_TYPES).join(',')
-
-const percentToBps = (value: string) => {
-  const [whole, fraction = ''] = value.split('.')
-  return Number(whole) * 100 + Number(fraction.padEnd(2, '0'))
-}
-
-export const bpsToPercent = (bps: number) => String(bps / 100)
 
 export const settingsSchema = z.strictObject({
   businessName: z

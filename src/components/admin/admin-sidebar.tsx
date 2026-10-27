@@ -3,6 +3,7 @@ import {
   ChevronsUpDownIcon,
   FileTextIcon,
   LayoutDashboardIcon,
+  PackageIcon,
   SettingsIcon,
   type LucideIcon,
 } from 'lucide-react'
@@ -33,7 +34,7 @@ import {
 
 type NavItem = {
   title: string
-  to: '/admin' | '/admin/settings'
+  to: '/admin' | '/admin/services' | '/admin/settings'
   icon: LucideIcon
   exact?: boolean
 }
@@ -52,7 +53,10 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   },
   {
     label: 'Configure',
-    items: [{ title: 'Settings', to: '/admin/settings', icon: SettingsIcon }],
+    items: [
+      { title: 'Services', to: '/admin/services', icon: PackageIcon },
+      { title: 'Settings', to: '/admin/settings', icon: SettingsIcon },
+    ],
   },
 ]
 

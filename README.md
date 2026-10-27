@@ -82,3 +82,31 @@ Business details are edited at `/admin/settings`. The logo is stored in the R2 b
 ```bash
 bunx wrangler r2 bucket create quotekit-files
 ```
+
+## Services
+
+Services are managed at `/admin/services`. Prices are entered as decimals (`49.99`) and stored in cents. Percentage option values are stored in basis points. Services and options are never deleted. Archiving a service sets `active` to false, and removing an option in the editor archives it, so older quotes and invoices keep their references. The list shows active services by default, and the filter also offers archived and all. The order set with the arrow buttons is stored in `sort_order`.
+
+A service has these settings:
+
+- A category. Categories are managed from the Categories button and can only be removed when empty.
+- A pricing mode. `fixed` services use the unit price. `custom` services treat it as a default and take the real price per quote.
+- Billing: one time, weekly, monthly, quarterly or yearly.
+- Quantity rules (minimum, maximum, step), a taxable flag, estimated days and a short note.
+- Option groups. An option can sit in a group where the client chooses one or any, and a group can be required. Options outside a group are independent add-ons.
+- Required services. A service can depend on others. Self references and loops are rejected.
+
+### Importing services
+
+Load services from a JSON file into the local database with:
+
+```bash
+bun run services:import scripts/services.example.json --dry-run   # validate only
+bun run services:import scripts/services.example.json
+```
+
+The file format is shown in `scripts/services.example.json`. Categories, option groups and required services are referenced by name. A service whose name already exists is skipped, so the command is safe to run twice. The script uses the same validation and save code as the admin page. It only writes to the local database. Create services in production through `/admin/services`.
+
+## IDs
+
+Every database ID is a CUID (CUID2, 24 characters) created with `createId` from `src/lib/id.ts`. ESLint rejects `crypto.randomUUID`. The only fixed ID is `main`, the key of the single settings row.

@@ -14,6 +14,7 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as SiteAboutIndexRouteImport } from './routes/_site/about/index'
+import { Route as AdminServicesIndexRouteImport } from './routes/admin/services/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as FilesLogoIndexRouteImport } from './routes/files/logo/index'
 
@@ -41,6 +42,11 @@ const SiteAboutIndexRoute = SiteAboutIndexRouteImport.update({
   path: '/about/',
   getParentRoute: () => SiteRouteRoute,
 } as any)
+const AdminServicesIndexRoute = AdminServicesIndexRouteImport.update({
+  id: '/services/',
+  path: '/services/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminSettingsIndexRoute = AdminSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/about/': typeof SiteAboutIndexRoute
+  '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
 }
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/': typeof SiteIndexRoute
   '/admin': typeof AdminIndexRoute
   '/about': typeof SiteAboutIndexRoute
+  '/admin/services': typeof AdminServicesIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/files/logo': typeof FilesLogoIndexRoute
 }
@@ -74,15 +82,28 @@ export interface FileRoutesById {
   '/_site/': typeof SiteIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/_site/about/': typeof SiteAboutIndexRoute
+  '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/admin' | '/admin/' | '/about/' | '/admin/settings/' | '/files/logo/'
+    | '/'
+    | '/admin'
+    | '/admin/'
+    | '/about/'
+    | '/admin/services/'
+    | '/admin/settings/'
+    | '/files/logo/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/about' | '/admin/settings' | '/files/logo'
+  to:
+    | '/'
+    | '/admin'
+    | '/about'
+    | '/admin/services'
+    | '/admin/settings'
+    | '/files/logo'
   id:
     | '__root__'
     | '/_site'
@@ -90,6 +111,7 @@ export interface FileRouteTypes {
     | '/_site/'
     | '/admin/'
     | '/_site/about/'
+    | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
   fileRoutesById: FileRoutesById
@@ -137,6 +159,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteAboutIndexRouteImport
       parentRoute: typeof SiteRouteRoute
     }
+    '/admin/services/': {
+      id: '/admin/services/'
+      path: '/services'
+      fullPath: '/admin/services/'
+      preLoaderRoute: typeof AdminServicesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/settings/': {
       id: '/admin/settings/'
       path: '/settings'
@@ -170,11 +199,13 @@ const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
 
 interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminServicesIndexRoute: typeof AdminServicesIndexRoute
   AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminServicesIndexRoute: AdminServicesIndexRoute,
   AdminSettingsIndexRoute: AdminSettingsIndexRoute,
 }
 

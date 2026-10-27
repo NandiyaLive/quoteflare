@@ -70,7 +70,7 @@ describe('logo storage', () => {
     const result = await storeLogo(db, bucket, png())
     expect(result.ok).toBe(true)
     const { logoKey } = await loadSettings(db)
-    expect(logoKey).toMatch(/^logo\/[0-9a-f-]+\.png$/)
+    expect(logoKey).toMatch(/^logo\/[a-z0-9]{24}\.png$/)
     const object = await bucket.get(logoKey!)
     expect(object?.httpMetadata?.contentType).toBe('image/png')
   })

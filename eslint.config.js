@@ -20,5 +20,17 @@ export default tseslint.config(
   {
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
+  {
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'crypto',
+          property: 'randomUUID',
+          message: 'Create IDs with createId from #/lib/id.',
+        },
+      ],
+    },
+  },
   prettier,
 )

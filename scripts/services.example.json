@@ -1,0 +1,55 @@
+{
+  "categories": ["Content management", "Forms", "Support"],
+  "services": [
+    {
+      "name": "CMS setup",
+      "description": "Sets up a headless CMS so your team can edit content without changing code.",
+      "price": "100.00",
+      "category": "Content management",
+      "estimatedDays": [2, 3]
+    },
+    {
+      "name": "Dynamic listing page",
+      "description": "Shows a collection of CMS entries, such as blog posts.",
+      "unitLabel": "page",
+      "price": "60.00",
+      "category": "Content management",
+      "requires": ["CMS setup"],
+      "estimatedDays": [2, 3],
+      "options": [{ "name": "Rush delivery", "type": "percent", "value": "25" }]
+    },
+    {
+      "name": "Content schema",
+      "description": "Defines one CMS content type and its fields.",
+      "unitLabel": "schema",
+      "price": "15.00",
+      "pricingMode": "custom",
+      "category": "Content management",
+      "requires": ["CMS setup"]
+    },
+    {
+      "name": "Contact form",
+      "description": "Sends form submissions to your email.",
+      "note": "Requires an account with the email provider.",
+      "price": "50.00",
+      "category": "Forms",
+      "maxQuantity": 1,
+      "optionGroups": [
+        { "name": "Spam protection", "selection": "single", "required": true }
+      ],
+      "options": [
+        { "name": "Honeypot field", "value": "0", "group": "Spam protection" },
+        { "name": "CAPTCHA", "value": "10.00", "group": "Spam protection" }
+      ]
+    },
+    {
+      "name": "Maintenance retainer",
+      "description": "Updates, security checks and minor fixes after launch.",
+      "unitLabel": "month",
+      "price": "35.00",
+      "billing": "monthly",
+      "category": "Support",
+      "taxable": false
+    }
+  ]
+}

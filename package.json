@@ -19,11 +19,13 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "db:seed": "wrangler d1 execute DB --local --file=src/db/seed.sql"
+    "db:seed": "wrangler d1 execute DB --local --file=src/db/seed.sql",
+    "services:import": "bun scripts/import-services.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
     "@fontsource-variable/geist": "^5.3.0",
+    "@paralleldrive/cuid2": "^3.3.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "0.10.13",
     "@tanstack/react-form": "^1.33.5",

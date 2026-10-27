@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Miniflare } from 'miniflare'
+import { createId } from '#/lib/id'
 
 const migrationsDir = join(import.meta.dirname, '../../drizzle')
 
@@ -8,8 +9,8 @@ export async function createTestD1() {
   const mf = new Miniflare({
     modules: true,
     script: 'export default { fetch() { return new Response(null) } }',
-    d1Databases: { DB: crypto.randomUUID() },
-    r2Buckets: { FILES: crypto.randomUUID() },
+    d1Databases: { DB: createId() },
+    r2Buckets: { FILES: createId() },
   })
   const d1 = await mf.getD1Database('DB')
   const bucket = (await mf.getR2Bucket('FILES')) as unknown as R2Bucket

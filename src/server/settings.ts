@@ -4,10 +4,11 @@ import { schema } from '#/db'
 import {
   LOGO_MAX_BYTES,
   LOGO_TYPES,
-  bpsToPercent,
   type SettingsData,
   type SettingsFormValues,
 } from '#/lib/settings'
+import { bpsToPercent } from '#/lib/decimal'
+import { createId } from '#/lib/id'
 
 const { settings } = schema
 
@@ -103,7 +104,7 @@ export async function storeLogo(
     }
   }
 
-  const key = `logo/${crypto.randomUUID()}.${ext}`
+  const key = `logo/${createId()}.${ext}`
   await bucket.put(key, bytes, { httpMetadata: { contentType: file.type } })
   await db.update(settings).set({ logoKey: key }).where(eq(settings.id, 'main'))
   if (current.logoKey) await bucket.delete(current.logoKey)

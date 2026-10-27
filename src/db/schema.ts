@@ -3,9 +3,12 @@ import {
   check,
   index,
   integer,
+  real,
   sqliteTable,
   text,
+  uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
+import { createId } from '#/lib/id'
 
 // Money is stored in minor units (cents). Tax rates and percentage price
 // modifiers are stored in basis points (1500 = 15%). Dates are `YYYY-MM-DD`
@@ -26,6 +29,15 @@ export const recurringIntervals = [
   'quarterly',
   'yearly',
 ] as const
+export const pricingModes = ['fixed', 'custom'] as const
+export const serviceBillings = [
+  'one_time',
+  'weekly',
+  'monthly',
+  'quarterly',
+  'yearly',
+] as const
+export const optionSelections = ['single', 'multiple'] as const
 export const emailStatuses = [
   'pending',
   'sent',
@@ -39,6 +51,9 @@ export type InvoiceStatus = (typeof invoiceStatuses)[number]
 export type QuoteStatus = (typeof quoteStatuses)[number]
 export type ModifierType = (typeof modifierTypes)[number]
 export type RecurringInterval = (typeof recurringIntervals)[number]
+export type PricingMode = (typeof pricingModes)[number]
+export type ServiceBilling = (typeof serviceBillings)[number]
+export type OptionSelection = (typeof optionSelections)[number]
 export type EmailStatus = (typeof emailStatuses)[number]
 
 export type QuoteSelection = {
@@ -56,7 +71,7 @@ export type RecurringItem = {
 const id = () =>
   text('id')
     .primaryKey()
-    .$defaultFn(() => crypto.randomUUID())
+    .$defaultFn(() => createId())
 
 const createdAt = () =>
   text('created_at')
@@ -87,21 +102,62 @@ export const settings = sqliteTable(
   ],
 )
 
+export const serviceCategories = sqliteTable('service_categories', {
+  id: id(),
+  name: text('name').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+})
+
+// `unitPrice` is the price for `fixed` services and only a default for
+// `custom` ones. The new columns carry no table-level checks because SQLite
+// would have to rebuild the table to add them, so Zod enforces their ranges.
 export const services = sqliteTable(
   'services',
   {
     id: id(),
+    categoryId: text('category_id').references(() => serviceCategories.id),
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
+    note: text('note').notNull().default(''),
     unitLabel: text('unit_label').notNull().default('unit'),
     unitPrice: integer('unit_price').notNull(),
+    pricingMode: text('pricing_mode', { enum: pricingModes })
+      .notNull()
+      .default('fixed'),
+    billing: text('billing', { enum: serviceBillings })
+      .notNull()
+      .default('one_time'),
+    minQuantity: integer('min_quantity').notNull().default(1),
+    maxQuantity: integer('max_quantity'),
+    quantityStep: integer('quantity_step').notNull().default(1),
+    taxable: integer('taxable', { mode: 'boolean' }).notNull().default(true),
+    estimatedDaysMin: real('estimated_days_min'),
+    estimatedDaysMax: real('estimated_days_max'),
     active: integer('active', { mode: 'boolean' }).notNull().default(true),
     sortOrder: integer('sort_order').notNull().default(0),
   },
   (t) => [
     check('services_unit_price_nonneg', sql`${t.unitPrice} >= 0`),
     index('services_active_sort_idx').on(t.active, t.sortOrder),
+    index('services_category_idx').on(t.categoryId),
   ],
+)
+
+export const serviceOptionGroups = sqliteTable(
+  'service_option_groups',
+  {
+    id: id(),
+    serviceId: text('service_id')
+      .notNull()
+      .references(() => services.id),
+    name: text('name').notNull(),
+    selection: text('selection', { enum: optionSelections })
+      .notNull()
+      .default('multiple'),
+    required: integer('required', { mode: 'boolean' }).notNull().default(false),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (t) => [index('service_option_groups_service_idx').on(t.serviceId)],
 )
 
 export const serviceOptions = sqliteTable(
@@ -111,6 +167,7 @@ export const serviceOptions = sqliteTable(
     serviceId: text('service_id')
       .notNull()
       .references(() => services.id),
+    groupId: text('group_id').references(() => serviceOptionGroups.id),
     name: text('name').notNull(),
     modifierType: text('modifier_type', { enum: modifierTypes }).notNull(),
     modifierValue: integer('modifier_value').notNull(),
@@ -119,6 +176,29 @@ export const serviceOptions = sqliteTable(
   (t) => [
     check('service_options_type', inList('modifier_type', modifierTypes)),
     index('service_options_service_idx').on(t.serviceId),
+  ],
+)
+
+export const serviceDependencies = sqliteTable(
+  'service_dependencies',
+  {
+    id: id(),
+    serviceId: text('service_id')
+      .notNull()
+      .references(() => services.id),
+    requiredServiceId: text('required_service_id')
+      .notNull()
+      .references(() => services.id),
+  },
+  (t) => [
+    check(
+      'service_dependencies_not_self',
+      sql`${t.serviceId} <> ${t.requiredServiceId}`,
+    ),
+    uniqueIndex('service_dependencies_pair_idx').on(
+      t.serviceId,
+      t.requiredServiceId,
+    ),
   ],
 )
 
