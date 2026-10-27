@@ -55,6 +55,13 @@ export type PublicInvoice = {
     address: string
     email: string
     paymentInstructions: string
+    bank: {
+      name: string
+      branch: string
+      accountName: string
+      accountNumber: string
+      swiftCode: string
+    }
     hasLogo: boolean
   }
   items: InvoiceItemRow[]
@@ -379,6 +386,13 @@ export async function getPublicInvoice(
       address: business?.address ?? '',
       email: business?.email ?? '',
       paymentInstructions: business?.paymentInstructions ?? '',
+      bank: {
+        name: business?.bankName ?? '',
+        branch: business?.bankBranch ?? '',
+        accountName: business?.bankAccountName ?? '',
+        accountNumber: business?.bankAccountNumber ?? '',
+        swiftCode: business?.bankSwiftCode ?? '',
+      },
       hasLogo: Boolean(business?.logoKey),
     },
     items,

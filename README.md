@@ -77,6 +77,31 @@ Configuration:
 
 The Access application covers `invoices.neranjana.me/admin/*` with a single Allow policy for the owner's email and the One-time PIN login method. The Worker is attached to that hostname through `routes` in `wrangler.toml`.
 
+## Production setup
+
+One-time setup, in order:
+
+1. Create the D1 database and R2 bucket, then put the database ID in `wrangler.toml`.
+2. Apply migrations: `bun run db:migrate:remote`.
+3. Set the secrets. Each command prompts for the value:
+
+   ```bash
+   bunx wrangler secret put ACCESS_AUD
+   bunx wrangler secret put TURNSTILE_SECRET
+   bunx wrangler secret put RESEND_API_KEY
+   bunx wrangler secret put RESEND_WEBHOOK_SECRET
+   bunx wrangler secret list
+   ```
+
+   `secret list` must show all four names exactly. A misspelled name is silently ignored by the Worker.
+
+4. Set the vars in `wrangler.toml`: `ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`.
+5. Create the Access application for `/admin/*` with one Allow policy for the owner's email, register the Resend webhook, and verify the sending domain in Resend (see the sections above).
+6. Deploy with `bun run deploy`, or push to the branch connected to Workers Builds.
+7. Watch the Worker with `bunx wrangler tail`.
+
+Production starts with no sample data. Never run `db:seed` against the remote database. To start from a clean state, delete the rows in `invoice_items`, `invoices`, `quotes`, `email_log`, `recurring_schedules` and `clients`, then set `settings.next_invoice_number` to 1. Take a backup first (see Backups).
+
 ## Files and business settings
 
 Business details are edited at `/admin/settings`. The logo is stored in the R2 bucket `quoteflare-files` (binding `FILES`) under `logo/<random>.<ext>`, limited to PNG, JPG or SVG and 1 MB. `/files/logo` streams the current logo and is public so invoices can show it. Create the bucket once with:

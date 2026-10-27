@@ -70,6 +70,26 @@ export const settingsSchema = z.strictObject({
     .regex(/^\d{1,9}$/, 'Enter a whole number')
     .transform(Number)
     .refine((n) => n >= 1, 'Must be 1 or higher'),
+  bankName: z
+    .string()
+    .trim()
+    .max(120, 'Bank name must be 120 characters or fewer'),
+  bankBranch: z
+    .string()
+    .trim()
+    .max(120, 'Branch must be 120 characters or fewer'),
+  bankAccountName: z
+    .string()
+    .trim()
+    .max(120, 'Account name must be 120 characters or fewer'),
+  bankAccountNumber: z
+    .string()
+    .trim()
+    .max(40, 'Account number must be 40 characters or fewer'),
+  bankSwiftCode: z
+    .string()
+    .trim()
+    .max(11, 'SWIFT code must be 11 characters or fewer'),
   paymentInstructions: z
     .string()
     .trim()

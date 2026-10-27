@@ -22,6 +22,15 @@ export function PublicInvoiceView({
 }) {
   const { invoice, client, business, items, totals } = data
   const money = (minor: number) => formatMinor(minor, invoice.currency)
+  const bankRows = (
+    [
+      ['Bank', business.bank.name],
+      ['Branch', business.bank.branch],
+      ['Account name', business.bank.accountName],
+      ['Account number', business.bank.accountNumber],
+      ['SWIFT code', business.bank.swiftCode],
+    ] as const
+  ).filter(([, value]) => value)
 
   return (
     <main
@@ -117,6 +126,20 @@ export function PublicInvoiceView({
           taxRateBps={invoice.taxRateBps}
         />
       </div>
+
+      {bankRows.length > 0 && (
+        <section data-print-keep className="flex flex-col gap-1 text-sm">
+          <h3 className="font-medium">Bank details</h3>
+          <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
+            {bankRows.map(([label, value]) => (
+              <div key={label} className="contents">
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd className="tabular-nums">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
 
       {business.paymentInstructions && (
         <section data-print-keep className="flex flex-col gap-1 text-sm">
