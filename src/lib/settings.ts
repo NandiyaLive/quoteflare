@@ -1,0 +1,78 @@
+import { z } from 'zod'
+
+export const CURRENCIES = [
+  'USD',
+  'EUR',
+  'GBP',
+  'LKR',
+  'INR',
+  'AUD',
+  'CAD',
+  'NZD',
+  'SGD',
+  'AED',
+] as const
+
+export const LOGO_MAX_BYTES = 1024 * 1024
+
+export const LOGO_TYPES = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/svg+xml': 'svg',
+} as const
+
+export const LOGO_ACCEPT = Object.keys(LOGO_TYPES).join(',')
+
+const percentToBps = (value: string) => {
+  const [whole, fraction = ''] = value.split('.')
+  return Number(whole) * 100 + Number(fraction.padEnd(2, '0'))
+}
+
+export const bpsToPercent = (bps: number) => String(bps / 100)
+
+export const settingsSchema = z.strictObject({
+  businessName: z
+    .string()
+    .trim()
+    .min(1, 'Business name is required')
+    .max(120, 'Business name must be 120 characters or fewer'),
+  address: z
+    .string()
+    .trim()
+    .max(500, 'Address must be 500 characters or fewer'),
+  email: z
+    .string()
+    .trim()
+    .max(254, 'Email must be 254 characters or fewer')
+    .refine(
+      (value) => value === '' || z.email().safeParse(value).success,
+      'Enter a valid email address',
+    ),
+  currency: z.string().regex(/^[A-Z]{3}$/, 'Use a three-letter currency code'),
+  taxRate: z
+    .string()
+    .trim()
+    .regex(
+      /^\d{1,3}(\.\d{1,2})?$/,
+      'Enter a percentage from 0 to 100 with up to two decimals',
+    )
+    .transform(percentToBps)
+    .refine((bps) => bps <= 10000, 'Tax rate cannot be more than 100%'),
+  invoicePrefix: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9-]{1,12}$/, 'Use 1 to 12 letters, numbers or hyphens'),
+  nextInvoiceNumber: z
+    .string()
+    .trim()
+    .regex(/^\d{1,9}$/, 'Enter a whole number')
+    .transform(Number)
+    .refine((n) => n >= 1, 'Must be 1 or higher'),
+  paymentInstructions: z
+    .string()
+    .trim()
+    .max(2000, 'Payment instructions must be 2000 characters or fewer'),
+})
+
+export type SettingsFormValues = z.input<typeof settingsSchema>
+export type SettingsData = z.output<typeof settingsSchema>

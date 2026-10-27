@@ -1,0 +1,131 @@
+import { eq } from 'drizzle-orm'
+import type { Db } from '#/db'
+import { schema } from '#/db'
+import {
+  LOGO_MAX_BYTES,
+  LOGO_TYPES,
+  bpsToPercent,
+  type SettingsData,
+  type SettingsFormValues,
+} from '#/lib/settings'
+
+const { settings } = schema
+
+export type LogoResult =
+  { ok: true; key: string } | { ok: false; error: string }
+
+const emptySettings: SettingsFormValues = {
+  businessName: '',
+  address: '',
+  email: '',
+  currency: 'USD',
+  taxRate: '0',
+  invoicePrefix: 'INV',
+  nextInvoiceNumber: '1',
+  paymentInstructions: '',
+}
+
+export async function loadSettings(db: Db) {
+  const row = await db.query.settings.findFirst()
+  if (!row) return { values: emptySettings, logoKey: null }
+  const values: SettingsFormValues = {
+    businessName: row.businessName,
+    address: row.address,
+    email: row.email,
+    currency: row.currency,
+    taxRate: bpsToPercent(row.taxRateBps),
+    invoicePrefix: row.invoicePrefix,
+    nextInvoiceNumber: String(row.nextInvoiceNumber),
+    paymentInstructions: row.paymentInstructions,
+  }
+  return { values, logoKey: row.logoKey }
+}
+
+export async function saveSettings(db: Db, data: SettingsData) {
+  const columns = {
+    businessName: data.businessName,
+    address: data.address,
+    email: data.email,
+    currency: data.currency,
+    taxRateBps: data.taxRate,
+    invoicePrefix: data.invoicePrefix,
+    nextInvoiceNumber: data.nextInvoiceNumber,
+    paymentInstructions: data.paymentInstructions,
+  }
+  await db
+    .insert(settings)
+    .values({ id: 'main', ...columns })
+    .onConflictDoUpdate({ target: settings.id, set: columns })
+}
+
+const startsWith = (bytes: Uint8Array, magic: number[]) =>
+  magic.every((b, i) => bytes[i] === b)
+
+function matchesType(type: string, bytes: Uint8Array) {
+  if (type === 'image/png') {
+    return startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+  }
+  if (type === 'image/jpeg') return startsWith(bytes, [0xff, 0xd8, 0xff])
+  const head = new TextDecoder().decode(bytes.subarray(0, 2048))
+  return /<svg[\s>]/i.test(head)
+}
+
+const formatSize = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
+
+export async function storeLogo(
+  db: Db,
+  bucket: R2Bucket,
+  file: File,
+): Promise<LogoResult> {
+  if (file.size > LOGO_MAX_BYTES) {
+    return {
+      ok: false,
+      error: `The logo must be 1 MB or smaller. This file is ${formatSize(file.size)}.`,
+    }
+  }
+  const ext = LOGO_TYPES[file.type as keyof typeof LOGO_TYPES]
+  if (!ext) {
+    return { ok: false, error: 'The logo must be a PNG, JPG or SVG image.' }
+  }
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  if (bytes.byteLength > LOGO_MAX_BYTES) {
+    return { ok: false, error: 'The logo must be 1 MB or smaller.' }
+  }
+  if (!matchesType(file.type, bytes)) {
+    return { ok: false, error: 'The file contents do not match its type.' }
+  }
+
+  const current = await db.query.settings.findFirst()
+  if (!current) {
+    return {
+      ok: false,
+      error: 'Save your business details before adding a logo.',
+    }
+  }
+
+  const key = `logo/${crypto.randomUUID()}.${ext}`
+  await bucket.put(key, bytes, { httpMetadata: { contentType: file.type } })
+  await db.update(settings).set({ logoKey: key }).where(eq(settings.id, 'main'))
+  if (current.logoKey) await bucket.delete(current.logoKey)
+  return { ok: true, key }
+}
+
+export async function readLogo(db: Db, bucket: R2Bucket, request: Request) {
+  const row = await db.query.settings.findFirst()
+  const object = row?.logoKey ? await bucket.get(row.logoKey) : null
+  if (!object) return new Response('Not found', { status: 404 })
+
+  const headers = new Headers({
+    'Content-Type':
+      object.httpMetadata?.contentType ?? 'application/octet-stream',
+    ETag: object.httpEtag,
+    'Cache-Control': 'public, max-age=0, must-revalidate',
+    'X-Content-Type-Options': 'nosniff',
+    'Content-Security-Policy':
+      "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+  })
+  if (request.headers.get('If-None-Match') === object.httpEtag) {
+    return new Response(null, { status: 304, headers })
+  }
+  return new Response(object.body, { headers })
+}

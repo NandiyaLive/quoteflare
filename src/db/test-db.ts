@@ -9,8 +9,10 @@ export async function createTestD1() {
     modules: true,
     script: 'export default { fetch() { return new Response(null) } }',
     d1Databases: { DB: crypto.randomUUID() },
+    r2Buckets: { FILES: crypto.randomUUID() },
   })
   const d1 = await mf.getD1Database('DB')
+  const bucket = (await mf.getR2Bucket('FILES')) as unknown as R2Bucket
 
   const files = readdirSync(migrationsDir)
     .filter((f) => f.endsWith('.sql'))
@@ -23,5 +25,5 @@ export async function createTestD1() {
     await d1.batch(statements.map((s) => d1.prepare(s)))
   }
 
-  return { d1, dispose: () => mf.dispose() }
+  return { d1, bucket, dispose: () => mf.dispose() }
 }

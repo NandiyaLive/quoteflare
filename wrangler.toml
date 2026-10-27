@@ -18,3 +18,7 @@ binding = "DB"
 database_name = "quotekit"
 database_id = "e8527523-f135-403c-8325-ea1f32a8a519"
 migrations_dir = "drizzle"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "quotekit-files"

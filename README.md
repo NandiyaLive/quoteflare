@@ -74,3 +74,11 @@ Configuration:
 - `ACCESS_DEV_EMAIL` is for local development only. Copy `.dev.vars.example` to `.dev.vars` and `/admin` accepts that identity, but only when the request host is `localhost`, `127.0.0.1` or `[::1]`. Never set it in production.
 
 The Access application covers `invoices.neranjana.me/admin/*` with a single Allow policy for the owner's email and the One-time PIN login method. The Worker is attached to that hostname through `routes` in `wrangler.toml`.
+
+## Files and business settings
+
+Business details are edited at `/admin/settings`. The logo is stored in the R2 bucket `quotekit-files` (binding `FILES`) under `logo/<random>.<ext>`, limited to PNG, JPG or SVG and 1 MB. `/files/logo` streams the current logo and is public so invoices can show it. Create the bucket once with:
+
+```bash
+bunx wrangler r2 bucket create quotekit-files
+```

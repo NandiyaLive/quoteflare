@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AboutIndexRouteImport } from './routes/about/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
+import { Route as FilesLogoIndexRouteImport } from './routes/files/logo/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,17 +36,31 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminSettingsIndexRoute = AdminSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const FilesLogoIndexRoute = FilesLogoIndexRouteImport.update({
+  id: '/files/logo/',
+  path: '/files/logo/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/about/': typeof AboutIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/settings/': typeof AdminSettingsIndexRoute
+  '/files/logo/': typeof FilesLogoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/settings': typeof AdminSettingsIndexRoute
+  '/files/logo': typeof FilesLogoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -52,19 +68,30 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/about/': typeof AboutIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/settings/': typeof AdminSettingsIndexRoute
+  '/files/logo/': typeof FilesLogoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/about/' | '/admin/'
+  fullPaths:
+    '/' | '/admin' | '/about/' | '/admin/' | '/admin/settings/' | '/files/logo/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/admin'
-  id: '__root__' | '/' | '/admin' | '/about/' | '/admin/'
+  to: '/' | '/about' | '/admin' | '/admin/settings' | '/files/logo'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/about/'
+    | '/admin/'
+    | '/admin/settings/'
+    | '/files/logo/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AboutIndexRoute: typeof AboutIndexRoute
+  FilesLogoIndexRoute: typeof FilesLogoIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -97,15 +124,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/settings/': {
+      id: '/admin/settings/'
+      path: '/settings'
+      fullPath: '/admin/settings/'
+      preLoaderRoute: typeof AdminSettingsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/files/logo/': {
+      id: '/files/logo/'
+      path: '/files/logo'
+      fullPath: '/files/logo/'
+      preLoaderRoute: typeof FilesLogoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminSettingsIndexRoute: AdminSettingsIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
@@ -116,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AboutIndexRoute: AboutIndexRoute,
+  FilesLogoIndexRoute: FilesLogoIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

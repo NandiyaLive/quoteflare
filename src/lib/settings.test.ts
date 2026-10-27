@@ -1,0 +1,63 @@
+import { describe, expect, it } from 'vitest'
+import { settingsSchema } from './settings'
+
+const valid = {
+  businessName: 'Acme Studio',
+  address: '1 Main Street',
+  email: 'billing@acme.example',
+  currency: 'USD',
+  taxRate: '7.5',
+  invoicePrefix: 'INV',
+  nextInvoiceNumber: '12',
+  paymentInstructions: 'Pay by bank transfer.',
+}
+
+const issuesFor = (patch: Record<string, string>) => {
+  const result = settingsSchema.safeParse({ ...valid, ...patch })
+  return result.success ? [] : result.error.issues.map((i) => i.path[0])
+}
+
+describe('settings schema', () => {
+  it('converts the tax rate to basis points', () => {
+    expect(settingsSchema.parse(valid)).toMatchObject({
+      taxRate: 750,
+      nextInvoiceNumber: 12,
+    })
+    expect(settingsSchema.parse({ ...valid, taxRate: '15' }).taxRate).toBe(1500)
+    expect(settingsSchema.parse({ ...valid, taxRate: '0.05' }).taxRate).toBe(5)
+    expect(settingsSchema.parse({ ...valid, taxRate: '100' }).taxRate).toBe(
+      10000,
+    )
+  })
+
+  it.each(['-5', 'abc', '', '100.01', '1.234', '1e2', '5%'])(
+    'rejects tax rate %j',
+    (taxRate) => {
+      expect(issuesFor({ taxRate })).toEqual(['taxRate'])
+    },
+  )
+
+  it('requires a business name', () => {
+    expect(issuesFor({ businessName: '   ' })).toEqual(['businessName'])
+  })
+
+  it('accepts an empty email and rejects a malformed one', () => {
+    expect(issuesFor({ email: '' })).toEqual([])
+    expect(issuesFor({ email: 'not-an-email' })).toEqual(['email'])
+  })
+
+  it('validates currency, prefix and next number', () => {
+    expect(issuesFor({ currency: 'usd' })).toEqual(['currency'])
+    expect(issuesFor({ invoicePrefix: 'bad prefix' })).toEqual([
+      'invoicePrefix',
+    ])
+    expect(issuesFor({ nextInvoiceNumber: '0' })).toEqual(['nextInvoiceNumber'])
+    expect(issuesFor({ nextInvoiceNumber: '1.5' })).toEqual([
+      'nextInvoiceNumber',
+    ])
+  })
+
+  it('rejects unknown fields', () => {
+    expect(issuesFor({ extra: 'x' })).toHaveLength(1)
+  })
+})

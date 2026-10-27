@@ -1,4 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/admin/')({
   component: AdminHome,
@@ -12,6 +13,14 @@ function AdminHome() {
       <p className="text-muted-foreground">
         Signed in as <span data-testid="admin-email">{admin.email}</span>
       </p>
+      <Button
+        variant="outline"
+        nativeButton={false}
+        render={<Link to="/admin/settings" />}
+        className="w-fit"
+      >
+        Settings
+      </Button>
     </main>
   )
 }
