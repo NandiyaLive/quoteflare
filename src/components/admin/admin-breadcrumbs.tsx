@@ -1,6 +1,6 @@
 import { Link, useMatches } from '@tanstack/react-router'
 import { Fragment } from 'react'
-import '#/lib/breadcrumbs'
+import { loaderCrumb } from '#/lib/breadcrumbs'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,7 +19,8 @@ export function AdminBreadcrumbs() {
               {
                 id: match.id,
                 to: match.pathname,
-                label: match.staticData.breadcrumb,
+                label:
+                  loaderCrumb(match.loaderData) ?? match.staticData.breadcrumb,
               },
             ]
           : [],

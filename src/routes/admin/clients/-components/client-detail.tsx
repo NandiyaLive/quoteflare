@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useRouter } from '@tanstack/react-router'
+import BackButton from '@/components/common/back-button'
 import PageHeader from '@/components/common/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -38,6 +39,15 @@ export function ClientDetail({
   return (
     <>
       <PageHeader
+        back={
+          <BackButton
+            link={
+              <Link to="/admin/clients" search={{ q: '', status: 'active' }} />
+            }
+          >
+            Back to clients
+          </BackButton>
+        }
         title={client.name}
         description={
           <span className="inline-flex items-center gap-2">
@@ -48,15 +58,6 @@ export function ClientDetail({
           </span>
         }
       >
-        <Button
-          variant="outline"
-          nativeButton={false}
-          render={
-            <Link to="/admin/clients" search={{ q: '', status: 'active' }} />
-          }
-        >
-          Back to clients
-        </Button>
         <Button variant="outline" onClick={() => setEditing(true)}>
           Edit
         </Button>

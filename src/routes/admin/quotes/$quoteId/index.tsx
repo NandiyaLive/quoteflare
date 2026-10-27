@@ -7,7 +7,7 @@ export const Route = createFileRoute('/admin/quotes/$quoteId/')({
   loader: async ({ params }) => {
     const quote = await getQuoteDetail({ data: params.quoteId })
     if (!quote) throw notFound()
-    return quote
+    return { quote, crumb: `Quote from ${quote.contactName}` }
   },
   notFoundComponent: () => (
     <p className="text-muted-foreground">This quote does not exist.</p>
@@ -16,5 +16,5 @@ export const Route = createFileRoute('/admin/quotes/$quoteId/')({
 })
 
 function QuotePage() {
-  return <QuoteDetail quote={Route.useLoaderData()} />
+  return <QuoteDetail quote={Route.useLoaderData().quote} />
 }

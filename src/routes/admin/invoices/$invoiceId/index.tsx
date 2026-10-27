@@ -14,7 +14,7 @@ export const Route = createFileRoute('/admin/invoices/$invoiceId/')({
       getInvoiceFormContext(),
     ])
     if (!invoice) throw notFound()
-    return { invoice, context }
+    return { invoice, context, crumb: invoice.invoice.number }
   },
   notFoundComponent: () => (
     <p className="text-muted-foreground">This invoice does not exist.</p>

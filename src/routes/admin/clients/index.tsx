@@ -3,7 +3,6 @@ import { getClients } from '#/server/clients-actions'
 import { ClientsList } from './-components/clients-list'
 
 export const Route = createFileRoute('/admin/clients/')({
-  staticData: { breadcrumb: 'Clients' },
   loader: () => getClients({ data: { q: '', status: 'all' } }),
   component: ClientsPage,
 })

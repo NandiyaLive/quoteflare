@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
+import BackButton from '@/components/common/back-button'
 import PageHeader from '@/components/common/page-header'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
@@ -13,6 +13,7 @@ import {
 import { formatDate } from '@/lib/format'
 import { formatMinor } from '#/lib/decimal'
 import type { InvoiceDetail } from '#/server/invoices'
+import { PublicLinkCard } from './public-link-card'
 import { InvoiceStatusActions } from './invoice-status-actions'
 import { InvoiceStatusBadge } from './invoice-status-badge'
 import { InvoiceTotalsList } from '@/components/common/invoice-totals-list'
@@ -24,6 +25,11 @@ export function InvoiceView({ invoice: detail }: { invoice: InvoiceDetail }) {
   return (
     <>
       <PageHeader
+        back={
+          <BackButton link={<Link to="/admin/invoices" />}>
+            Back to invoices
+          </BackButton>
+        }
         title={invoice.number}
         description={
           <span className="inline-flex items-center gap-2">
@@ -38,13 +44,6 @@ export function InvoiceView({ invoice: detail }: { invoice: InvoiceDetail }) {
           </span>
         }
       >
-        <Button
-          variant="outline"
-          nativeButton={false}
-          render={<Link to="/admin/invoices" />}
-        >
-          Back to invoices
-        </Button>
         <InvoiceStatusActions invoiceId={invoice.id} status={invoice.status} />
       </PageHeader>
       <div className="grid items-start gap-6 lg:grid-cols-3">
@@ -97,24 +96,14 @@ export function InvoiceView({ invoice: detail }: { invoice: InvoiceDetail }) {
                 <span className="text-muted-foreground">Due </span>
                 {formatDate(`${invoice.dueDate}T00:00:00`)}
               </p>
-              {invoice.publicToken && (
-                <p className="break-all">
-                  <span className="text-muted-foreground">Public link </span>
-                  <a
-                    href={`/i/${invoice.publicToken}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline-offset-4 hover:underline"
-                  >
-                    {`/i/${invoice.publicToken}`}
-                  </a>
-                </p>
-              )}
               <p className="text-muted-foreground">
                 Only draft invoices can be edited.
               </p>
             </CardContent>
           </Card>
+          {invoice.publicToken && (
+            <PublicLinkCard token={invoice.publicToken} />
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Totals</CardTitle>

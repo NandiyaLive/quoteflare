@@ -7,7 +7,7 @@ export const Route = createFileRoute('/admin/clients/$clientId/')({
   loader: async ({ params }) => {
     const detail = await getClientDetail({ data: params.clientId })
     if (!detail) throw notFound()
-    return detail
+    return { ...detail, crumb: detail.client.name }
   },
   notFoundComponent: () => (
     <p className="text-muted-foreground">This client does not exist.</p>

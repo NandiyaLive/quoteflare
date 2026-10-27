@@ -3,7 +3,6 @@ import { getQuotes } from '#/server/quote-actions'
 import { QuotesList } from './-components/quotes-list'
 
 export const Route = createFileRoute('/admin/quotes/')({
-  staticData: { breadcrumb: 'Quotes' },
   loader: () => getQuotes({ data: { status: 'all' } }),
   component: QuotesPage,
 })

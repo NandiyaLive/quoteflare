@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { PlusIcon, Trash2Icon } from 'lucide-react'
+import BackButton from '@/components/common/back-button'
 import PageHeader from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
 import {
@@ -164,6 +165,11 @@ export function InvoiceEditor({
       }}
     >
       <PageHeader
+        back={
+          <BackButton link={<Link to="/admin/invoices" />}>
+            Back to invoices
+          </BackButton>
+        }
         title={invoice ? invoice.invoice.number : 'New invoice'}
         description={
           invoice
@@ -171,14 +177,6 @@ export function InvoiceEditor({
             : 'The invoice number is assigned when you first save.'
         }
       >
-        <Button
-          type="button"
-          variant="outline"
-          nativeButton={false}
-          render={<Link to="/admin/invoices" />}
-        >
-          Back to invoices
-        </Button>
         {invoice && (
           <form.Subscribe selector={(s) => s.isDirty}>
             {(dirty) => (

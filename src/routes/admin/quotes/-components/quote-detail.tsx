@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useRouter } from '@tanstack/react-router'
+import BackButton from '@/components/common/back-button'
 import PageHeader from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -95,6 +96,13 @@ export function QuoteDetail({ quote }: { quote: QuoteRow }) {
   return (
     <>
       <PageHeader
+        back={
+          <BackButton
+            link={<Link to="/admin/quotes" search={{ status: 'all' }} />}
+          >
+            Back to quotes
+          </BackButton>
+        }
         title={`Quote from ${quote.contactName}`}
         description={
           <span className="inline-flex items-center gap-2">
@@ -103,13 +111,6 @@ export function QuoteDetail({ quote }: { quote: QuoteRow }) {
           </span>
         }
       >
-        <Button
-          variant="outline"
-          nativeButton={false}
-          render={<Link to="/admin/quotes" search={{ status: 'all' }} />}
-        >
-          Back to quotes
-        </Button>
         {quote.status === 'new' && (
           <Button
             variant="outline"
