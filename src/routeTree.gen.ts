@@ -11,12 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SiteRouteRouteImport } from './routes/_site/route'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
-import { Route as SiteIndexRouteImport } from './routes/_site/index'
+import { Route as SiteCalculatorRouteRouteImport } from './routes/_site/_calculator/route'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as SiteCalculatorIndexRouteImport } from './routes/_site/_calculator/index'
 import { Route as SiteAboutIndexRouteImport } from './routes/_site/about/index'
 import { Route as AdminServicesIndexRouteImport } from './routes/admin/services/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as FilesLogoIndexRouteImport } from './routes/files/logo/index'
+import { Route as SiteCalculatorOptionsIndexRouteImport } from './routes/_site/_calculator/options/index'
+import { Route as SiteCalculatorReviewIndexRouteImport } from './routes/_site/_calculator/review/index'
+import { Route as SiteCalculatorScopeIndexRouteImport } from './routes/_site/_calculator/scope/index'
 
 const SiteRouteRoute = SiteRouteRouteImport.update({
   id: '/_site',
@@ -27,15 +31,19 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SiteIndexRoute = SiteIndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SiteCalculatorRouteRoute = SiteCalculatorRouteRouteImport.update({
+  id: '/_calculator',
   getParentRoute: () => SiteRouteRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const SiteCalculatorIndexRoute = SiteCalculatorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SiteCalculatorRouteRoute,
 } as any)
 const SiteAboutIndexRoute = SiteAboutIndexRouteImport.update({
   id: '/about/',
@@ -57,34 +65,62 @@ const FilesLogoIndexRoute = FilesLogoIndexRouteImport.update({
   path: '/files/logo/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SiteCalculatorOptionsIndexRoute =
+  SiteCalculatorOptionsIndexRouteImport.update({
+    id: '/options/',
+    path: '/options/',
+    getParentRoute: () => SiteCalculatorRouteRoute,
+  } as any)
+const SiteCalculatorReviewIndexRoute =
+  SiteCalculatorReviewIndexRouteImport.update({
+    id: '/review/',
+    path: '/review/',
+    getParentRoute: () => SiteCalculatorRouteRoute,
+  } as any)
+const SiteCalculatorScopeIndexRoute =
+  SiteCalculatorScopeIndexRouteImport.update({
+    id: '/scope/',
+    path: '/scope/',
+    getParentRoute: () => SiteCalculatorRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof SiteIndexRoute
+  '/': typeof SiteCalculatorIndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/about/': typeof SiteAboutIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
+  '/options/': typeof SiteCalculatorOptionsIndexRoute
+  '/review/': typeof SiteCalculatorReviewIndexRoute
+  '/scope/': typeof SiteCalculatorScopeIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof SiteIndexRoute
+  '/': typeof SiteCalculatorIndexRoute
   '/admin': typeof AdminIndexRoute
   '/about': typeof SiteAboutIndexRoute
   '/admin/services': typeof AdminServicesIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/files/logo': typeof FilesLogoIndexRoute
+  '/options': typeof SiteCalculatorOptionsIndexRoute
+  '/review': typeof SiteCalculatorReviewIndexRoute
+  '/scope': typeof SiteCalculatorScopeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_site': typeof SiteRouteRouteWithChildren
   '/admin': typeof AdminRouteRouteWithChildren
-  '/_site/': typeof SiteIndexRoute
+  '/_site/_calculator': typeof SiteCalculatorRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
+  '/_site/_calculator/': typeof SiteCalculatorIndexRoute
   '/_site/about/': typeof SiteAboutIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
+  '/_site/_calculator/options/': typeof SiteCalculatorOptionsIndexRoute
+  '/_site/_calculator/review/': typeof SiteCalculatorReviewIndexRoute
+  '/_site/_calculator/scope/': typeof SiteCalculatorScopeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,6 +132,9 @@ export interface FileRouteTypes {
     | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
+    | '/options/'
+    | '/review/'
+    | '/scope/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -104,16 +143,23 @@ export interface FileRouteTypes {
     | '/admin/services'
     | '/admin/settings'
     | '/files/logo'
+    | '/options'
+    | '/review'
+    | '/scope'
   id:
     | '__root__'
     | '/_site'
     | '/admin'
-    | '/_site/'
+    | '/_site/_calculator'
     | '/admin/'
+    | '/_site/_calculator/'
     | '/_site/about/'
     | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
+    | '/_site/_calculator/options/'
+    | '/_site/_calculator/review/'
+    | '/_site/_calculator/scope/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -138,11 +184,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_site/': {
-      id: '/_site/'
-      path: '/'
+    '/_site/_calculator': {
+      id: '/_site/_calculator'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof SiteIndexRouteImport
+      preLoaderRoute: typeof SiteCalculatorRouteRouteImport
       parentRoute: typeof SiteRouteRoute
     }
     '/admin/': {
@@ -151,6 +197,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/_site/_calculator/': {
+      id: '/_site/_calculator/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof SiteCalculatorIndexRouteImport
+      parentRoute: typeof SiteCalculatorRouteRoute
     }
     '/_site/about/': {
       id: '/_site/about/'
@@ -180,16 +233,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FilesLogoIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_site/_calculator/options/': {
+      id: '/_site/_calculator/options/'
+      path: '/options'
+      fullPath: '/options/'
+      preLoaderRoute: typeof SiteCalculatorOptionsIndexRouteImport
+      parentRoute: typeof SiteCalculatorRouteRoute
+    }
+    '/_site/_calculator/review/': {
+      id: '/_site/_calculator/review/'
+      path: '/review'
+      fullPath: '/review/'
+      preLoaderRoute: typeof SiteCalculatorReviewIndexRouteImport
+      parentRoute: typeof SiteCalculatorRouteRoute
+    }
+    '/_site/_calculator/scope/': {
+      id: '/_site/_calculator/scope/'
+      path: '/scope'
+      fullPath: '/scope/'
+      preLoaderRoute: typeof SiteCalculatorScopeIndexRouteImport
+      parentRoute: typeof SiteCalculatorRouteRoute
+    }
   }
 }
 
+interface SiteCalculatorRouteRouteChildren {
+  SiteCalculatorIndexRoute: typeof SiteCalculatorIndexRoute
+  SiteCalculatorOptionsIndexRoute: typeof SiteCalculatorOptionsIndexRoute
+  SiteCalculatorReviewIndexRoute: typeof SiteCalculatorReviewIndexRoute
+  SiteCalculatorScopeIndexRoute: typeof SiteCalculatorScopeIndexRoute
+}
+
+const SiteCalculatorRouteRouteChildren: SiteCalculatorRouteRouteChildren = {
+  SiteCalculatorIndexRoute: SiteCalculatorIndexRoute,
+  SiteCalculatorOptionsIndexRoute: SiteCalculatorOptionsIndexRoute,
+  SiteCalculatorReviewIndexRoute: SiteCalculatorReviewIndexRoute,
+  SiteCalculatorScopeIndexRoute: SiteCalculatorScopeIndexRoute,
+}
+
+const SiteCalculatorRouteRouteWithChildren =
+  SiteCalculatorRouteRoute._addFileChildren(SiteCalculatorRouteRouteChildren)
+
 interface SiteRouteRouteChildren {
-  SiteIndexRoute: typeof SiteIndexRoute
+  SiteCalculatorRouteRoute: typeof SiteCalculatorRouteRouteWithChildren
   SiteAboutIndexRoute: typeof SiteAboutIndexRoute
 }
 
 const SiteRouteRouteChildren: SiteRouteRouteChildren = {
-  SiteIndexRoute: SiteIndexRoute,
+  SiteCalculatorRouteRoute: SiteCalculatorRouteRouteWithChildren,
   SiteAboutIndexRoute: SiteAboutIndexRoute,
 }
 

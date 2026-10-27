@@ -1,0 +1,170 @@
+import { decimalToMinor, minorToDecimal } from '#/lib/decimal'
+import {
+  calculatePrice,
+  type PricingBreakdown,
+  type PricingErrorCode,
+  type PricingSelection,
+  type PricingService,
+} from '#/lib/pricing'
+
+export type CalculatorService = PricingService & {
+  categoryId: string | null
+  description: string
+  note: string
+  unitLabel: string
+  estimatedDaysMin: number | null
+  estimatedDaysMax: number | null
+  requires: string[]
+}
+
+export type CalculatorCatalog = {
+  categories: { id: string; name: string }[]
+  services: CalculatorService[]
+  currency: string
+  taxRateBps: number
+}
+
+export type ChosenService = {
+  quantity: string
+  optionIds: string[]
+  price: string
+}
+
+export type CalculatorState = Record<string, ChosenService>
+
+const MONEY_PATTERN = /^\d{1,9}(\.\d{1,2})?$/
+const QUANTITY_PATTERN = /^\d{1,6}$/
+
+export const emptyChoice = (service: CalculatorService): ChosenService => ({
+  quantity: String(service.minQuantity),
+  optionIds: [],
+  price:
+    service.pricingMode === 'custom' && service.unitPrice > 0
+      ? minorToDecimal(service.unitPrice)
+      : '',
+})
+
+export function selectService(
+  catalog: CalculatorCatalog,
+  state: CalculatorState,
+  serviceId: string,
+): CalculatorState {
+  const byId = new Map(catalog.services.map((s) => [s.id, s]))
+  const next = { ...state }
+  const stack = [serviceId]
+  while (stack.length > 0) {
+    const id = stack.pop()!
+    const service = byId.get(id)
+    if (!service || next[id]) continue
+    next[id] = emptyChoice(service)
+    stack.push(...service.requires)
+  }
+  return next
+}
+
+export function dependentsOf(
+  catalog: CalculatorCatalog,
+  state: CalculatorState,
+  serviceId: string,
+) {
+  return catalog.services.filter(
+    (s) => state[s.id] && s.requires.includes(serviceId),
+  )
+}
+
+export function deselectService(
+  state: CalculatorState,
+  serviceId: string,
+): CalculatorState {
+  const next = { ...state }
+  delete next[serviceId]
+  return next
+}
+
+const MESSAGES: Record<PricingErrorCode, string> = {
+  invalid_tax_rate: 'The tax rate is invalid.',
+  invalid_discount: 'The discount is invalid.',
+  unknown_service: 'This service is not available.',
+  duplicate_service: 'This service is selected twice.',
+  invalid_quantity: 'Enter a whole number of 1 or more.',
+  quantity_below_minimum: 'The quantity is below the minimum.',
+  quantity_above_maximum: 'The quantity is above the maximum.',
+  quantity_step: 'The quantity does not fit the allowed steps.',
+  price_override_required: 'Enter a price.',
+  price_override_not_allowed: 'This service has a fixed price.',
+  invalid_price_override: 'Enter a price like 49.99.',
+  unknown_option: 'This option is not available.',
+  duplicate_option: 'This option is selected twice.',
+  multiple_in_single_group: 'Choose only one option in this group.',
+  required_group_missing: 'Choose an option in each required group.',
+}
+
+export type Evaluation = {
+  breakdown: PricingBreakdown
+  problems: Record<string, string[]>
+}
+
+const toSelection = (
+  service: CalculatorService,
+  choice: ChosenService,
+): PricingSelection | null => {
+  if (!QUANTITY_PATTERN.test(choice.quantity)) return null
+  const selection: PricingSelection = {
+    serviceId: service.id,
+    quantity: Number(choice.quantity),
+    optionIds: choice.optionIds,
+  }
+  if (service.pricingMode === 'custom') {
+    if (!MONEY_PATTERN.test(choice.price)) return null
+    selection.priceOverride = decimalToMinor(choice.price)
+  }
+  return selection
+}
+
+export function evaluate(
+  catalog: CalculatorCatalog,
+  state: CalculatorState,
+): Evaluation {
+  const problems: Record<string, string[]> = {}
+  const valid: PricingSelection[] = []
+
+  for (const service of catalog.services) {
+    const choice = state[service.id]
+    if (!choice) continue
+    const selection = toSelection(service, choice)
+    if (!selection) {
+      problems[service.id] = [
+        service.pricingMode === 'custom' &&
+        QUANTITY_PATTERN.test(choice.quantity)
+          ? MESSAGES[
+              choice.price === ''
+                ? 'price_override_required'
+                : 'invalid_price_override'
+            ]
+          : MESSAGES.invalid_quantity,
+      ]
+      continue
+    }
+    const single = calculatePrice({
+      services: [service],
+      selections: [selection],
+      taxRateBps: catalog.taxRateBps,
+      discount: 0,
+    })
+    if (single.ok) valid.push(selection)
+    else {
+      problems[service.id] = [
+        ...new Set(single.errors.map((e) => MESSAGES[e.code])),
+      ]
+    }
+  }
+
+  const result = calculatePrice({
+    services: catalog.services,
+    selections: valid,
+    taxRateBps: catalog.taxRateBps,
+    discount: 0,
+  })
+  if (!result.ok) throw new Error('Validated selections failed to price')
+  return { breakdown: result, problems }
+}

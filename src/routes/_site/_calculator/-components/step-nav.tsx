@@ -1,0 +1,26 @@
+import { Link } from '@tanstack/react-router'
+import { STEPS } from './steps'
+
+export function StepNav() {
+  return (
+    <nav
+      aria-label="Calculator steps"
+      className="flex overflow-x-auto border-b [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      {STEPS.map((step) => (
+        <Link
+          key={step.to}
+          to={step.to}
+          activeOptions={{ exact: true }}
+          className="relative shrink-0 px-3 py-3 sm:px-4 text-base font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none after:absolute after:inset-x-0 after:-bottom-px after:h-[3px] after:rounded-t-full hover:text-foreground focus-visible:text-foreground focus-visible:after:bg-ring"
+          activeProps={{
+            className: 'text-primary after:bg-primary',
+            'aria-current': 'page',
+          }}
+        >
+          {step.label}
+        </Link>
+      ))}
+    </nav>
+  )
+}
