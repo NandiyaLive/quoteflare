@@ -90,6 +90,7 @@ export const settings = sqliteTable(
     businessName: text('business_name').notNull(),
     address: text('address').notNull().default(''),
     email: text('email').notNull().default(''),
+    replyToEmail: text('reply_to_email').notNull().default(''),
     currency: text('currency').notNull().default('USD'),
     taxRateBps: integer('tax_rate_bps').notNull().default(0),
     invoicePrefix: text('invoice_prefix').notNull().default('INV'),

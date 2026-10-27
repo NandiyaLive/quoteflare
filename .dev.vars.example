@@ -7,3 +7,7 @@ ACCESS_AUD=
 # real site key as a var and `wrangler secret put TURNSTILE_SECRET`.
 TURNSTILE_SITE_KEY=1x00000000000000000000AA
 TURNSTILE_SECRET=1x0000000000000000000000000000000AA
+
+# Production uses `wrangler secret put RESEND_API_KEY`. EMAIL_FROM is a var in
+# wrangler.toml and must use a domain verified in Resend.
+RESEND_API_KEY=

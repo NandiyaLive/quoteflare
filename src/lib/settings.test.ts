@@ -5,6 +5,7 @@ const valid = {
   businessName: 'Acme Studio',
   address: '1 Main Street',
   email: 'billing@acme.example',
+  replyToEmail: 'hello@acme.example',
   currency: 'USD',
   taxRate: '7.5',
   invoicePrefix: 'INV',
@@ -44,6 +45,11 @@ describe('settings schema', () => {
   it('accepts an empty email and rejects a malformed one', () => {
     expect(issuesFor({ email: '' })).toEqual([])
     expect(issuesFor({ email: 'not-an-email' })).toEqual(['email'])
+  })
+
+  it('accepts an empty reply-to email and rejects a malformed one', () => {
+    expect(issuesFor({ replyToEmail: '' })).toEqual([])
+    expect(issuesFor({ replyToEmail: 'nope' })).toEqual(['replyToEmail'])
   })
 
   it('validates currency, prefix and next number', () => {

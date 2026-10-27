@@ -78,6 +78,7 @@ declare module '@tanstack/react-table' {
     dataTableFilteringFeature: TableState_DataTableFiltering
   }
 
+  /* eslint-disable @typescript-eslint/no-unused-vars -- generics must match the library declaration */
   interface TableOptions_FeatureMap<
     in out TFeatures extends TableFeatures,
     in out TData extends RowData,
@@ -91,6 +92,7 @@ declare module '@tanstack/react-table' {
   > {
     dataTableFilteringFeature: Table_DataTableFiltering
   }
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 }
 
 type DataTableInstance = Table<DataTableFeatures, RowData>

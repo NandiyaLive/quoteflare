@@ -118,6 +118,12 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
               autoComplete: 'organization',
             })}
             {text('email', 'Email', { type: 'email', autoComplete: 'email' })}
+            {text(
+              'replyToEmail',
+              'Reply-to email',
+              { type: 'email' },
+              'Replies to invoice emails go here.',
+            )}
             <form.Field name="address">
               {(field) => {
                 const errors = fieldErrors(field.name, field.state.meta.errors)

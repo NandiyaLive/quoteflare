@@ -62,6 +62,7 @@ export interface ColumnFilterItem<
 }
 
 declare module '@tanstack/react-table' {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface ColumnFilter extends Partial<
     Pick<ColumnFilterItem, 'operator' | 'variant' | 'filterId'>
   > {}

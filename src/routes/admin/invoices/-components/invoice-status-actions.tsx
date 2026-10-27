@@ -11,8 +11,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import type { InvoiceStatus } from '#/db/schema'
-import { INVOICE_TRANSITIONS } from '#/lib/invoices'
-import { changeInvoiceStatusAction } from '#/server/invoices-actions'
+import { EMAILABLE_STATUSES, INVOICE_TRANSITIONS } from '#/lib/invoices'
+import {
+  changeInvoiceStatusAction,
+  sendInvoiceEmailAction,
+} from '#/server/invoices-actions'
 
 const ACTION_LABELS: Record<InvoiceStatus, (from: InvoiceStatus) => string> = {
   draft: () => 'Back to draft',
@@ -34,6 +37,7 @@ export function InvoiceStatusActions({
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [confirmVoid, setConfirmVoid] = useState(false)
 
   const change = async (next: InvoiceStatus) => {
@@ -51,11 +55,34 @@ export function InvoiceStatusActions({
     }
   }
 
+  const send = async () => {
+    setBusy(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const result = await sendInvoiceEmailAction({ data: { id: invoiceId } })
+      if (result.ok) setNotice(`Invoice emailed to ${result.to}.`)
+      else setError(result.error)
+      await router.invalidate()
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const targets = INVOICE_TRANSITIONS[status]
   if (targets.length === 0) return null
 
   return (
     <>
+      {EMAILABLE_STATUSES.includes(status) && (
+        <Button
+          type="button"
+          disabled={busy || disabled}
+          onClick={() => void send()}
+        >
+          {status === 'draft' ? 'Send to client' : 'Resend to client'}
+        </Button>
+      )}
       {targets.map((target) => (
         <Button
           key={target}
@@ -69,6 +96,11 @@ export function InvoiceStatusActions({
           {ACTION_LABELS[target](status)}
         </Button>
       ))}
+      {notice && (
+        <p role="status" className="w-full text-sm text-muted-foreground">
+          {notice}
+        </p>
+      )}
       {error && (
         <p role="alert" className="w-full text-sm text-destructive">
           {error}

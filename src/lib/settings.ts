@@ -42,6 +42,14 @@ export const settingsSchema = z.strictObject({
       (value) => value === '' || z.email().safeParse(value).success,
       'Enter a valid email address',
     ),
+  replyToEmail: z
+    .string()
+    .trim()
+    .max(254, 'Reply-to email must be 254 characters or fewer')
+    .refine(
+      (value) => value === '' || z.email().safeParse(value).success,
+      'Enter a valid email address',
+    ),
   currency: z.string().regex(/^[A-Z]{3}$/, 'Use a three-letter currency code'),
   taxRate: z
     .string()

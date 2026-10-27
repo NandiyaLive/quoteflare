@@ -24,12 +24,18 @@ export const INVOICE_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
   void: [],
 }
 
+export const EMAILABLE_STATUSES: InvoiceStatus[] = ['draft', 'sent', 'overdue']
+
 export const canTransition = (from: InvoiceStatus, to: InvoiceStatus) =>
   INVOICE_TRANSITIONS[from].includes(to)
 
 export const invoiceStatusChangeSchema = z.strictObject({
   id: z.string().min(1).max(64),
   status: z.enum(invoiceStatuses),
+})
+
+export const invoiceIdSchema = z.strictObject({
+  id: z.string().min(1).max(64),
 })
 
 export const MAX_INVOICE_ITEMS = 50

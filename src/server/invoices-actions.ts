@@ -1,9 +1,15 @@
 import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
+import { getRequestUrl } from '@tanstack/react-start/server'
 import { createDb } from '#/db'
-import { invoiceSchema, invoiceStatusChangeSchema } from '#/lib/invoices'
+import {
+  invoiceIdSchema,
+  invoiceSchema,
+  invoiceStatusChangeSchema,
+} from '#/lib/invoices'
 import { requireAdmin } from './admin-middleware'
 import { listActiveClients } from './clients'
+import { sendInvoiceEmail } from './invoice-email'
 import {
   changeInvoiceStatus,
   createInvoice,
@@ -79,6 +85,21 @@ export const changeInvoiceStatusAction = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
   .handler(({ data }) =>
     changeInvoiceStatus(createDb(env.DB), data.id, data.status),
+  )
+
+export const sendInvoiceEmailAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => invoiceIdSchema.parse(input))
+  .middleware([requireAdmin])
+  .handler(({ data }) =>
+    sendInvoiceEmail(
+      createDb(env.DB),
+      {
+        apiKey: env.RESEND_API_KEY,
+        from: env.EMAIL_FROM,
+        origin: getRequestUrl().origin,
+      },
+      data.id,
+    ),
   )
 
 export const getPublicInvoiceAction = createServerFn()

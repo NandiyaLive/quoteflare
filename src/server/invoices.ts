@@ -290,6 +290,7 @@ export async function changeInvoiceStatus(
   db: Db,
   id: string,
   to: InvoiceStatus,
+  token = createPublicToken(),
 ): Promise<ChangeStatusResult> {
   const existing = (
     await db.select().from(invoices).where(eq(invoices.id, id)).limit(1)
@@ -310,7 +311,7 @@ export async function changeInvoiceStatus(
       status: to,
       ...(to === 'sent'
         ? {
-            publicToken: sql`coalesce(${invoices.publicToken}, ${createPublicToken()})`,
+            publicToken: sql`coalesce(${invoices.publicToken}, ${token})`,
             sentAt: sql`coalesce(${invoices.sentAt}, ${new Date().toISOString()})`,
           }
         : {}),

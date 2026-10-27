@@ -25,6 +25,7 @@ const input = {
   businessName: 'Acme Studio',
   address: '',
   email: '',
+  replyToEmail: 'replies@acme.example',
   currency: 'EUR',
   taxRate: '7.25',
   invoicePrefix: 'ACM',
@@ -56,6 +57,7 @@ describe('settings persistence', () => {
     expect(rows[0]).toMatchObject({
       businessName: 'Acme 2',
       taxRateBps: 1000,
+      replyToEmail: 'replies@acme.example',
       currency: 'EUR',
       nextInvoiceNumber: 5,
     })

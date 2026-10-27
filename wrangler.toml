@@ -29,6 +29,7 @@ enabled = true
 [vars]
 ACCESS_TEAM_DOMAIN = "neranjana.cloudflareaccess.com"
 TURNSTILE_SITE_KEY = "0x4AAAAAAFLs7TZo8Q7quaZ0"
+EMAIL_FROM = "Invoices <invoices@neranjana.me>"
 
 [[d1_databases]]
 binding = "DB"

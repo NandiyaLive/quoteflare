@@ -212,6 +212,8 @@ function Faceted<Multiple extends boolean = false>({
   );
 
   useIsoLayoutEffect(() => {
+    // The store is an external mutable object that holds the latest callbacks.
+    // eslint-disable-next-line react-hooks/immutability
     store.controller = {
       isValueControlled: value !== undefined,
       onValueChange(nextValue) {

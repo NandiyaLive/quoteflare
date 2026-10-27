@@ -109,6 +109,18 @@ bun run services:import scripts/services.example.json
 
 The file format is shown in `scripts/services.example.json`. Categories, option groups and required services are referenced by name. A service whose name already exists is skipped, so the command is safe to run twice. The script uses the same validation and save code as the admin page. It only writes to the local database. Create services in production through `/admin/services`.
 
+## Email
+
+Invoices are emailed through Resend's REST API (`src/server/email.ts`). Setup:
+
+- Verify the sending domain in Resend and add the DKIM and SPF records it shows in Cloudflare DNS.
+- Set `EMAIL_FROM` in `wrangler.toml` to an address on that domain.
+- Store the key with `bunx wrangler secret put RESEND_API_KEY`. For local development put it in `.dev.vars`.
+
+The Send to client button on an invoice emails the client a link to `/i/<token>`. A draft becomes `sent` only after Resend accepts the message, so a failed send leaves it a draft. Resending a `sent` or `overdue` invoice reuses the same link. Paid and void invoices cannot be emailed.
+
+Each send writes an `email_log` row with status `pending` before the request, then `sent` with the Resend message ID or `failed` with the error text. The log row ID is also the idempotency key, so a retried request cannot deliver twice.
+
 ## IDs
 
 Every database ID is a CUID (CUID2, 24 characters) created with `createId` from `src/lib/id.ts`. ESLint rejects `crypto.randomUUID`. The only fixed ID is `main`, the key of the single settings row.
