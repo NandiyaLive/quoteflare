@@ -54,6 +54,8 @@ export function ServiceCard({
   const checked = Boolean(choice)
   const locked = requiredBy.length > 0
   const single = service.maxQuantity === 1
+  const hasDetails =
+    !single || service.options.length > 0 || problems.length > 0
   const days = estimate(service)
   const recurring = service.billing !== 'one_time'
   const id = `service-${service.id}`
@@ -130,7 +132,7 @@ export function ServiceCard({
           </div>
         </div>
 
-        {choice && (
+        {choice && hasDetails && (
           <div className="flex flex-col gap-5 border-t pt-5 sm:pl-7">
             {!single && (
               <Field>

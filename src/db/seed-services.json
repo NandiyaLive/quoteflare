@@ -57,7 +57,8 @@
       "description": "Sets up Sanity so your team can create and edit content without changing code. Includes the Studio, content types and deployment.",
       "price": "10000.00",
       "category": "Content management (Sanity)",
-      "estimatedDays": [2, 3]
+      "estimatedDays": [2, 3],
+      "maxQuantity": 1
     },
     {
       "name": "Content schema",
@@ -76,7 +77,8 @@
       "price": "10000.00",
       "category": "Content management (Sanity)",
       "estimatedDays": [1, 2],
-      "requires": ["Sanity CMS setup"]
+      "requires": ["Sanity CMS setup"],
+      "maxQuantity": 1
     },
     {
       "name": "Dynamic listing page",
@@ -104,7 +106,8 @@
       "price": "5000.00",
       "category": "Forms and integrations",
       "note": "Requires a Formspree account. Subscription fees are separate.",
-      "estimatedDays": [0.5, 1]
+      "estimatedDays": [0.5, 1],
+      "maxQuantity": 1
     },
     {
       "name": "Custom contact form",
@@ -112,7 +115,8 @@
       "price": "15000.00",
       "category": "Forms and integrations",
       "note": "Requires a Resend account.",
-      "estimatedDays": [1, 2]
+      "estimatedDays": [1, 2],
+      "maxQuantity": 1
     },
     {
       "name": "Third-party API integration",
@@ -130,14 +134,16 @@
       "price": "20000.00",
       "category": "Forms and integrations",
       "note": "The provider charges transaction fees separately.",
-      "estimatedDays": [2, 3]
+      "estimatedDays": [2, 3],
+      "maxQuantity": 1
     },
     {
       "name": "Deployment",
       "description": "Deploys the site to its live URL, connects your domain and configures automatic deploys from code changes.",
       "price": "10000.00",
       "category": "Deployment",
-      "estimatedDays": [0.5, 1]
+      "estimatedDays": [0.5, 1],
+      "maxQuantity": 1
     },
     {
       "name": "Cloudflare setup",
@@ -145,7 +151,8 @@
       "price": "3000.00",
       "category": "Cloudflare",
       "note": "Requires a Cloudflare account.",
-      "estimatedDays": [0.5, 1]
+      "estimatedDays": [0.5, 1],
+      "maxQuantity": 1
     },
     {
       "name": "Professional email setup",
@@ -153,7 +160,8 @@
       "price": "5000.00",
       "category": "Email",
       "note": "Zoho fees are separate.",
-      "estimatedDays": [0.5, 1]
+      "estimatedDays": [0.5, 1],
+      "maxQuantity": 1
     },
     {
       "name": "Transactional email",
@@ -161,7 +169,8 @@
       "price": "8000.00",
       "category": "Email",
       "note": "Requires a Resend account.",
-      "estimatedDays": [1, 2]
+      "estimatedDays": [1, 2],
+      "maxQuantity": 1
     },
     {
       "name": "Email template",
@@ -176,14 +185,16 @@
       "description": "Adds page titles, meta descriptions, social sharing tags, canonical URLs and an XML sitemap for Google Search Console.",
       "price": "6000.00",
       "category": "SEO",
-      "estimatedDays": [1, 2]
+      "estimatedDays": [1, 2],
+      "maxQuantity": 1
     },
     {
       "name": "Structured data",
       "description": "Adds JSON-LD markup for eligible Google results, such as ratings, FAQs, breadcrumbs or events.",
       "price": "5000.00",
       "category": "SEO",
-      "estimatedDays": [0.5, 1]
+      "estimatedDays": [0.5, 1],
+      "maxQuantity": 1
     },
     {
       "name": "Analytics setup",
@@ -191,7 +202,8 @@
       "price": "4000.00",
       "category": "SEO",
       "note": "Both services are free.",
-      "estimatedDays": [0.5, 1]
+      "estimatedDays": [0.5, 1],
+      "maxQuantity": 1
     },
     {
       "name": "Maintenance retainer",
@@ -208,7 +220,8 @@
       "category": "General add-ons",
       "note": "Price depends on the amount and format of the content.",
       "pricingMode": "custom",
-      "estimatedDays": [2, 4]
+      "estimatedDays": [2, 4],
+      "maxQuantity": 1
     },
     {
       "name": "Extra revision round",

@@ -333,14 +333,40 @@ function ServiceForm({
 
         <FieldSet>
           <FieldLegend variant="label">Quantity</FieldLegend>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {text('minQuantity', 'Minimum', { inputMode: 'numeric' })}
-            {text('maxQuantity', 'Maximum', {
-              inputMode: 'numeric',
-              placeholder: 'No limit',
-            })}
-            {text('quantityStep', 'Step', { inputMode: 'numeric' })}
-          </div>
+          <form.Subscribe
+            selector={(s) =>
+              s.values.minQuantity === '1' && s.values.maxQuantity === '1'
+            }
+          >
+            {(single) => (
+              <>
+                <Field orientation="horizontal">
+                  <Checkbox
+                    id="service-single"
+                    checked={single}
+                    onCheckedChange={(checked) => {
+                      form.setFieldValue('minQuantity', '1')
+                      form.setFieldValue('maxQuantity', checked ? '1' : '')
+                      form.setFieldValue('quantityStep', '1')
+                    }}
+                  />
+                  <FieldLabel htmlFor="service-single">
+                    No quantity, sold once per quote
+                  </FieldLabel>
+                </Field>
+                {!single && (
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    {text('minQuantity', 'Minimum', { inputMode: 'numeric' })}
+                    {text('maxQuantity', 'Maximum', {
+                      inputMode: 'numeric',
+                      placeholder: 'No limit',
+                    })}
+                    {text('quantityStep', 'Step', { inputMode: 'numeric' })}
+                  </div>
+                )}
+              </>
+            )}
+          </form.Subscribe>
         </FieldSet>
 
         <FieldSet>
