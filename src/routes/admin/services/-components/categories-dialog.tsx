@@ -22,6 +22,7 @@ import {
 import type { CategoryRow } from '#/server/services'
 import { saveCategoriesAction } from '#/server/services-actions'
 import { toast } from 'sonner'
+import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 export function CategoriesDialog({
   open,
@@ -63,7 +64,11 @@ function CategoriesForm({
     validators: { onSubmit: categoriesSchema },
     onSubmit: async ({ value }) => {
       setServerErrors({})
-      const result = await saveCategoriesAction({ data: value })
+      const result = await callAction(
+        () => saveCategoriesAction({ data: value }),
+        'Could not save the categories. Try again.',
+      )
+      if (!result) return
       if (result.ok) {
         toast.success('Categories saved.')
         await router.invalidate()
@@ -71,7 +76,7 @@ function CategoriesForm({
         return
       }
       setServerErrors(result.errors)
-      if (result.errors.form) toast.error(result.errors.form)
+      toastFormErrors(result.errors)
     },
   })
 

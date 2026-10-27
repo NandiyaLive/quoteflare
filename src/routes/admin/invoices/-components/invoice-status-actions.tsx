@@ -17,6 +17,7 @@ import {
   sendInvoiceEmailAction,
 } from '#/server/invoices-actions'
 import { toast } from 'sonner'
+import { callAction } from '#/lib/action-errors'
 
 const ACTION_LABELS: Record<InvoiceStatus, (from: InvoiceStatus) => string> = {
   draft: () => 'Back to draft',
@@ -42,11 +43,13 @@ export function InvoiceStatusActions({
   const change = async (next: InvoiceStatus) => {
     setBusy(true)
     try {
-      const result = await changeInvoiceStatusAction({
-        data: { id: invoiceId, status: next },
-      })
-      if (result.ok) toast.success('Invoice status updated.')
-      else toast.error(result.error)
+      const result = await callAction(
+        () =>
+          changeInvoiceStatusAction({ data: { id: invoiceId, status: next } }),
+        'Could not update the invoice status. Try again.',
+      )
+      if (result?.ok) toast.success('Invoice status updated.')
+      else if (result) toast.error(result.error)
       setConfirmVoid(false)
       await router.invalidate()
     } finally {
@@ -57,9 +60,12 @@ export function InvoiceStatusActions({
   const send = async () => {
     setBusy(true)
     try {
-      const result = await sendInvoiceEmailAction({ data: { id: invoiceId } })
-      if (result.ok) toast.success(`Invoice emailed to ${result.to}.`)
-      else toast.error(result.error)
+      const result = await callAction(
+        () => sendInvoiceEmailAction({ data: { id: invoiceId } }),
+        'Could not send the invoice email. Try again.',
+      )
+      if (result?.ok) toast.success(`Invoice emailed to ${result.to}.`)
+      else if (result) toast.error(result.error)
       await router.invalidate()
     } finally {
       setBusy(false)

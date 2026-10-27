@@ -43,6 +43,7 @@ import {
 import type { CategoryRow, ServiceRow } from '#/server/services'
 import { saveServiceAction } from '#/server/services-actions'
 import { toast } from 'sonner'
+import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 export type ServiceChoice = { id: string; name: string; active: boolean }
 
@@ -174,7 +175,11 @@ function ServiceForm({
     validators: { onSubmit: serviceSchema },
     onSubmit: async ({ value }) => {
       setServerErrors({})
-      const result = await saveServiceAction({ data: value })
+      const result = await callAction(
+        () => saveServiceAction({ data: value }),
+        'Could not save the service. Try again.',
+      )
+      if (!result) return
       if (result.ok) {
         toast.success('Service saved.')
         await router.invalidate()
@@ -182,7 +187,7 @@ function ServiceForm({
         return
       }
       setServerErrors(result.errors)
-      if (result.errors.form) toast.error(result.errors.form)
+      toastFormErrors(result.errors)
     },
   })
 

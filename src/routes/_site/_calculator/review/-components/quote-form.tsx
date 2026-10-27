@@ -24,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { quoteDetailsSchema } from '#/lib/quotes'
 import { submitQuoteAction } from '#/server/quote-actions'
 import { useCalculator } from '../../-components/calculator-context'
+import { callAction } from '#/lib/action-errors'
 
 export function QuoteForm({ turnstileSiteKey }: { turnstileSiteKey: string }) {
   const { catalog, state, evaluation } = useCalculator()
@@ -52,9 +53,18 @@ export function QuoteForm({ turnstileSiteKey }: { turnstileSiteKey: string }) {
         toast.error('Complete the spam check.')
         return
       }
-      const result = await submitQuoteAction({
-        data: { ...value, turnstileToken: token, selections },
-      })
+      const result = await callAction(
+        () =>
+          submitQuoteAction({
+            data: { ...value, turnstileToken: token, selections },
+          }),
+        'Could not send your quote request. Try again.',
+      )
+      if (!result) {
+        setToken('')
+        setWidgetKey((key) => key + 1)
+        return
+      }
       if (result.ok) {
         toast.success('Quote request sent.')
         setSent(true)

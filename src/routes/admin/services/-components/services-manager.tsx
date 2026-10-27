@@ -32,6 +32,7 @@ import {
 import { CategoriesDialog } from './categories-dialog'
 import { ServiceDialog, type ServiceChoice } from './service-dialog'
 import { toast } from 'sonner'
+import { callAction } from '#/lib/action-errors'
 
 export function ServicesManager({
   services,
@@ -54,8 +55,13 @@ export function ServicesManager({
   ) => {
     setBusy(true)
     try {
-      const result = await action()
-      if (!result.ok) toast.error(result.error ?? 'Something went wrong.')
+      const result = await callAction(
+        action,
+        'Could not update the services. Try again.',
+      )
+      if (result && !result.ok) {
+        toast.error(result.error ?? 'Something went wrong.')
+      }
       await router.invalidate()
     } finally {
       setBusy(false)

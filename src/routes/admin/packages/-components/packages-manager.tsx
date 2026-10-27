@@ -21,6 +21,7 @@ import {
 } from '#/server/packages-actions'
 import { PackageDialog, type ServiceChoice } from './package-dialog'
 import { toast } from 'sonner'
+import { callAction } from '#/lib/action-errors'
 
 export function PackagesManager({
   packages,
@@ -40,8 +41,13 @@ export function PackagesManager({
   ) => {
     setBusy(true)
     try {
-      const result = await action()
-      if (!result.ok) toast.error(result.error ?? 'Something went wrong.')
+      const result = await callAction(
+        action,
+        'Could not update the packages. Try again.',
+      )
+      if (result && !result.ok) {
+        toast.error(result.error ?? 'Something went wrong.')
+      }
       await router.invalidate()
     } finally {
       setBusy(false)

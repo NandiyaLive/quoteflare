@@ -36,6 +36,7 @@ import {
 } from '#/lib/settings'
 import { updateSettings } from '#/server/settings-actions'
 import { toast } from 'sonner'
+import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 type FieldName = Exclude<keyof SettingsFormValues, 'sendReminders'>
 
@@ -48,16 +49,18 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
     validators: { onSubmit: settingsSchema },
     onSubmit: async ({ value }) => {
       setServerErrors({})
-      const result = await updateSettings({ data: value })
+      const result = await callAction(
+        () => updateSettings({ data: value }),
+        'Could not save the settings. Try again.',
+      )
+      if (!result) return
       if (result.ok) {
         toast.success('Settings saved.')
         await router.invalidate()
         return
       }
       setServerErrors(result.errors)
-      toast.error(
-        result.errors.form ?? 'Fix the highlighted fields and try again.',
-      )
+      toastFormErrors(result.errors)
     },
   })
 

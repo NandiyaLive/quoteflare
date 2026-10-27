@@ -42,6 +42,7 @@ import {
 import { InvoiceStatusActions } from './invoice-status-actions'
 import { InvoiceTotalsList } from '@/components/common/invoice-totals-list'
 import { toast } from 'sonner'
+import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 type Context = Awaited<ReturnType<typeof getInvoiceFormContext>>
 
@@ -104,10 +105,14 @@ export function InvoiceEditor({
     validators: { onSubmit: invoiceSchema },
     onSubmit: async ({ value, formApi }) => {
       setServerErrors({})
-      const result = await saveInvoiceAction({ data: value })
+      const result = await callAction(
+        () => saveInvoiceAction({ data: value }),
+        'Could not save the invoice. Try again.',
+      )
+      if (!result) return
       if (!result.ok) {
         setServerErrors(result.errors)
-        if (result.errors.form) toast.error(result.errors.form)
+        toastFormErrors(result.errors)
         return
       }
       if (invoice) {

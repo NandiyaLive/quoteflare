@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { clientSchema, emptyClient, type ClientFormValues } from '#/lib/clients'
 import { saveClientAction } from '#/server/clients-actions'
 import { toast } from 'sonner'
+import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 export function ClientDialog({
   open,
@@ -57,7 +58,11 @@ function ClientForm({
     validators: { onSubmit: clientSchema },
     onSubmit: async ({ value }) => {
       setServerErrors({})
-      const result = await saveClientAction({ data: value })
+      const result = await callAction(
+        () => saveClientAction({ data: value }),
+        'Could not save the client. Try again.',
+      )
+      if (!result) return
       if (result.ok) {
         toast.success('Client saved.')
         await router.invalidate()
@@ -65,7 +70,7 @@ function ClientForm({
         return
       }
       setServerErrors(result.errors)
-      if (result.errors.form) toast.error(result.errors.form)
+      toastFormErrors(result.errors)
     },
   })
 

@@ -42,6 +42,7 @@ import {
   saveScheduleAction,
 } from '#/server/recurring-actions'
 import { toast } from 'sonner'
+import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 type Context = Awaited<ReturnType<typeof getRecurringFormContext>>
 
@@ -67,10 +68,14 @@ export function RecurringEditor({
     validators: { onSubmit: recurringSchema },
     onSubmit: async ({ value }) => {
       setServerErrors({})
-      const result = await saveScheduleAction({ data: value })
+      const result = await callAction(
+        () => saveScheduleAction({ data: value }),
+        'Could not save the schedule. Try again.',
+      )
+      if (!result) return
       if (!result.ok) {
         setServerErrors(result.errors)
-        if (result.errors.form) toast.error(result.errors.form)
+        toastFormErrors(result.errors)
         return
       }
       if (schedule) {

@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { LOGO_ACCEPT } from '#/lib/settings'
 import { uploadLogo } from '#/server/settings-actions'
 import { toast } from 'sonner'
+import { describeFailure } from '#/lib/action-errors'
 
 export function LogoUpload({ logoKey }: { logoKey: string | null }) {
   const router = useRouter()
@@ -37,8 +38,9 @@ export function LogoUpload({ logoKey }: { logoKey: string | null }) {
       toast.success('Logo uploaded.')
       form.reset()
       await router.invalidate()
-    } catch {
-      toast.error('The upload failed. Try again.')
+    } catch (error) {
+      console.error(error)
+      toast.error(describeFailure(error, 'The upload failed. Try again.'))
     } finally {
       setUploading(false)
     }

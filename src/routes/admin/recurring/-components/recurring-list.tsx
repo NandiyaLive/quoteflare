@@ -23,6 +23,8 @@ import { formatMinor } from '#/lib/decimal'
 import { RECURRING_INTERVAL_LABELS } from '#/lib/recurring'
 import type { RecurringRow } from '#/server/recurring'
 import { setScheduleActiveAction } from '#/server/recurring-actions'
+import { callAction } from '#/lib/action-errors'
+import { toast } from 'sonner'
 
 export function RecurringList({ schedules }: { schedules: RecurringRow[] }) {
   const router = useRouter()
@@ -40,9 +42,16 @@ export function RecurringList({ schedules }: { schedules: RecurringRow[] }) {
       }))
     )
       return
-    await setScheduleActiveAction({
-      data: { id: schedule.id, active: !schedule.active },
-    })
+    const result = await callAction(
+      () =>
+        setScheduleActiveAction({
+          data: { id: schedule.id, active: !schedule.active },
+        }),
+      'Could not update the schedule. Try again.',
+    )
+    if (result && !result.ok) {
+      toast.error('Schedule not found. Reload the page.')
+    }
     await router.invalidate()
   }
 

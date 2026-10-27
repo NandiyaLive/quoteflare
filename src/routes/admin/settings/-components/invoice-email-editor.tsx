@@ -30,6 +30,7 @@ import {
   updateInvoiceEmailTemplate,
 } from '#/server/settings-actions'
 import { toast } from 'sonner'
+import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 export function InvoiceEmailEditor({
   initial,
@@ -48,16 +49,18 @@ export function InvoiceEmailEditor({
     validators: { onSubmit: invoiceEmailTemplateSchema },
     onSubmit: async ({ value }) => {
       setServerErrors({})
-      const result = await updateInvoiceEmailTemplate({ data: value })
+      const result = await callAction(
+        () => updateInvoiceEmailTemplate({ data: value }),
+        'Could not save the template. Try again.',
+      )
+      if (!result) return
       if (result.ok) {
         toast.success('Template saved.')
         await router.invalidate()
         return
       }
       setServerErrors(result.errors)
-      toast.error(
-        result.errors.form ?? 'Fix the highlighted fields and try again.',
-      )
+      toastFormErrors(result.errors)
     },
   })
 

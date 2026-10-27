@@ -8,6 +8,7 @@ import type { InvoiceAdvance } from '#/lib/invoices'
 import type { InvoiceStatus } from '#/db/schema'
 import { setAdvancePaidAction } from '#/server/invoices-actions'
 import { toast } from 'sonner'
+import { callAction } from '#/lib/action-errors'
 
 export function AdvancePaymentCard({
   invoiceId,
@@ -28,9 +29,14 @@ export function AdvancePaymentCard({
   const toggle = async () => {
     setBusy(true)
     try {
-      const result = await setAdvancePaidAction({
-        data: { id: invoiceId, paid: !advance.paidAt },
-      })
+      const result = await callAction(
+        () =>
+          setAdvancePaidAction({
+            data: { id: invoiceId, paid: !advance.paidAt },
+          }),
+        'Could not update the advance payment. Try again.',
+      )
+      if (!result) return
       if (result.ok) {
         toast.success(
           result.paidAt ? 'Advance marked as paid.' : 'Advance marked unpaid.',

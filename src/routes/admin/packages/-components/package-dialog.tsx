@@ -31,6 +31,7 @@ import {
 import type { PackageRow } from '#/server/packages'
 import { savePackageAction } from '#/server/packages-actions'
 import { toast } from 'sonner'
+import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 export type ServiceChoice = {
   id: string
@@ -100,7 +101,11 @@ function PackageForm({
     validators: { onSubmit: packageSchema },
     onSubmit: async ({ value }) => {
       setServerErrors({})
-      const result = await savePackageAction({ data: value })
+      const result = await callAction(
+        () => savePackageAction({ data: value }),
+        'Could not save the package. Try again.',
+      )
+      if (!result) return
       if (result.ok) {
         toast.success('Package saved.')
         await router.invalidate()
@@ -108,7 +113,7 @@ function PackageForm({
         return
       }
       setServerErrors(result.errors)
-      if (result.errors.form) toast.error(result.errors.form)
+      toastFormErrors(result.errors)
     },
   })
 

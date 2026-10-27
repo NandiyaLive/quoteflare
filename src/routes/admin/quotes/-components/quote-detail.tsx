@@ -28,6 +28,7 @@ import {
 import type { QuoteRow } from '#/server/quotes'
 import { QuoteStatusBadge } from './quote-status-badge'
 import { toast } from 'sonner'
+import { callAction } from '#/lib/action-errors'
 
 function LinesTable({
   lines,
@@ -114,12 +115,13 @@ export function QuoteDetail({
       return
     setBusy(true)
     try {
-      const result = await setQuoteStatusAction({
-        data: { id: quote.id, status },
-      })
-      if (result.ok)
+      const result = await callAction(
+        () => setQuoteStatusAction({ data: { id: quote.id, status } }),
+        'Could not update the quote. Try again.',
+      )
+      if (result?.ok)
         toast.success(status === 'new' ? 'Quote reopened.' : 'Quote dismissed.')
-      else toast.error('This quote can no longer be changed.')
+      else if (result) toast.error('This quote can no longer be changed.')
       await router.invalidate()
     } finally {
       setBusy(false)
@@ -129,9 +131,14 @@ export function QuoteDetail({
   const createInvoice = async () => {
     setBusy(true)
     try {
-      const result = await convertQuoteAction({
-        data: { id: quote.id, advancePercent: advance ? percent : null },
-      })
+      const result = await callAction(
+        () =>
+          convertQuoteAction({
+            data: { id: quote.id, advancePercent: advance ? percent : null },
+          }),
+        'Could not create the invoice. Try again.',
+      )
+      if (!result) return
       if (!result.ok) {
         toast.error(result.error)
         return

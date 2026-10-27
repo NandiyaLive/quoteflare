@@ -19,6 +19,8 @@ import { toClientFormValues } from '#/lib/clients'
 import type { ClientInvoiceRow, ClientRow } from '#/server/clients'
 import { setClientArchivedAction } from '#/server/clients-actions'
 import { ClientDialog } from './client-dialog'
+import { callAction } from '#/lib/action-errors'
+import { toast } from 'sonner'
 
 export function ClientDetail({
   client,
@@ -43,9 +45,14 @@ export function ClientDetail({
       }))
     )
       return
-    await setClientArchivedAction({
-      data: { id: client.id, archived: !client.archived },
-    })
+    const result = await callAction(
+      () =>
+        setClientArchivedAction({
+          data: { id: client.id, archived: !client.archived },
+        }),
+      'Could not update the client. Try again.',
+    )
+    if (result && !result.ok) toast.error('Client not found. Reload the page.')
     await router.invalidate()
   }
 
