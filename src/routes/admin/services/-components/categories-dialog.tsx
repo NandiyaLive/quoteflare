@@ -3,6 +3,7 @@ import { useForm } from '@tanstack/react-form'
 import { useRouter } from '@tanstack/react-router'
 import { ArrowDownIcon, ArrowUpIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ButtonGroup } from '@/components/ui/button-group'
 import {
   Dialog,
   DialogContent,
@@ -119,35 +120,37 @@ function CategoriesForm({
                     )
                   }}
                 </form.Field>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Move category ${index + 1} up`}
-                  disabled={index === 0}
-                  onClick={() => listField.moveValue(index, index - 1)}
-                >
-                  <ArrowUpIcon />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Move category ${index + 1} down`}
-                  disabled={index === listField.state.value.length - 1}
-                  onClick={() => listField.moveValue(index, index + 1)}
-                >
-                  <ArrowDownIcon />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Remove category ${index + 1}`}
-                  onClick={() => listField.removeValue(index)}
-                >
-                  <Trash2Icon />
-                </Button>
+                <ButtonGroup>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label={`Move category ${index + 1} up`}
+                    disabled={index === 0}
+                    onClick={() => listField.moveValue(index, index - 1)}
+                  >
+                    <ArrowUpIcon />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label={`Move category ${index + 1} down`}
+                    disabled={index === listField.state.value.length - 1}
+                    onClick={() => listField.moveValue(index, index + 1)}
+                  >
+                    <ArrowDownIcon />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label={`Remove category ${index + 1}`}
+                    onClick={() => listField.removeValue(index)}
+                  >
+                    <Trash2Icon />
+                  </Button>
+                </ButtonGroup>
               </div>
             ))}
             <Button

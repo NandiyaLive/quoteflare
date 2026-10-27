@@ -12,6 +12,7 @@ import {
 import PageHeader from '@/components/common/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ButtonGroup } from '@/components/ui/button-group'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
@@ -109,28 +110,30 @@ export function ClientsList({ clients }: { clients: ClientRow[] }) {
         cell: ({ row }) => {
           const client = row.original
           return (
-            <div className="flex justify-end gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Edit ${client.name}`}
-                onClick={() =>
-                  setDialog({
-                    open: true,
-                    client: toClientFormValues(client),
-                  })
-                }
-              >
-                <PencilIcon />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`${client.archived ? 'Restore' : 'Archive'} ${client.name}`}
-                onClick={() => void toggleArchived(client)}
-              >
-                {client.archived ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
-              </Button>
+            <div className="flex justify-end">
+              <ButtonGroup>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={`Edit ${client.name}`}
+                  onClick={() =>
+                    setDialog({
+                      open: true,
+                      client: toClientFormValues(client),
+                    })
+                  }
+                >
+                  <PencilIcon />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={`${client.archived ? 'Restore' : 'Archive'} ${client.name}`}
+                  onClick={() => void toggleArchived(client)}
+                >
+                  {client.archived ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
+                </Button>
+              </ButtonGroup>
             </div>
           )
         },
