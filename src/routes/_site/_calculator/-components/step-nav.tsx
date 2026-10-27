@@ -1,11 +1,10 @@
 import { Link } from '@tanstack/react-router'
-import Container from '@/components/common/container'
 import { STEPS } from './steps'
 
 export function StepNav() {
   return (
     <div className="sticky top-14 z-40 border-b bg-background/80 backdrop-blur">
-      <Container>
+      <div className="container">
         <nav
           aria-label="Calculator steps"
           className="flex gap-6 overflow-x-auto sm:gap-8 scrollbar-none [&::-webkit-scrollbar]:hidden"
@@ -25,7 +24,7 @@ export function StepNav() {
             </Link>
           ))}
         </nav>
-      </Container>
+      </div>
     </div>
   )
 }

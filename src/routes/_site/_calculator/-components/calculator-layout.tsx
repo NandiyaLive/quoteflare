@@ -1,5 +1,4 @@
 import { Outlet } from '@tanstack/react-router'
-import Container from '@/components/common/container'
 import PageHeader from '@/components/common/page-header'
 import type { CalculatorCatalog } from '#/lib/calculator'
 import { CalculatorProvider, useCalculator } from './calculator-context'
@@ -11,14 +10,14 @@ function Shell() {
   const { catalog, evaluation } = useCalculator()
   return (
     <div className="flex flex-col gap-8">
-      <Container>
+      <div className="container">
         <PageHeader
           title="Price calculator"
           description="Work through the steps. The estimate updates as you choose."
         />
-      </Container>
+      </div>
       <StepNav />
-      <Container className="pb-20 lg:pb-0">
+      <div className="container pb-20 lg:pb-0">
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-10">
           <div className="flex min-w-0 flex-col gap-8 empty:hidden">
             <Outlet />
@@ -30,7 +29,7 @@ function Shell() {
             taxRateBps={catalog.taxRateBps}
           />
         </div>
-      </Container>
+      </div>
     </div>
   )
 }
