@@ -1,20 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
-import PageHeader from '@/components/common/page-header'
+import { getOverview } from '#/server/overview-actions'
+import { OverviewPage } from './-components/overview'
 
 export const Route = createFileRoute('/admin/')({
+  loader: () => getOverview(),
   component: AdminHome,
 })
 
 function AdminHome() {
   const { admin } = Route.useRouteContext()
-  return (
-    <PageHeader
-      title="Dashboard"
-      description={
-        <>
-          Signed in as <span data-testid="admin-email">{admin.email}</span>
-        </>
-      }
-    />
-  )
+  return <OverviewPage overview={Route.useLoaderData()} email={admin.email} />
 }
