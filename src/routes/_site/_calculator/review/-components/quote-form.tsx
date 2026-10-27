@@ -124,6 +124,7 @@ export function QuoteForm({ turnstileSiteKey }: { turnstileSiteKey: string }) {
       </CardHeader>
       <form
         noValidate
+        className="flex flex-col gap-(--card-spacing)"
         onSubmit={(e) => {
           e.preventDefault()
           void form.handleSubmit()

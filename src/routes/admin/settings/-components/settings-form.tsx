@@ -106,6 +106,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
       </CardHeader>
       <form
         noValidate
+        className="flex flex-col gap-(--card-spacing)"
         onSubmit={(e) => {
           e.preventDefault()
           void form.handleSubmit()
