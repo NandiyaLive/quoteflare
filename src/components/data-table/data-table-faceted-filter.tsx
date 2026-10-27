@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import type * as React from "react";
+import type * as React from 'react'
 
-import { type Column, type RowData, Subscribe } from "@tanstack/react-table";
+import { type Column, type RowData, Subscribe } from '@tanstack/react-table'
 
-import type { DataTableFeatures } from "@/lib/data-table-features";
-import type { FilterOption } from "@/lib/data-table-types";
+import type { DataTableFeatures } from '@/lib/data-table-features'
+import type { FilterOption } from '@/lib/data-table-types'
 
-import { Button } from "@/components/ui/button";
-import { useDirection } from "@/components/ui/direction";
+import { Button } from '@/components/ui/button'
+import { useDirection } from '@/components/ui/direction'
 import {
   Faceted,
   FacetedBadge,
@@ -23,15 +23,15 @@ import {
   FacetedList,
   FacetedTrigger,
   FacetedValue,
-} from "@/components/ui/faceted";
-import { Separator } from "@/components/ui/separator";
-import { XCircle, PlusCircle } from "lucide-react";
+} from '@/components/ui/faceted'
+import { Separator } from '@/components/ui/separator'
+import { XCircle, PlusCircle } from 'lucide-react'
 
 interface DataTableFacetedFilterProps<TData extends RowData, TValue> {
-  column?: Column<DataTableFeatures, TData, TValue>;
-  title?: string;
-  options: FilterOption[];
-  multiple?: boolean;
+  column?: Column<DataTableFeatures, TData, TValue>
+  title?: string
+  options: FilterOption[]
+  multiple?: boolean
 }
 
 export function DataTableFacetedFilter<TData extends RowData, TValue>({
@@ -39,7 +39,7 @@ export function DataTableFacetedFilter<TData extends RowData, TValue>({
   ...props
 }: DataTableFacetedFilterProps<TData, TValue>) {
   if (!column) {
-    return <DataTableFacetedFilterContent column={column} {...props} />;
+    return <DataTableFacetedFilterContent column={column} {...props} />
   }
 
   return (
@@ -55,14 +55,14 @@ export function DataTableFacetedFilter<TData extends RowData, TValue>({
         />
       )}
     </Subscribe>
-  );
+  )
 }
 
 interface DataTableFacetedFilterContentProps<
   TData extends RowData,
   TValue,
 > extends DataTableFacetedFilterProps<TData, TValue> {
-  columnFilterValue?: unknown;
+  columnFilterValue?: unknown
 }
 
 function DataTableFacetedFilterContent<TData extends RowData, TValue>({
@@ -72,22 +72,22 @@ function DataTableFacetedFilterContent<TData extends RowData, TValue>({
   multiple = false,
   columnFilterValue,
 }: DataTableFacetedFilterContentProps<TData, TValue>) {
-  const dir = useDirection();
+  const dir = useDirection()
   const selectedValues = Array.isArray(columnFilterValue)
     ? columnFilterValue.filter(
-        (value): value is string => typeof value === "string",
+        (value): value is string => typeof value === 'string',
       )
-    : [];
-  const hasSelection = selectedValues.length > 0;
+    : []
+  const hasSelection = selectedValues.length > 0
 
   function onValueChange(value: string | string[] | undefined) {
-    const values = Array.isArray(value) ? value : value ? [value] : [];
-    column?.setFilterValue(values.length > 0 ? values : undefined);
+    const values = Array.isArray(value) ? value : value ? [value] : []
+    column?.setFilterValue(values.length > 0 ? values : undefined)
   }
 
   function onReset(event?: React.MouseEvent) {
-    event?.stopPropagation();
-    column?.setFilterValue(undefined);
+    event?.stopPropagation()
+    column?.setFilterValue(undefined)
   }
 
   return (
@@ -106,12 +106,10 @@ function DataTableFacetedFilterContent<TData extends RowData, TValue>({
             className="rounded-sm opacity-70 transition-opacity hover:opacity-100"
             onClick={onReset}
           >
-            <XCircle
-            />
+            <XCircle />
           </span>
         ) : (
-          <PlusCircle
-          />
+          <PlusCircle />
         )}
         {title}
         {hasSelection && (
@@ -155,5 +153,5 @@ function DataTableFacetedFilterContent<TData extends RowData, TValue>({
         </FacetedList>
       </FacetedContent>
     </Faceted>
-  );
+  )
 }

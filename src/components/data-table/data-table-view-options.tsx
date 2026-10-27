@@ -1,17 +1,13 @@
-"use client";
+'use client'
 
-import {
-  type ReactTable,
-  type RowData,
-  Subscribe,
-} from "@tanstack/react-table";
-import { cn } from "@/lib/utils";
-import * as React from "react";
+import { type ReactTable, type RowData, Subscribe } from '@tanstack/react-table'
+import { cn } from '@/lib/utils'
+import * as React from 'react'
 
-import type { DataTableFeatures } from "@/lib/data-table-features";
+import type { DataTableFeatures } from '@/lib/data-table-features'
 
-import { Button } from "@/components/ui/button";
-import { useDirection } from "@/components/ui/direction";
+import { Button } from '@/components/ui/button'
+import { useDirection } from '@/components/ui/direction'
 import {
   Faceted,
   FacetedContent,
@@ -22,14 +18,14 @@ import {
   FacetedItemIndicator,
   FacetedList,
   FacetedTrigger,
-} from "@/components/ui/faceted";
-import { Settings2 } from "lucide-react";
+} from '@/components/ui/faceted'
+import { Settings2 } from 'lucide-react'
 
 interface DataTableViewOptionsProps<
   TData extends RowData,
 > extends React.ComponentProps<typeof FacetedContent> {
-  table: ReactTable<DataTableFeatures, TData, unknown>;
-  disabled?: boolean;
+  table: ReactTable<DataTableFeatures, TData, unknown>
+  disabled?: boolean
 }
 
 export function DataTableViewOptions<TData extends RowData>({
@@ -38,17 +34,17 @@ export function DataTableViewOptions<TData extends RowData>({
   className,
   ...props
 }: DataTableViewOptionsProps<TData>) {
-  const dir = useDirection();
+  const dir = useDirection()
   const columns = React.useMemo(
     () =>
       table
         .getAllColumns()
         .filter(
           (column) =>
-            typeof column.accessorFn !== "undefined" && column.getCanHide(),
+            typeof column.accessorFn !== 'undefined' && column.getCanHide(),
         ),
     [table],
-  );
+  )
 
   return (
     <Subscribe source={table.atoms.columnVisibility}>
@@ -76,7 +72,7 @@ export function DataTableViewOptions<TData extends RowData>({
             aria-label="Columns"
             dir={dir}
             align="center"
-            className={cn("w-44", className)}
+            className={cn('w-44', className)}
             {...props}
           >
             <FacetedInput placeholder="Search columns..." />
@@ -101,5 +97,5 @@ export function DataTableViewOptions<TData extends RowData>({
         </Faceted>
       )}
     </Subscribe>
-  );
+  )
 }

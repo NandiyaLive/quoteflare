@@ -29,83 +29,83 @@ import {
   type TableFeatures,
   tableFeatures,
   type Updater,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table'
 
 import type {
   ColumnFilterItem,
   DataTableColumnMeta,
   JoinOperator,
-} from "@/lib/data-table-types";
+} from '@/lib/data-table-types'
 
 import {
   createDataTableFacetedRowModel,
   createDataTableFilteredRowModel,
   dataTableFilterFn,
-} from "@/lib/data-table-filters";
+} from '@/lib/data-table-filters'
 import {
   getIsPlainFilter,
   getPlainFilterValue,
   normalizeColumnFilter,
-} from "@/lib/data-table-utils";
+} from '@/lib/data-table-utils'
 
 interface TableState_DataTableFiltering {
-  joinOperator: JoinOperator;
+  joinOperator: JoinOperator
 }
 
 interface TableOptions_DataTableFiltering {
-  onJoinOperatorChange?: OnChangeFn<JoinOperator>;
+  onJoinOperatorChange?: OnChangeFn<JoinOperator>
 }
 
 interface Table_DataTableFiltering {
-  getColumnFilterItems: () => ColumnFilterItem[];
-  addColumnFilter: (filter: ColumnFilterItem) => void;
+  getColumnFilterItems: () => ColumnFilterItem[]
+  addColumnFilter: (filter: ColumnFilterItem) => void
   updateColumnFilter: (
     filterId: string,
-    updates: Partial<Omit<ColumnFilterItem, "filterId">>,
-  ) => void;
-  removeColumnFilter: (filterId: string) => void;
-  getJoinOperator: () => JoinOperator;
-  setJoinOperator: (updater: Updater<JoinOperator>) => void;
-  resetJoinOperator: (defaultState?: boolean) => void;
+    updates: Partial<Omit<ColumnFilterItem, 'filterId'>>,
+  ) => void
+  removeColumnFilter: (filterId: string) => void
+  getJoinOperator: () => JoinOperator
+  setJoinOperator: (updater: Updater<JoinOperator>) => void
+  resetJoinOperator: (defaultState?: boolean) => void
 }
 
-declare module "@tanstack/react-table" {
+declare module '@tanstack/react-table' {
   interface Plugins {
-    dataTableFilteringFeature: TableFeature;
+    dataTableFilteringFeature: TableFeature
   }
 
   interface TableState_FeatureMap {
-    dataTableFilteringFeature: TableState_DataTableFiltering;
+    dataTableFilteringFeature: TableState_DataTableFiltering
   }
 
   interface TableOptions_FeatureMap<
     in out TFeatures extends TableFeatures,
     in out TData extends RowData,
   > {
-    dataTableFilteringFeature: TableOptions_DataTableFiltering;
+    dataTableFilteringFeature: TableOptions_DataTableFiltering
   }
 
   interface Table_FeatureMap<
     in out TFeatures extends TableFeatures,
     in out TData extends RowData,
   > {
-    dataTableFilteringFeature: Table_DataTableFiltering;
+    dataTableFilteringFeature: Table_DataTableFiltering
   }
 }
 
-type DataTableInstance = Table<DataTableFeatures, RowData>;
+type DataTableInstance = Table<DataTableFeatures, RowData>
 
 /**
  * Feature hooks get a `Table` generic over any features. This feature is only
  * registered in `dataTableFeatures`, so its hooks can use that table's types.
  */
 function asDataTable(table: object) {
-  return table as DataTableInstance;
+  return table as DataTableInstance
 }
 
 const dataTableFilteringFeature: TableFeature = {
   getInitialState: (initialState) => ({
-    joinOperator: "and",
+    joinOperator: 'and',
     ...initialState,
   }),
   getDefaultColumnDef: () => ({
@@ -114,14 +114,14 @@ const dataTableFilteringFeature: TableFeature = {
   }),
   getDefaultTableOptions: (table) => {
     const options: TableOptions_DataTableFiltering = {
-      onJoinOperatorChange: makeStateUpdater("joinOperator", table),
-    };
-    return options;
+      onJoinOperatorChange: makeStateUpdater('joinOperator', table),
+    }
+    return options
   },
   assignColumnPrototype: (prototype, table) => {
-    const instance = asDataTable(table);
+    const instance = asDataTable(table)
 
-    assignPrototypeAPIs("dataTableFilteringFeature", prototype, table, {
+    assignPrototypeAPIs('dataTableFilteringFeature', prototype, table, {
       column_getFilterValue: {
         fn: (column: { id: string }) =>
           getPlainFilter(
@@ -135,25 +135,25 @@ const dataTableFilteringFeature: TableFeature = {
         fn: (column: { id: string }, updater: Updater<unknown>) =>
           setPlainFilter(instance, column.id, updater),
       },
-    });
+    })
   },
   constructTableAPIs: (table) => {
-    const instance = asDataTable(table);
+    const instance = asDataTable(table)
     const resolve = (filter: ColumnFilter) =>
       normalizeColumnFilter(
         filter,
-        instance.getColumn(filter.id)?.columnDef.meta?.variant ?? "text",
-      );
+        instance.getColumn(filter.id)?.columnDef.meta?.variant ?? 'text',
+      )
 
     const setJoinOperator = (updater: Updater<JoinOperator>) =>
       instance.options.onJoinOperatorChange?.((old) =>
         functionalUpdate(updater, old),
-      );
+      )
 
-    assignTableAPIs("dataTableFilteringFeature", table, {
+    assignTableAPIs('dataTableFilteringFeature', table, {
       table_setColumnFilters: {
         fn: (updater: Updater<ColumnFilter[]>) =>
-          setStateSlice(table, "columnFilters", (old: ColumnFilter[]) =>
+          setStateSlice(table, 'columnFilters', (old: ColumnFilter[]) =>
             functionalUpdate(updater, old).filter(
               (filter) => !getShouldRemoveFilter(filter, instance),
             ),
@@ -170,14 +170,14 @@ const dataTableFilteringFeature: TableFeature = {
       table_updateColumnFilter: {
         fn: (
           filterId: string,
-          updates: Partial<Omit<ColumnFilterItem, "filterId">>,
+          updates: Partial<Omit<ColumnFilterItem, 'filterId'>>,
         ) =>
           instance.setColumnFilters((old) =>
             old.map((filter) => {
-              const item = resolve(filter);
+              const item = resolve(filter)
               return item.filterId === filterId
                 ? { ...item, ...updates }
-                : filter;
+                : filter
             }),
           ),
       },
@@ -195,13 +195,13 @@ const dataTableFilteringFeature: TableFeature = {
         fn: (defaultState?: boolean) =>
           setJoinOperator(
             defaultState
-              ? "and"
-              : (instance.initialState.joinOperator ?? "and"),
+              ? 'and'
+              : (instance.initialState.joinOperator ?? 'and'),
           ),
       },
-    });
+    })
   },
-};
+}
 
 function getPlainFilter(
   instance: DataTableInstance,
@@ -209,18 +209,18 @@ function getPlainFilter(
   filters: ColumnFilter[],
 ) {
   const variant =
-    instance.getColumn(columnId)?.columnDef.meta?.variant ?? "text";
+    instance.getColumn(columnId)?.columnDef.meta?.variant ?? 'text'
   const index = filters.findIndex(
     (filter) =>
       filter.id === columnId &&
       getIsPlainFilter(normalizeColumnFilter(filter, variant)),
-  );
-  const filter = filters[index];
+  )
+  const filter = filters[index]
   const value = filter
     ? getPlainFilterValue(normalizeColumnFilter(filter, variant))
-    : undefined;
+    : undefined
 
-  return { index, filter, value };
+  return { index, filter, value }
 }
 
 function setPlainFilter(
@@ -233,17 +233,17 @@ function setPlainFilter(
       index,
       filter: previous,
       value: previousValue,
-    } = getPlainFilter(instance, columnId, old);
-    const value = functionalUpdate(updater, previousValue);
+    } = getPlainFilter(instance, columnId, old)
+    const value = functionalUpdate(updater, previousValue)
     const next: ColumnFilter = previous?.filterId
       ? { id: columnId, value, filterId: previous.filterId }
-      : { id: columnId, value };
+      : { id: columnId, value }
 
-    if (index === -1) return [...old, next];
+    if (index === -1) return [...old, next]
     return old.map((filter, filterIndex) =>
       filterIndex === index ? next : filter,
-    );
-  });
+    )
+  })
 }
 
 /**
@@ -255,17 +255,17 @@ function getShouldRemoveFilter(
   filter: ColumnFilter,
   instance: DataTableInstance,
 ) {
-  if (filter.value === undefined) return true;
-  if (filter.operator) return false;
+  if (filter.value === undefined) return true
+  if (filter.operator) return false
 
-  const column = instance.getColumn(filter.id);
-  if (!column) return false;
+  const column = instance.getColumn(filter.id)
+  if (!column) return false
 
-  const filterFn = column.getFilterFn();
+  const filterFn = column.getFilterFn()
   if (filterFn?.autoRemove) {
-    return filterFn.autoRemove(filter.value, column);
+    return filterFn.autoRemove(filter.value, column)
   }
-  return typeof filter.value === "string" && !filter.value;
+  return typeof filter.value === 'string' && !filter.value
 }
 
 export const dataTableFeatures = tableFeatures({
@@ -291,6 +291,6 @@ export const dataTableFeatures = tableFeatures({
     text: sortFn_text,
   },
   columnMeta: metaHelper<DataTableColumnMeta>(),
-});
+})
 
-export type DataTableFeatures = typeof dataTableFeatures;
+export type DataTableFeatures = typeof dataTableFeatures

@@ -1,4 +1,6 @@
+import { PrinterIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -22,7 +24,10 @@ export function PublicInvoiceView({
   const money = (minor: number) => formatMinor(minor, invoice.currency)
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-8 p-4 sm:p-8">
+    <main
+      data-print-root
+      className="mx-auto flex max-w-3xl flex-col gap-8 p-4 sm:p-8"
+    >
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           {business.hasLogo && (
@@ -40,6 +45,16 @@ export function PublicInvoiceView({
         </div>
         <div className="flex flex-col gap-1 sm:items-end">
           <h1 className="text-2xl font-semibold">Invoice {invoice.number}</h1>
+          <Button
+            data-print-hide
+            variant="outline"
+            size="sm"
+            className="mb-1 sm:self-end"
+            onClick={() => window.print()}
+          >
+            <PrinterIcon data-icon="inline-start" />
+            Download PDF
+          </Button>
           <Badge variant={invoice.status === 'paid' ? 'secondary' : 'outline'}>
             {INVOICE_STATUS_LABELS[invoice.status]}
           </Badge>
@@ -95,7 +110,7 @@ export function PublicInvoiceView({
         </TableBody>
       </Table>
 
-      <div className="sm:ml-auto sm:w-72">
+      <div data-print-keep className="sm:ml-auto sm:w-72">
         <InvoiceTotalsList
           totals={totals}
           currency={invoice.currency}
@@ -104,7 +119,7 @@ export function PublicInvoiceView({
       </div>
 
       {business.paymentInstructions && (
-        <section className="flex flex-col gap-1 text-sm">
+        <section data-print-keep className="flex flex-col gap-1 text-sm">
           <h3 className="font-medium">Payment instructions</h3>
           <p className="whitespace-pre-line text-muted-foreground">
             {business.paymentInstructions}

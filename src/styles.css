@@ -129,3 +129,50 @@
     @apply bg-background text-foreground;
   }
 }
+
+@page {
+  size: A4;
+  margin: 15mm;
+}
+
+@media print {
+  html,
+  html.dark {
+    color-scheme: light;
+    --background: #fff;
+    --foreground: #000;
+    --muted-foreground: #444;
+    --border: #bbb;
+    --secondary: #fff;
+    --secondary-foreground: #000;
+  }
+  body {
+    background: #fff;
+    color: #000;
+    print-color-adjust: economy;
+  }
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  [data-print-hide] {
+    display: none !important;
+  }
+  [data-print-root] {
+    max-width: none;
+    padding: 0;
+    gap: 1.5rem;
+  }
+  [data-slot='table-container'] {
+    overflow: visible;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr,
+  [data-print-keep] {
+    break-inside: avoid;
+  }
+}

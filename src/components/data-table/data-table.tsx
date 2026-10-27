@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   type Cell,
@@ -9,20 +9,20 @@ import {
   type Row,
   type RowData,
   Subscribe,
-} from "@tanstack/react-table";
-import { cn } from "@/lib/utils";
-import * as React from "react";
+} from '@tanstack/react-table'
+import { cn } from '@/lib/utils'
+import * as React from 'react'
 
-import type { DataTableFeatures } from "@/lib/data-table-features";
+import type { DataTableFeatures } from '@/lib/data-table-features'
 
 import {
   getAriaSort,
   getColumnPinningStyle,
   getColumnSizingStyle,
   getVisibleSelectedRows,
-} from "@/lib/data-table-utils";
-import { DataTablePagination } from "@/components/data-table/data-table-pagination";
-import { useDirection } from "@/components/ui/direction";
+} from '@/lib/data-table-utils'
+import { DataTablePagination } from '@/components/data-table/data-table-pagination'
+import { useDirection } from '@/components/ui/direction'
 import {
   Table,
   TableBody,
@@ -30,13 +30,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table'
 
 interface DataTableProps<
   TData extends RowData,
-> extends React.ComponentProps<"div"> {
-  table: ReactTable<DataTableFeatures, TData, unknown>;
-  actionBar?: React.ReactNode;
+> extends React.ComponentProps<'div'> {
+  table: ReactTable<DataTableFeatures, TData, unknown>
+  actionBar?: React.ReactNode
 }
 
 export function DataTable<TData extends RowData>({
@@ -44,17 +44,17 @@ export function DataTable<TData extends RowData>({
   actionBar,
   children,
   className,
-  "aria-label": ariaLabel,
-  "aria-labelledby": ariaLabelledBy,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
   ...props
 }: DataTableProps<TData>) {
-  const dir = useDirection();
+  const dir = useDirection()
 
   return (
     <div
       data-slot="data-table"
       dir={dir}
-      className={cn("flex w-full flex-col gap-2.5 overflow-auto", className)}
+      className={cn('flex w-full flex-col gap-2.5 overflow-auto', className)}
       {...props}
     >
       {children}
@@ -75,15 +75,15 @@ export function DataTable<TData extends RowData>({
         ) : null}
       </div>
     </div>
-  );
+  )
 }
 
 interface DataTableLayoutProps<TData extends RowData> extends Pick<
-  React.ComponentProps<"table">,
-  "aria-label" | "aria-labelledby"
+  React.ComponentProps<'table'>,
+  'aria-label' | 'aria-labelledby'
 > {
-  table: ReactTable<DataTableFeatures, TData, unknown>;
-  children: React.ReactNode;
+  table: ReactTable<DataTableFeatures, TData, unknown>
+  children: React.ReactNode
 }
 
 function DataTableLayout<TData extends RowData>({
@@ -110,11 +110,11 @@ function DataTableLayout<TData extends RowData>({
         </Table>
       )}
     </table.Subscribe>
-  );
+  )
 }
 
 interface DataTableHeaderProps<TData extends RowData> {
-  table: ReactTable<DataTableFeatures, TData, unknown>;
+  table: ReactTable<DataTableFeatures, TData, unknown>
 }
 
 function DataTableHeader<TData extends RowData>({
@@ -144,12 +144,12 @@ function DataTableHeader<TData extends RowData>({
         </TableHeader>
       )}
     </table.Subscribe>
-  );
+  )
 }
 
 interface DataTableHeadCellProps<TData extends RowData> {
-  header: Header<DataTableFeatures, TData>;
-  pinned: ColumnPinningPosition;
+  header: Header<DataTableFeatures, TData>
+  pinned: ColumnPinningPosition
 }
 
 function DataTableHeadCell<TData extends RowData>({
@@ -172,17 +172,17 @@ function DataTableHeadCell<TData extends RowData>({
         </TableHead>
       )}
     </Subscribe>
-  );
+  )
 }
 
 interface DataTableBodyProps<TData extends RowData> {
-  table: ReactTable<DataTableFeatures, TData, unknown>;
+  table: ReactTable<DataTableFeatures, TData, unknown>
 }
 
 function DataTableBody<TData extends RowData>({
   table,
 }: DataTableBodyProps<TData>) {
-  const rows = table.getRowModel().rows;
+  const rows = table.getRowModel().rows
 
   if (!rows.length) {
     return (
@@ -200,7 +200,7 @@ function DataTableBody<TData extends RowData>({
           </TableBody>
         )}
       </Subscribe>
-    );
+    )
   }
 
   return (
@@ -209,14 +209,14 @@ function DataTableBody<TData extends RowData>({
         <DataTableRow key={row.id} row={row} />
       ))}
     </TableBody>
-  );
+  )
 }
 
 interface DataTableRowProps<TData extends RowData> {
-  row: Row<DataTableFeatures, TData>;
+  row: Row<DataTableFeatures, TData>
 }
 
-const DataTableRow = React.memo(DataTableRowImpl) as typeof DataTableRowImpl;
+const DataTableRow = React.memo(DataTableRowImpl) as typeof DataTableRowImpl
 
 function DataTableRowImpl<TData extends RowData>({
   row,
@@ -233,7 +233,7 @@ function DataTableRowImpl<TData extends RowData>({
     >
       {({ isSelected }) => (
         <TableRow
-          data-state={isSelected ? "selected" : undefined}
+          data-state={isSelected ? 'selected' : undefined}
           className="group/row"
         >
           {row.getVisibleCells().map((cell) => (
@@ -246,15 +246,15 @@ function DataTableRowImpl<TData extends RowData>({
         </TableRow>
       )}
     </Subscribe>
-  );
+  )
 }
 
 interface DataTableCellProps<TData extends RowData> {
-  cell: Cell<DataTableFeatures, TData>;
-  pinned: ColumnPinningPosition;
+  cell: Cell<DataTableFeatures, TData>
+  pinned: ColumnPinningPosition
 }
 
-const DataTableCell = React.memo(DataTableCellImpl) as typeof DataTableCellImpl;
+const DataTableCell = React.memo(DataTableCellImpl) as typeof DataTableCellImpl
 
 function DataTableCellImpl<TData extends RowData>({
   cell,
@@ -267,12 +267,12 @@ function DataTableCellImpl<TData extends RowData>({
     >
       <FlexRender cell={cell} />
     </TableCell>
-  );
+  )
 }
 
 interface DataTableActionBarProps<TData extends RowData> {
-  table: ReactTable<DataTableFeatures, TData, unknown>;
-  actionBar: React.ReactNode;
+  table: ReactTable<DataTableFeatures, TData, unknown>
+  actionBar: React.ReactNode
 }
 
 function DataTableActionBar<TData extends RowData>({
@@ -283,11 +283,11 @@ function DataTableActionBar<TData extends RowData>({
     <table.Subscribe selector={() => getVisibleSelectedRows(table).length > 0}>
       {(hasVisibleSelectedRows) => (hasVisibleSelectedRows ? actionBar : null)}
     </table.Subscribe>
-  );
+  )
 }
 
 function getCellClassName(pinned: ColumnPinningPosition) {
   return pinned
-    ? "overflow-hidden bg-background transition-colors group-hover/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))] group-has-aria-expanded/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))] group-data-[state=selected]/row:bg-muted"
-    : "overflow-hidden";
+    ? 'overflow-hidden bg-background transition-colors group-hover/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))] group-has-aria-expanded/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))] group-data-[state=selected]/row:bg-muted'
+    : 'overflow-hidden'
 }

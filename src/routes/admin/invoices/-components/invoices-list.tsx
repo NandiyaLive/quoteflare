@@ -86,7 +86,7 @@ export function InvoicesList({ invoices }: { invoices: InvoiceListRow[] }) {
           />
         ),
         cell: ({ row }) => (
-          <div className="text-right tabular-nums">
+          <div className="tabular-nums">
             {formatMinor(row.original.total, row.original.currency)}
           </div>
         ),

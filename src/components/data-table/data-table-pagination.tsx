@@ -1,15 +1,15 @@
-"use client";
+'use client'
 
-import type { ReactTable, RowData } from "@tanstack/react-table";
+import type { ReactTable, RowData } from '@tanstack/react-table'
 
-import { cn } from "@/lib/utils";
-import * as React from "react";
+import { cn } from '@/lib/utils'
+import * as React from 'react'
 
-import type { DataTableFeatures } from "@/lib/data-table-features";
+import type { DataTableFeatures } from '@/lib/data-table-features'
 
-import { getVisibleSelectedRows } from "@/lib/data-table-utils";
-import { Button } from "@/components/ui/button";
-import { useDirection } from "@/components/ui/direction";
+import { getVisibleSelectedRows } from '@/lib/data-table-utils'
+import { Button } from '@/components/ui/button'
+import { useDirection } from '@/components/ui/direction'
 import {
   Select,
   SelectContent,
@@ -17,14 +17,19 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
+} from '@/components/ui/select'
+import {
+  ChevronsLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsRight,
+} from 'lucide-react'
 
 interface DataTablePaginationProps<
   TData extends RowData,
-> extends React.ComponentProps<"div"> {
-  table: ReactTable<DataTableFeatures, TData, unknown>;
-  pageSizeOptions?: number[];
+> extends React.ComponentProps<'div'> {
+  table: ReactTable<DataTableFeatures, TData, unknown>
+  pageSizeOptions?: number[]
 }
 
 export function DataTablePagination<TData extends RowData>({
@@ -55,18 +60,18 @@ export function DataTablePagination<TData extends RowData>({
         />
       )}
     </table.Subscribe>
-  );
+  )
 }
 
 interface DataTablePaginationContentProps<
   TData extends RowData,
-> extends React.ComponentProps<"div"> {
-  table: ReactTable<DataTableFeatures, TData, unknown>;
-  pageIndex: number;
-  pageSize: number;
-  selectedRowCount: number;
-  visibleSelectedRowCount: number;
-  pageSizeOptions: number[];
+> extends React.ComponentProps<'div'> {
+  table: ReactTable<DataTableFeatures, TData, unknown>
+  pageIndex: number
+  pageSize: number
+  selectedRowCount: number
+  visibleSelectedRowCount: number
+  pageSizeOptions: number[]
 }
 
 function DataTablePaginationContent<TData extends RowData>({
@@ -79,17 +84,17 @@ function DataTablePaginationContent<TData extends RowData>({
   className,
   ...props
 }: DataTablePaginationContentProps<TData>) {
-  const pageSizeLabelId = React.useId();
-  const pageCount = table.getPageCount();
-  const canPreviousPage = table.getCanPreviousPage();
-  const canNextPage = table.getCanNextPage();
-  const dir = useDirection();
+  const pageSizeLabelId = React.useId()
+  const pageCount = table.getPageCount()
+  const canPreviousPage = table.getCanPreviousPage()
+  const canNextPage = table.getCanNextPage()
+  const dir = useDirection()
 
   return (
     <div
       data-slot="data-table-pagination"
       className={cn(
-        "flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto p-1 sm:flex-row sm:gap-8",
+        'flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto p-1 sm:flex-row sm:gap-8',
         className,
       )}
       {...props}
@@ -98,10 +103,10 @@ function DataTablePaginationContent<TData extends RowData>({
         role="status"
         className="flex-1 text-sm whitespace-nowrap text-muted-foreground"
       >
-        {selectedRowCount} {selectedRowCount === 1 ? "row" : "rows"} selected
+        {selectedRowCount} {selectedRowCount === 1 ? 'row' : 'rows'} selected
         {selectedRowCount > visibleSelectedRowCount
           ? ` (${selectedRowCount - visibleSelectedRowCount} not shown)`
-          : ""}
+          : ''}
         .
       </div>
       <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
@@ -115,8 +120,8 @@ function DataTablePaginationContent<TData extends RowData>({
           <Select
             value={`${pageSize}`}
             onValueChange={(value) => {
-              if (value == null) return;
-              table.setPageSize(Number(value));
+              if (value == null) return
+              table.setPageSize(Number(value))
             }}
           >
             <SelectTrigger aria-labelledby={pageSizeLabelId} className="w-18">
@@ -181,5 +186,5 @@ function DataTablePaginationContent<TData extends RowData>({
         </div>
       </div>
     </div>
-  );
+  )
 }
