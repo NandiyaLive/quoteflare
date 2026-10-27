@@ -6,6 +6,7 @@ import {
   InboxIcon,
   ReceiptTextIcon,
   LayoutDashboardIcon,
+  LayersIcon,
   PackageIcon,
   UsersIcon,
   SettingsIcon,
@@ -43,6 +44,7 @@ type NavItem = {
     | '/admin'
     | '/admin/clients'
     | '/admin/invoices'
+    | '/admin/packages'
     | '/admin/quotes'
     | '/admin/recurring'
     | '/admin/services'
@@ -71,6 +73,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: 'Configure',
     items: [
       { title: 'Services', to: '/admin/services', icon: PackageIcon },
+      { title: 'Packages', to: '/admin/packages', icon: LayersIcon },
       { title: 'Settings', to: '/admin/settings', icon: SettingsIcon },
     ],
   },

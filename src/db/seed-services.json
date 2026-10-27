@@ -217,5 +217,148 @@
       "category": "General add-ons",
       "unitLabel": "round"
     }
+  ],
+  "packages": [
+    {
+      "name": "Landing page",
+      "description": "A single page with a contact form, ready to launch and be found. Good for a campaign, an event or a new business.",
+      "items": [
+        {
+          "service": "Home page"
+        },
+        {
+          "service": "Formspree contact form"
+        },
+        {
+          "service": "On-page SEO"
+        },
+        {
+          "service": "Analytics setup"
+        },
+        {
+          "service": "Cloudflare setup"
+        },
+        {
+          "service": "Deployment"
+        }
+      ]
+    },
+    {
+      "name": "Business website",
+      "description": "A five page brochure site with your own contact form, a business email address and the SEO basics.",
+      "items": [
+        {
+          "service": "Home page"
+        },
+        {
+          "service": "Additional page",
+          "quantity": 4
+        },
+        {
+          "service": "Custom contact form"
+        },
+        {
+          "service": "Professional email setup"
+        },
+        {
+          "service": "On-page SEO"
+        },
+        {
+          "service": "Structured data"
+        },
+        {
+          "service": "Analytics setup"
+        },
+        {
+          "service": "Cloudflare setup"
+        },
+        {
+          "service": "Deployment"
+        }
+      ]
+    },
+    {
+      "name": "Content managed website",
+      "description": "A site your team can edit without a developer, with a blog or listing section and visual editing.",
+      "items": [
+        {
+          "service": "Home page"
+        },
+        {
+          "service": "Additional page",
+          "quantity": 3
+        },
+        {
+          "service": "Sanity CMS setup"
+        },
+        {
+          "service": "Content schema"
+        },
+        {
+          "service": "Visual editing"
+        },
+        {
+          "service": "Dynamic listing page"
+        },
+        {
+          "service": "Dynamic detail page"
+        },
+        {
+          "service": "On-page SEO"
+        },
+        {
+          "service": "Cloudflare setup"
+        },
+        {
+          "service": "Deployment"
+        }
+      ]
+    },
+    {
+      "name": "Online store",
+      "description": "A site that takes payments and sends order emails, with product pages and a branded confirmation email.",
+      "items": [
+        {
+          "service": "Home page"
+        },
+        {
+          "service": "Additional page",
+          "quantity": 4
+        },
+        {
+          "service": "Payment integration"
+        },
+        {
+          "service": "Transactional email"
+        },
+        {
+          "service": "Email template"
+        },
+        {
+          "service": "Custom contact form"
+        },
+        {
+          "service": "Analytics setup"
+        },
+        {
+          "service": "Cloudflare setup"
+        },
+        {
+          "service": "Deployment"
+        }
+      ]
+    },
+    {
+      "name": "Website care plan",
+      "description": "Monthly maintenance for a live site, with a revision round included for changes you want made.",
+      "items": [
+        {
+          "service": "Maintenance retainer"
+        },
+        {
+          "service": "Extra revision round"
+        }
+      ]
+    }
   ]
 }

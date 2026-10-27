@@ -4,6 +4,7 @@ import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { PlusIcon, Trash2Icon } from 'lucide-react'
 import BackButton from '@/components/common/back-button'
 import PageHeader from '@/components/common/page-header'
+import { SearchSelect } from '@/components/common/search-select'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -20,13 +21,6 @@ import {
 } from '@/components/ui/field'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { bpsToPercent, formatMinor, minorToDecimal } from '#/lib/decimal'
 import {
   DEFAULT_PAYMENT_TERM_DAYS,
@@ -225,43 +219,25 @@ export function InvoiceEditor({
                       field.state.meta.errors,
                     )
                     const invalid = errors.length > 0
-                    const selected = clients.find(
-                      (c) => c.id === field.state.value,
-                    )
                     return (
                       <Field data-invalid={invalid} className="md:col-span-2">
                         <FieldLabel htmlFor="invoice-clientId">
                           Client
                         </FieldLabel>
-                        <Select
+                        <SearchSelect
+                          id="invoice-clientId"
                           value={field.state.value}
-                          onValueChange={(v) => v && field.handleChange(v)}
-                        >
-                          <SelectTrigger
-                            id="invoice-clientId"
-                            className="w-full"
-                            aria-invalid={invalid}
-                          >
-                            <SelectValue>
-                              {selected ? (
-                                selected.name
-                              ) : (
-                                <span className="text-muted-foreground">
-                                  Choose a client
-                                </span>
-                              )}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {clients.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.company
-                                  ? `${c.name} (${c.company})`
-                                  : c.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          invalid={invalid}
+                          placeholder="Choose a client"
+                          emptyText="No clients found."
+                          options={clients.map((c) => ({
+                            value: c.id,
+                            label: c.company
+                              ? `${c.name} (${c.company})`
+                              : c.name,
+                          }))}
+                          onValueChange={field.handleChange}
+                        />
                         {invalid && <FieldError errors={errors} />}
                       </Field>
                     )
@@ -433,8 +409,17 @@ export function InvoiceEditor({
                           <PlusIcon />
                           Add line
                         </Button>
-                        <Select
+                        <SearchSelect
+                          aria-label="Add from a service"
                           value={null}
+                          disabled={atLimit || context.services.length === 0}
+                          placeholder="Add from a service"
+                          emptyText="No services found."
+                          contentClassName="min-w-72"
+                          options={context.services.map((s) => ({
+                            value: s.id,
+                            label: `${s.name} (${money(s.unitPrice)})`,
+                          }))}
                           onValueChange={(serviceId) => {
                             const service = context.services.find(
                               (s) => s.id === serviceId,
@@ -447,25 +432,7 @@ export function InvoiceEditor({
                               taxable: service.taxable,
                             })
                           }}
-                        >
-                          <SelectTrigger
-                            aria-label="Add from a service"
-                            disabled={atLimit || context.services.length === 0}
-                          >
-                            <SelectValue>
-                              <span className="text-muted-foreground">
-                                Add from a service
-                              </span>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent className="min-w-72">
-                            {context.services.map((s) => (
-                              <SelectItem key={s.id} value={s.id}>
-                                {s.name} ({money(s.unitPrice)})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        />
                       </div>
                     </div>
                   )

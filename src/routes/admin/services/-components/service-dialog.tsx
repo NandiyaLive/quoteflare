@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { useRouter } from '@tanstack/react-router'
 import { PlusIcon, Trash2Icon } from 'lucide-react'
+import { SearchSelect } from '@/components/common/search-select'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -279,7 +280,23 @@ function ServiceForm({
       <FieldGroup>
         <div className="grid gap-4 sm:grid-cols-2">
           {text('name', 'Name')}
-          {choice('categoryId', 'Category', categoryItems)}
+          <form.Field name="categoryId">
+            {(field) => (
+              <Field>
+                <FieldLabel htmlFor="service-categoryId">Category</FieldLabel>
+                <SearchSelect
+                  id="service-categoryId"
+                  value={field.state.value || NONE}
+                  placeholder="Choose a category"
+                  emptyText="No categories found."
+                  options={Object.entries(categoryItems).map(
+                    ([value, label]) => ({ value, label }),
+                  )}
+                  onValueChange={(v) => field.handleChange(v === NONE ? '' : v)}
+                />
+              </Field>
+            )}
+          </form.Field>
         </div>
         {text('description', 'Description')}
         {text(

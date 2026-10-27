@@ -4,6 +4,7 @@ import {
   dependentsOf,
   evaluate,
   selectService,
+  stateForPackage,
   type CalculatorCatalog,
   type CalculatorService,
 } from './calculator'
@@ -35,6 +36,7 @@ const catalog = (
 ): CalculatorCatalog => ({
   categories: [],
   services,
+  packages: [],
   currency: 'USD',
   taxRateBps,
 })
@@ -165,5 +167,51 @@ describe('evaluate', () => {
     expect([breakdown.subtotal, breakdown.taxAmount, breakdown.total]).toEqual([
       0, 0, 0,
     ])
+  })
+})
+
+describe('stateForPackage', () => {
+  const withOptions = catalog([
+    {
+      ...base,
+      id: 'a',
+      requires: ['b'],
+      options: [
+        {
+          id: 'o1',
+          groupId: null,
+          name: 'O1',
+          modifierType: 'flat',
+          modifierValue: 500,
+          active: true,
+        },
+      ],
+    },
+    { ...base, id: 'b' },
+  ])
+
+  it('applies quantities and options and pulls in requirements', () => {
+    const state = stateForPackage(withOptions, {
+      id: 'p',
+      name: 'P',
+      description: '',
+      items: [{ serviceId: 'a', quantity: 3, optionIds: ['o1'] }],
+    })
+    expect(state.a).toMatchObject({ quantity: '3', optionIds: ['o1'] })
+    expect(state.b.quantity).toBe('1')
+  })
+
+  it('skips services and options that are gone', () => {
+    const state = stateForPackage(withOptions, {
+      id: 'p',
+      name: 'P',
+      description: '',
+      items: [
+        { serviceId: 'gone', quantity: 1, optionIds: [] },
+        { serviceId: 'b', quantity: 2, optionIds: ['missing'] },
+      ],
+    })
+    expect(Object.keys(state)).toEqual(['b'])
+    expect(state.b).toMatchObject({ quantity: '2', optionIds: [] })
   })
 })

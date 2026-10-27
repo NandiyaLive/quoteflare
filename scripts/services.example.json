@@ -51,5 +51,20 @@
       "category": "Support",
       "taxable": false
     }
+  ],
+  "packages": [
+    {
+      "name": "Starter",
+      "description": "CMS with a listing page and a contact form.",
+      "items": [
+        { "service": "CMS setup" },
+        {
+          "service": "Dynamic listing page",
+          "quantity": 2,
+          "options": ["Rush delivery"]
+        },
+        { "service": "Contact form" }
+      ]
+    }
   ]
 }

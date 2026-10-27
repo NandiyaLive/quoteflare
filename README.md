@@ -59,7 +59,7 @@ bun run db:migrate:remote  # apply migrations to the remote database
 bun run db:seed            # insert sample data locally (safe to run twice)
 ```
 
-`db:seed` loads settings, two clients and one invoice from `src/db/seed.sql`, then imports the service catalogue in `src/db/seed-services.json` (categories, services, options and dependencies) with the same importer as `bun run services:import`. Prices are in LKR. A second run creates nothing.
+`db:seed` loads settings, two clients and one invoice from `src/db/seed.sql`, then imports the service catalogue in `src/db/seed-services.json` (categories, services, options, dependencies and packages) with the same importer as `bun run services:import`. Prices are in LKR. A second run creates nothing.
 
 ## UI components
 
@@ -107,7 +107,7 @@ bun run services:import scripts/services.example.json --dry-run   # validate onl
 bun run services:import scripts/services.example.json
 ```
 
-The file format is shown in `scripts/services.example.json`. Categories, option groups and required services are referenced by name. A service whose name already exists is skipped, so the command is safe to run twice. The script uses the same validation and save code as the admin page. It only writes to the local database. Create services in production through `/admin/services`.
+The file format is shown in `scripts/services.example.json`. Categories, option groups and required services are referenced by name. An optional `packages` list names the services, quantities and options each package preselects. A service or package whose name already exists is skipped, so the command is safe to run twice. The script uses the same validation and save code as the admin page. It only writes to the local database. Create services in production through `/admin/services`.
 
 ## Email
 

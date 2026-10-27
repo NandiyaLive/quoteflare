@@ -1,0 +1,187 @@
+import { useMemo, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { ArrowRightIcon, PencilRulerIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardFooter } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
+import { evaluate, stateForPackage } from '#/lib/calculator'
+import { formatMinor } from '#/lib/decimal'
+import { SCRATCH, useCalculator } from './calculator-context'
+
+const describePrice = (
+  price: { total: number; recurring: number; partial: boolean },
+  currency: string,
+) => {
+  const parts = []
+  if (price.total > 0 || price.recurring === 0) {
+    parts.push(formatMinor(price.total, currency))
+  }
+  if (price.recurring > 0) {
+    parts.push(`${formatMinor(price.recurring, currency)} recurring`)
+  }
+  return `${price.partial ? 'From ' : ''}${parts.join(' + ')}`
+}
+
+export function PackageStep() {
+  const { catalog, state, chosen, choose } = useCalculator()
+  const navigate = useNavigate()
+  const [pending, setPending] = useState<string | null>(null)
+
+  const names = useMemo(
+    () => new Map(catalog.services.map((s) => [s.id, s.name])),
+    [catalog],
+  )
+  const totals = useMemo(
+    () =>
+      new Map(
+        catalog.packages.map((pkg) => {
+          const result = evaluate(catalog, stateForPackage(catalog, pkg))
+          return [
+            pkg.id,
+            {
+              total: result.breakdown.total,
+              recurring: result.breakdown.recurring.total,
+              partial: Object.keys(result.problems).length > 0,
+            },
+          ]
+        }),
+      ),
+    [catalog],
+  )
+
+  const go = (target: string) => {
+    if (target !== chosen) choose(target)
+    setPending(null)
+    void navigate({ to: '/scope' })
+  }
+
+  const pick = (target: string) => {
+    if (target !== chosen && Object.keys(state).length > 0) setPending(target)
+    else go(target)
+  }
+
+  return (
+    <>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {catalog.packages.map((pkg) => {
+          const price = totals.get(pkg.id)
+          return (
+            <PackageCard
+              key={pkg.id}
+              selected={chosen === pkg.id}
+              title={pkg.name}
+              description={pkg.description}
+              services={pkg.items.map((i) => {
+                const name = names.get(i.serviceId) ?? ''
+                return i.quantity > 1 ? `${name} x${i.quantity}` : name
+              })}
+              price={price && describePrice(price, catalog.currency)}
+              action="Choose package"
+              onSelect={() => pick(pkg.id)}
+            />
+          )
+        })}
+        <PackageCard
+          selected={chosen === SCRATCH}
+          title="Start from scratch"
+          description="Pick each service yourself."
+          action="Choose services"
+          icon={<PencilRulerIcon className="size-5" />}
+          onSelect={() => pick(SCRATCH)}
+        />
+      </div>
+
+      <Dialog
+        open={pending !== null}
+        onOpenChange={(o) => !o && setPending(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Replace your selection?</DialogTitle>
+            <DialogDescription>
+              Choosing a different starting point clears the services you have
+              picked so far.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPending(null)}>
+              Keep my selection
+            </Button>
+            <Button onClick={() => pending && go(pending)}>Replace</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+function PackageCard({
+  selected,
+  title,
+  description,
+  services,
+  price,
+  action,
+  icon,
+  onSelect,
+}: {
+  selected: boolean
+  title: string
+  description: string
+  services?: string[]
+  price?: string
+  action: string
+  icon?: React.ReactNode
+  onSelect: () => void
+}) {
+  return (
+    <Card className={cn(selected && 'ring-2 ring-primary')}>
+      <CardContent className="flex h-full flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            {icon}
+            <h2 className="text-lg font-semibold">{title}</h2>
+          </div>
+          {description && (
+            <p className="text-muted-foreground">{description}</p>
+          )}
+        </div>
+        {services && (
+          <ul className="flex list-disc flex-col gap-0.5 pl-5 text-sm">
+            {services.map((name, index) => (
+              <li key={index}>{name}</li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-auto flex items-center justify-between gap-3 pt-2">
+          {price ? (
+            <div className="text-sm flex flex-col">
+              <span className="text-muted-foreground">Estimated </span>
+              <span className="font-semibold">{price}</span>
+            </div>
+          ) : (
+            <span />
+          )}
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button
+          className="w-full"
+          variant={selected ? 'default' : 'outline'}
+          onClick={onSelect}
+        >
+          {action}
+          <ArrowRightIcon data-icon="inline-end" />
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}

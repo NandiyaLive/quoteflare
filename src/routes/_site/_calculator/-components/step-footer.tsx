@@ -9,6 +9,7 @@ export function StepFooter() {
     0,
     STEPS.findIndex((s) => s.to === pathname.replace(/(.)\/$/, '$1')),
   )
+  if (index === 0) return null
   const previous = STEPS[index - 1]
   const next = STEPS[index + 1]
   if (!next) return null

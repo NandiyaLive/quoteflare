@@ -5,6 +5,7 @@ import { createDb, schema, type Db } from '#/db'
 import { createTestD1 } from '#/db/test-db'
 import { isCuid } from '#/lib/id'
 import { ImportError, importServices } from './services-import'
+import { listPackages } from './packages'
 import { listCategories, listServices } from './services'
 
 let db: Db
@@ -19,6 +20,8 @@ beforeAll(async () => {
 afterAll(() => dispose())
 
 beforeEach(async () => {
+  await db.delete(schema.packageItems)
+  await db.delete(schema.packages)
   await db.delete(schema.serviceDependencies)
   await db.delete(schema.serviceOptions)
   await db.delete(schema.serviceOptionGroups)
@@ -119,7 +122,10 @@ describe('services import', () => {
       created: [],
       skipped: example.services.map((s: { name: string }) => s.name),
       categoriesCreated: [],
+      packagesCreated: [],
+      packagesSkipped: ['Starter'],
     })
+    expect(await listPackages(db)).toHaveLength(1)
     expect(await db.select().from(schema.services)).toHaveLength(5)
     expect(await db.select().from(schema.serviceDependencies)).toHaveLength(2)
     expect(await db.select().from(schema.serviceCategories)).toHaveLength(3)
@@ -196,5 +202,58 @@ describe('services import', () => {
         ],
       }),
     ).toContain('loop')
+  })
+})
+
+describe('package import', () => {
+  it('creates packages with quantities and options', async () => {
+    const report = await importServices(db, example)
+    expect(report.packagesCreated).toEqual(['Starter'])
+    const [pkg] = await listPackages(db)
+    expect(pkg.items.map((i) => [i.serviceName, i.quantity])).toEqual([
+      ['CMS setup', 1],
+      ['Dynamic listing page', 2],
+      ['Contact form', 1],
+    ])
+    expect(pkg.items[1].optionIds).toHaveLength(1)
+  })
+
+  it('writes nothing in a dry run', async () => {
+    const report = await importServices(db, example, { dryRun: true })
+    expect(report.packagesCreated).toEqual(['Starter'])
+    expect(await listPackages(db)).toHaveLength(0)
+  })
+
+  it('rejects an unknown service or option without writing', async () => {
+    const withItem = (item: unknown) => ({
+      services: [{ name: 'Base', price: 10 }],
+      packages: [{ name: 'P', items: [item] }],
+    })
+    const unknownService = await importServices(
+      db,
+      withItem({ service: 'Nope' }),
+    ).catch((e: unknown) => e)
+    expect(unknownService).toBeInstanceOf(ImportError)
+    expect((unknownService as ImportError).message).toContain('"Nope"')
+    const unknownOption = await importServices(
+      db,
+      withItem({ service: 'Base', options: ['Missing'] }),
+    ).catch((e: unknown) => e)
+    expect((unknownOption as ImportError).message).toContain('"Missing"')
+    expect(await db.select().from(schema.services)).toHaveLength(0)
+  })
+
+  it('rejects a package that lists a service twice', async () => {
+    const error = await importServices(db, {
+      services: [{ name: 'Base', price: 10 }],
+      packages: [
+        {
+          name: 'P',
+          items: [{ service: 'Base' }, { service: 'Base' }],
+        },
+      ],
+    }).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ImportError)
+    expect(await db.select().from(schema.services)).toHaveLength(0)
   })
 })

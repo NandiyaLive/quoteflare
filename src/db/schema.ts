@@ -213,6 +213,42 @@ export const serviceDependencies = sqliteTable(
   ],
 )
 
+export const packages = sqliteTable(
+  'packages',
+  {
+    id: id(),
+    name: text('name').notNull(),
+    description: text('description').notNull().default(''),
+    active: integer('active', { mode: 'boolean' }).notNull().default(true),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (t) => [index('packages_active_sort_idx').on(t.active, t.sortOrder)],
+)
+
+// `optionIds` lists the service options the package preselects.
+export const packageItems = sqliteTable(
+  'package_items',
+  {
+    id: id(),
+    packageId: text('package_id')
+      .notNull()
+      .references(() => packages.id),
+    serviceId: text('service_id')
+      .notNull()
+      .references(() => services.id),
+    quantity: integer('quantity').notNull().default(1),
+    optionIds: text('option_ids', { mode: 'json' })
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'`),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (t) => [
+    check('package_items_quantity_positive', sql`${t.quantity} >= 1`),
+    uniqueIndex('package_items_pair_idx').on(t.packageId, t.serviceId),
+  ],
+)
+
 export const clients = sqliteTable(
   'clients',
   {

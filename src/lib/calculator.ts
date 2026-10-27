@@ -17,9 +17,17 @@ export type CalculatorService = PricingService & {
   requires: string[]
 }
 
+export type CalculatorPackage = {
+  id: string
+  name: string
+  description: string
+  items: { serviceId: string; quantity: number; optionIds: string[] }[]
+}
+
 export type CalculatorCatalog = {
   categories: { id: string; name: string }[]
   services: CalculatorService[]
+  packages: CalculatorPackage[]
   currency: string
   taxRateBps: number
 }
@@ -60,6 +68,34 @@ export function selectService(
     stack.push(...service.requires)
   }
   return next
+}
+
+/**
+ * Builds the selection a package starts from. Services that are no longer
+ * in the catalog and options that no longer exist are skipped, and required
+ * services are pulled in.
+ */
+export function stateForPackage(
+  catalog: CalculatorCatalog,
+  pkg: CalculatorPackage,
+): CalculatorState {
+  const byId = new Map(catalog.services.map((s) => [s.id, s]))
+  let state: CalculatorState = {}
+  for (const item of pkg.items) {
+    if (!byId.has(item.serviceId)) continue
+    state = selectService(catalog, state, item.serviceId)
+  }
+  for (const item of pkg.items) {
+    const service = byId.get(item.serviceId)
+    if (!service) continue
+    const known = new Set(service.options.map((o) => o.id))
+    state[item.serviceId] = {
+      ...state[item.serviceId],
+      quantity: String(item.quantity),
+      optionIds: item.optionIds.filter((id) => known.has(id)),
+    }
+  }
+  return state
 }
 
 export function dependentsOf(

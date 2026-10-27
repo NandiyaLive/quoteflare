@@ -4,6 +4,7 @@ import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { PlusIcon, Trash2Icon } from 'lucide-react'
 import BackButton from '@/components/common/back-button'
 import PageHeader from '@/components/common/page-header'
+import { SearchSelect } from '@/components/common/search-select'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -144,35 +145,22 @@ export function RecurringEditor({
                 return (
                   <Field data-invalid={invalid} className="md:col-span-2">
                     <FieldLabel htmlFor="recurring-clientId">Client</FieldLabel>
-                    <Select
+                    <SearchSelect
+                      id="recurring-clientId"
                       value={field.state.value}
-                      onValueChange={(v) => v && field.handleChange(v)}
-                    >
-                      <SelectTrigger
-                        id="recurring-clientId"
-                        className="w-full"
-                        aria-invalid={invalid}
-                      >
-                        <SelectValue>
-                          {selected ? (
-                            selected.name
-                          ) : (
-                            <span className="text-muted-foreground">
-                              {field.state.value
-                                ? 'Archived client'
-                                : 'Choose a client'}
-                            </span>
-                          )}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.company ? `${c.name} (${c.company})` : c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      invalid={invalid}
+                      placeholder={
+                        field.state.value && !selected
+                          ? 'Archived client'
+                          : 'Choose a client'
+                      }
+                      emptyText="No clients found."
+                      options={clients.map((c) => ({
+                        value: c.id,
+                        label: c.company ? `${c.name} (${c.company})` : c.name,
+                      }))}
+                      onValueChange={field.handleChange}
+                    />
                     {invalid && <FieldError errors={errors} />}
                   </Field>
                 )

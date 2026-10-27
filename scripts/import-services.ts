@@ -29,6 +29,14 @@ try {
   if (report.categoriesCreated.length > 0) {
     console.log(`${verb} categories: ${report.categoriesCreated.join(', ')}`)
   }
+  if (report.packagesCreated.length > 0) {
+    console.log(`${verb} packages: ${report.packagesCreated.join(', ')}`)
+  }
+  if (report.packagesSkipped.length > 0) {
+    console.log(
+      `Skipped existing packages: ${report.packagesSkipped.join(', ')}`,
+    )
+  }
   if (report.skipped.length > 0) {
     console.log(`Skipped existing: ${report.skipped.join(', ')}`)
   }

@@ -64,6 +64,13 @@
       "when": 1793100703356,
       "tag": "0008_add_payment_term",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1793101647010,
+      "tag": "0009_add_packages",
+      "breakpoints": true
     }
   ]
 }

@@ -15,11 +15,13 @@ import { Route as SiteCalculatorRouteRouteImport } from './routes/_site/_calcula
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminClientsRouteRouteImport } from './routes/admin/clients/route'
 import { Route as AdminInvoicesRouteRouteImport } from './routes/admin/invoices/route'
+import { Route as AdminPackagesRouteRouteImport } from './routes/admin/packages/route'
 import { Route as AdminQuotesRouteRouteImport } from './routes/admin/quotes/route'
 import { Route as AdminRecurringRouteRouteImport } from './routes/admin/recurring/route'
 import { Route as SiteCalculatorIndexRouteImport } from './routes/_site/_calculator/index'
 import { Route as AdminClientsIndexRouteImport } from './routes/admin/clients/index'
 import { Route as AdminInvoicesIndexRouteImport } from './routes/admin/invoices/index'
+import { Route as AdminPackagesIndexRouteImport } from './routes/admin/packages/index'
 import { Route as AdminQuotesIndexRouteImport } from './routes/admin/quotes/index'
 import { Route as AdminRecurringIndexRouteImport } from './routes/admin/recurring/index'
 import { Route as AdminServicesIndexRouteImport } from './routes/admin/services/index'
@@ -64,6 +66,11 @@ const AdminInvoicesRouteRoute = AdminInvoicesRouteRouteImport.update({
   path: '/invoices',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminPackagesRouteRoute = AdminPackagesRouteRouteImport.update({
+  id: '/packages',
+  path: '/packages',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminQuotesRouteRoute = AdminQuotesRouteRouteImport.update({
   id: '/quotes',
   path: '/quotes',
@@ -88,6 +95,11 @@ const AdminInvoicesIndexRoute = AdminInvoicesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminInvoicesRouteRoute,
+} as any)
+const AdminPackagesIndexRoute = AdminPackagesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminPackagesRouteRoute,
 } as any)
 const AdminQuotesIndexRoute = AdminQuotesIndexRouteImport.update({
   id: '/',
@@ -176,11 +188,13 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/clients': typeof AdminClientsRouteRouteWithChildren
   '/admin/invoices': typeof AdminInvoicesRouteRouteWithChildren
+  '/admin/packages': typeof AdminPackagesRouteRouteWithChildren
   '/admin/quotes': typeof AdminQuotesRouteRouteWithChildren
   '/admin/recurring': typeof AdminRecurringRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/admin/clients/': typeof AdminClientsIndexRoute
   '/admin/invoices/': typeof AdminInvoicesIndexRoute
+  '/admin/packages/': typeof AdminPackagesIndexRoute
   '/admin/quotes/': typeof AdminQuotesIndexRoute
   '/admin/recurring/': typeof AdminRecurringIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
@@ -202,6 +216,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/admin/clients': typeof AdminClientsIndexRoute
   '/admin/invoices': typeof AdminInvoicesIndexRoute
+  '/admin/packages': typeof AdminPackagesIndexRoute
   '/admin/quotes': typeof AdminQuotesIndexRoute
   '/admin/recurring': typeof AdminRecurringIndexRoute
   '/admin/services': typeof AdminServicesIndexRoute
@@ -225,12 +240,14 @@ export interface FileRoutesById {
   '/_site/_calculator': typeof SiteCalculatorRouteRouteWithChildren
   '/admin/clients': typeof AdminClientsRouteRouteWithChildren
   '/admin/invoices': typeof AdminInvoicesRouteRouteWithChildren
+  '/admin/packages': typeof AdminPackagesRouteRouteWithChildren
   '/admin/quotes': typeof AdminQuotesRouteRouteWithChildren
   '/admin/recurring': typeof AdminRecurringRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/_site/_calculator/': typeof SiteCalculatorIndexRoute
   '/admin/clients/': typeof AdminClientsIndexRoute
   '/admin/invoices/': typeof AdminInvoicesIndexRoute
+  '/admin/packages/': typeof AdminPackagesIndexRoute
   '/admin/quotes/': typeof AdminQuotesIndexRoute
   '/admin/recurring/': typeof AdminRecurringIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
@@ -254,11 +271,13 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/clients'
     | '/admin/invoices'
+    | '/admin/packages'
     | '/admin/quotes'
     | '/admin/recurring'
     | '/admin/'
     | '/admin/clients/'
     | '/admin/invoices/'
+    | '/admin/packages/'
     | '/admin/quotes/'
     | '/admin/recurring/'
     | '/admin/services/'
@@ -280,6 +299,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/clients'
     | '/admin/invoices'
+    | '/admin/packages'
     | '/admin/quotes'
     | '/admin/recurring'
     | '/admin/services'
@@ -302,12 +322,14 @@ export interface FileRouteTypes {
     | '/_site/_calculator'
     | '/admin/clients'
     | '/admin/invoices'
+    | '/admin/packages'
     | '/admin/quotes'
     | '/admin/recurring'
     | '/admin/'
     | '/_site/_calculator/'
     | '/admin/clients/'
     | '/admin/invoices/'
+    | '/admin/packages/'
     | '/admin/quotes/'
     | '/admin/recurring/'
     | '/admin/services/'
@@ -376,6 +398,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminInvoicesRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/packages': {
+      id: '/admin/packages'
+      path: '/packages'
+      fullPath: '/admin/packages'
+      preLoaderRoute: typeof AdminPackagesRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/quotes': {
       id: '/admin/quotes'
       path: '/quotes'
@@ -410,6 +439,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/invoices/'
       preLoaderRoute: typeof AdminInvoicesIndexRouteImport
       parentRoute: typeof AdminInvoicesRouteRoute
+    }
+    '/admin/packages/': {
+      id: '/admin/packages/'
+      path: '/'
+      fullPath: '/admin/packages/'
+      preLoaderRoute: typeof AdminPackagesIndexRouteImport
+      parentRoute: typeof AdminPackagesRouteRoute
     }
     '/admin/quotes/': {
       id: '/admin/quotes/'
@@ -576,6 +612,17 @@ const AdminInvoicesRouteRouteChildren: AdminInvoicesRouteRouteChildren = {
 const AdminInvoicesRouteRouteWithChildren =
   AdminInvoicesRouteRoute._addFileChildren(AdminInvoicesRouteRouteChildren)
 
+interface AdminPackagesRouteRouteChildren {
+  AdminPackagesIndexRoute: typeof AdminPackagesIndexRoute
+}
+
+const AdminPackagesRouteRouteChildren: AdminPackagesRouteRouteChildren = {
+  AdminPackagesIndexRoute: AdminPackagesIndexRoute,
+}
+
+const AdminPackagesRouteRouteWithChildren =
+  AdminPackagesRouteRoute._addFileChildren(AdminPackagesRouteRouteChildren)
+
 interface AdminQuotesRouteRouteChildren {
   AdminQuotesIndexRoute: typeof AdminQuotesIndexRoute
   AdminQuotesQuoteIdIndexRoute: typeof AdminQuotesQuoteIdIndexRoute
@@ -607,6 +654,7 @@ const AdminRecurringRouteRouteWithChildren =
 interface AdminRouteRouteChildren {
   AdminClientsRouteRoute: typeof AdminClientsRouteRouteWithChildren
   AdminInvoicesRouteRoute: typeof AdminInvoicesRouteRouteWithChildren
+  AdminPackagesRouteRoute: typeof AdminPackagesRouteRouteWithChildren
   AdminQuotesRouteRoute: typeof AdminQuotesRouteRouteWithChildren
   AdminRecurringRouteRoute: typeof AdminRecurringRouteRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
@@ -617,6 +665,7 @@ interface AdminRouteRouteChildren {
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminClientsRouteRoute: AdminClientsRouteRouteWithChildren,
   AdminInvoicesRouteRoute: AdminInvoicesRouteRouteWithChildren,
+  AdminPackagesRouteRoute: AdminPackagesRouteRouteWithChildren,
   AdminQuotesRouteRoute: AdminQuotesRouteRouteWithChildren,
   AdminRecurringRouteRoute: AdminRecurringRouteRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,

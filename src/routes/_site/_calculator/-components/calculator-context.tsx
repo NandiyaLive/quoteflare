@@ -9,16 +9,22 @@ import {
   deselectService,
   evaluate,
   selectService,
+  stateForPackage,
   type CalculatorCatalog,
   type CalculatorState,
   type ChosenService,
   type Evaluation,
 } from '#/lib/calculator'
 
+export const SCRATCH = 'scratch'
+
 type CalculatorValue = {
   catalog: CalculatorCatalog
   state: CalculatorState
   evaluation: Evaluation
+  /** A package id, `SCRATCH`, or null before the customer has chosen. */
+  chosen: string | null
+  choose: (target: string) => void
   toggle: (id: string, checked: boolean) => void
   change: (id: string, patch: Partial<ChosenService>) => void
 }
@@ -33,6 +39,7 @@ export function CalculatorProvider({
   children: ReactNode
 }) {
   const [state, setState] = useState<CalculatorState>({})
+  const [chosen, setChosen] = useState<string | null>(null)
   const evaluation = useMemo(() => evaluate(catalog, state), [catalog, state])
 
   const value = useMemo<CalculatorValue>(
@@ -40,6 +47,12 @@ export function CalculatorProvider({
       catalog,
       state,
       evaluation,
+      chosen,
+      choose: (target) => {
+        const pkg = catalog.packages.find((p) => p.id === target)
+        setState(pkg ? stateForPackage(catalog, pkg) : {})
+        setChosen(pkg ? pkg.id : SCRATCH)
+      },
       toggle: (id, checked) =>
         setState((current) =>
           checked
@@ -52,7 +65,7 @@ export function CalculatorProvider({
           [id]: { ...current[id], ...patch },
         })),
     }),
-    [catalog, state, evaluation],
+    [catalog, state, evaluation, chosen],
   )
 
   return (
