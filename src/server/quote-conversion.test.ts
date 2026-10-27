@@ -232,3 +232,24 @@ describe('converting a quote to an invoice', () => {
     ).toHaveLength(0)
   })
 })
+
+describe('converting a quote with an advance', () => {
+  it('keeps every item and records the advance on the invoice', async () => {
+    const quoteId = await submit()
+    const quote = await getQuote(db, quoteId)
+    const result = await convertQuoteToInvoice(db, quoteId, '2026-03-10', 40)
+    if (!result.ok) throw new Error(result.error)
+    const detail = await getInvoice(db, result.invoiceId)
+    expect(detail?.invoice.advanceBps).toBe(4000)
+    expect(detail?.items).toHaveLength(3)
+    expect(detail?.totals.total).toBe(quote?.total)
+  })
+
+  it('leaves the advance empty by default', async () => {
+    const result = await convert(await submit())
+    if (!result.ok) throw new Error(result.error)
+    expect((await getInvoice(db, result.invoiceId))?.invoice.advanceBps).toBe(
+      null,
+    )
+  })
+})

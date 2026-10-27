@@ -3,9 +3,9 @@ import { getRequestHeader } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
 import {
+  convertQuoteSchema,
   MAX_PUBLIC_BODY_BYTES,
   quoteFilterSchema,
-  quoteIdSchema,
   quoteRequestSchema,
   quoteStatusUpdateSchema,
 } from '#/lib/quotes'
@@ -68,12 +68,13 @@ export const setQuoteStatusAction = createServerFn({ method: 'POST' })
   }))
 
 export const convertQuoteAction = createServerFn({ method: 'POST' })
-  .validator((input: unknown) => quoteIdSchema.parse(input))
+  .validator((input: unknown) => convertQuoteSchema.parse(input))
   .middleware([requireAdmin])
   .handler(({ data }) =>
     convertQuoteToInvoice(
       createDb(env.DB),
       data.id,
       new Date().toISOString().slice(0, 10),
+      data.advancePercent,
     ),
   )

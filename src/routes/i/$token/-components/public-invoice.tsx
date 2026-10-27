@@ -20,7 +20,7 @@ export function PublicInvoiceView({
 }: {
   invoice: PublicInvoice
 }) {
-  const { invoice, client, business, items, totals } = data
+  const { invoice, client, business, items, totals, advance } = data
   const money = (minor: number) => formatMinor(minor, invoice.currency)
   const bankRows = (
     [
@@ -124,6 +124,7 @@ export function PublicInvoiceView({
           totals={totals}
           currency={invoice.currency}
           taxRateBps={invoice.taxRateBps}
+          advance={advance}
         />
       </div>
 

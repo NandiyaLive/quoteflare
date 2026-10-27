@@ -309,6 +309,9 @@ export const invoices = sqliteTable(
     sourceQuoteId: text('source_quote_id')
       .unique()
       .references(() => quotes.id),
+    // Share of the total billed up front, in basis points. Null means no advance.
+    advanceBps: integer('advance_bps'),
+    advancePaidAt: text('advance_paid_at'),
     sentAt: text('sent_at'),
     lastReminderAt: text('last_reminder_at'),
     createdAt: createdAt(),

@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers'
 import { getRequestUrl } from '@tanstack/react-start/server'
 import { createDb } from '#/db'
 import {
+  advancePaidSchema,
   invoiceIdSchema,
   invoiceSchema,
   invoiceStatusChangeSchema,
@@ -16,6 +17,7 @@ import {
   getPublicInvoice,
   getInvoice,
   listInvoices,
+  setAdvancePaid,
   updateInvoice,
 } from './invoices'
 import { listServices } from './services'
@@ -86,6 +88,11 @@ export const changeInvoiceStatusAction = createServerFn({ method: 'POST' })
   .handler(({ data }) =>
     changeInvoiceStatus(createDb(env.DB), data.id, data.status),
   )
+
+export const setAdvancePaidAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => advancePaidSchema.parse(input))
+  .middleware([requireAdmin])
+  .handler(({ data }) => setAdvancePaid(createDb(env.DB), data.id, data.paid))
 
 export const sendInvoiceEmailAction = createServerFn({ method: 'POST' })
   .validator((input: unknown) => invoiceIdSchema.parse(input))

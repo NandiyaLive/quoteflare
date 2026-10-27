@@ -5,6 +5,8 @@ import BackButton from '@/components/common/back-button'
 import PageHeader from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import {
   Table,
@@ -16,6 +18,7 @@ import {
 } from '@/components/ui/table'
 import { formatDate } from '@/lib/format'
 import { formatMinor } from '#/lib/decimal'
+import { MAX_ADVANCE_PERCENT, MIN_ADVANCE_PERCENT } from '#/lib/invoices'
 import type { PricedLine } from '#/lib/pricing'
 import { BILLING_LABELS } from '#/lib/services'
 import {
@@ -88,6 +91,13 @@ export function QuoteDetail({
   const router = useRouter()
   const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
+  const [advance, setAdvance] = useState(false)
+  const [advancePercent, setAdvancePercent] = useState('50')
+  const percent = Number(advancePercent)
+  const advanceValid =
+    Number.isInteger(percent) &&
+    percent >= MIN_ADVANCE_PERCENT &&
+    percent <= MAX_ADVANCE_PERCENT
   const { breakdown, currency } = quote
 
   const { confirm, dialog } = useConfirm()
@@ -119,7 +129,9 @@ export function QuoteDetail({
   const createInvoice = async () => {
     setBusy(true)
     try {
-      const result = await convertQuoteAction({ data: { id: quote.id } })
+      const result = await convertQuoteAction({
+        data: { id: quote.id, advancePercent: advance ? percent : null },
+      })
       if (!result.ok) {
         toast.error(result.error)
         return
@@ -174,7 +186,10 @@ export function QuoteDetail({
             >
               Dismiss
             </Button>
-            <Button disabled={busy} onClick={() => void createInvoice()}>
+            <Button
+              disabled={busy || (advance && !advanceValid)}
+              onClick={() => void createInvoice()}
+            >
               Create invoice
             </Button>
           </>
@@ -240,6 +255,42 @@ export function QuoteDetail({
             )}
           </CardContent>
         </Card>
+        {!invoice && quote.status === 'new' && breakdown && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Advance payment</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 text-sm">
+              <label className="flex items-center gap-2">
+                <Checkbox
+                  checked={advance}
+                  onCheckedChange={(checked) => setAdvance(checked === true)}
+                />
+                Ask for an advance before starting
+              </label>
+              {advance && (
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="advance-percent" className="font-medium">
+                    Advance (% of the total)
+                  </label>
+                  <Input
+                    id="advance-percent"
+                    inputMode="numeric"
+                    value={advancePercent}
+                    aria-invalid={!advanceValid}
+                    onChange={(e) => setAdvancePercent(e.target.value)}
+                  />
+                  {!advanceValid && (
+                    <p className="text-destructive">
+                      Enter a whole number from {MIN_ADVANCE_PERCENT} to{' '}
+                      {MAX_ADVANCE_PERCENT}.
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle>Contact</CardTitle>

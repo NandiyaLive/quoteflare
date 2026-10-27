@@ -128,6 +128,7 @@ export async function convertQuoteToInvoice(
   db: Db,
   quoteId: string,
   today: string,
+  advancePercent?: number | null,
 ): Promise<ConvertQuoteResult> {
   const quote = await getQuote(db, quoteId)
   if (!quote) return { ok: false, error: 'Quote not found.' }
@@ -186,6 +187,7 @@ export async function convertQuoteToInvoice(
         number,
         clientId,
         sourceQuoteId: quoteId,
+        advanceBps: advancePercent ? advancePercent * 100 : null,
         issueDate: today,
         dueDate: addDays(today, DEFAULT_PAYMENT_TERM_DAYS),
         currency: quote.currency,

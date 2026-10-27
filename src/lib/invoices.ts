@@ -34,11 +34,18 @@ export const invoiceStatusChangeSchema = z.strictObject({
   status: z.enum(invoiceStatuses),
 })
 
+export const advancePaidSchema = z.strictObject({
+  id: z.string().min(1).max(64),
+  paid: z.boolean(),
+})
+
 export const invoiceIdSchema = z.strictObject({
   id: z.string().min(1).max(64),
 })
 
 export const MAX_INVOICE_ITEMS = 50
+export const MIN_ADVANCE_PERCENT = 1
+export const MAX_ADVANCE_PERCENT = 99
 export const DEFAULT_PAYMENT_TERM_DAYS = 14
 
 const isRealDate = (value: string) => {
@@ -95,6 +102,20 @@ export const invoiceSchema = z
       .transform(percentToBps)
       .refine((bps) => bps <= 10000, 'Tax rate cannot be more than 100%'),
     discount: moneySchema(9, 'Discount'),
+    // Percentage billed up front. Empty means no advance.
+    advance: z
+      .string()
+      .trim()
+      .default('')
+      .refine(
+        (value) =>
+          value === '' ||
+          (/^\d{1,2}(\.\d{1,2})?$/.test(value) &&
+            Number(value) >= MIN_ADVANCE_PERCENT &&
+            Number(value) <= MAX_ADVANCE_PERCENT),
+        `Enter a percentage from ${MIN_ADVANCE_PERCENT} to ${MAX_ADVANCE_PERCENT}, or leave it empty`,
+      )
+      .transform((value) => (value === '' ? null : percentToBps(value))),
     items: z
       .array(invoiceItemSchema)
       .min(1, 'Add at least one line item')
@@ -193,6 +214,40 @@ export function previewTotals(values: InvoiceFormValues): InvoiceTotals {
     taxRate.success ? taxRate.data : 0,
     discount.success ? discount.data : 0,
   )
+}
+
+export type InvoiceAdvance = {
+  bps: number
+  paidAt: string | null
+  advanceAmount: number
+  balanceAmount: number
+}
+
+/** Splits the invoice total into the advance and the balance. Null when the invoice has no advance. */
+export function advanceFor(
+  total: number,
+  advanceBps: number | null,
+  advancePaidAt: string | null,
+): InvoiceAdvance | null {
+  if (!advanceBps) return null
+  const advanceAmount = Math.round((total * advanceBps) / 10000)
+  return {
+    bps: advanceBps,
+    paidAt: advancePaidAt,
+    advanceAmount,
+    balanceAmount: total - advanceAmount,
+  }
+}
+
+/** What the client still owes: the advance until it is paid, then the balance. */
+export function amountDue(
+  total: number,
+  advanceBps: number | null,
+  advancePaidAt: string | null,
+): number {
+  const advance = advanceFor(total, advanceBps, advancePaidAt)
+  if (!advance) return total
+  return advance.paidAt ? advance.balanceAmount : advance.advanceAmount
 }
 
 export const addDays = (date: string, days: number) => {

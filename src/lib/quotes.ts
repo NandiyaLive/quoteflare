@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { quoteStatuses } from '#/db/schema'
+import { MAX_ADVANCE_PERCENT, MIN_ADVANCE_PERCENT } from './invoices'
 import type { PricingBreakdown } from './pricing'
 
 export const QUOTE_STATUS_FILTERS = ['all', ...quoteStatuses] as const
@@ -61,6 +62,16 @@ export const quoteStatusUpdateSchema = z.object({
 })
 
 export const quoteIdSchema = z.strictObject({ id: z.string().min(1).max(64) })
+
+export const convertQuoteSchema = z.strictObject({
+  id: z.string().min(1).max(64),
+  advancePercent: z
+    .number()
+    .int()
+    .min(MIN_ADVANCE_PERCENT)
+    .max(MAX_ADVANCE_PERCENT)
+    .nullish(),
+})
 
 export const quoteFilterSchema = z.object({
   status: z.enum(QUOTE_STATUS_FILTERS).catch('all'),

@@ -12,7 +12,9 @@ import {
 } from '@/components/ui/table'
 import { formatDate } from '@/lib/format'
 import { formatMinor } from '#/lib/decimal'
+import { advanceFor } from '#/lib/invoices'
 import type { InvoiceDetail } from '#/server/invoices'
+import { AdvancePaymentCard } from './advance-payment-card'
 import { PublicLinkCard } from './public-link-card'
 import { InvoiceStatusActions } from './invoice-status-actions'
 import { InvoiceStatusBadge } from './invoice-status-badge'
@@ -21,6 +23,11 @@ import { InvoiceTotalsList } from '@/components/common/invoice-totals-list'
 export function InvoiceView({ invoice: detail }: { invoice: InvoiceDetail }) {
   const { invoice, client, items, totals } = detail
   const money = (minor: number) => formatMinor(minor, invoice.currency)
+  const advance = advanceFor(
+    totals.total,
+    invoice.advanceBps,
+    invoice.advancePaidAt,
+  )
 
   return (
     <>
@@ -101,6 +108,16 @@ export function InvoiceView({ invoice: detail }: { invoice: InvoiceDetail }) {
               </p>
             </CardContent>
           </Card>
+          {advance &&
+            invoice.status !== 'paid' &&
+            invoice.status !== 'void' && (
+              <AdvancePaymentCard
+                invoiceId={invoice.id}
+                status={invoice.status}
+                currency={invoice.currency}
+                advance={advance}
+              />
+            )}
           {invoice.publicToken && (
             <PublicLinkCard token={invoice.publicToken} />
           )}
@@ -113,6 +130,7 @@ export function InvoiceView({ invoice: detail }: { invoice: InvoiceDetail }) {
                 totals={totals}
                 currency={invoice.currency}
                 taxRateBps={invoice.taxRateBps}
+                advance={advance}
               />
             </CardContent>
           </Card>

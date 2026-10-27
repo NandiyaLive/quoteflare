@@ -1,11 +1,13 @@
-import { and, asc, desc, eq, ne, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, ne, sql } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { Db } from '#/db'
 import { schema } from '#/db'
 import type { InvoiceStatus } from '#/db/schema'
 import {
+  advanceFor,
   canTransition,
   computeInvoiceTotals,
+  type InvoiceAdvance,
   type InvoiceData,
   type InvoiceTotals,
 } from '#/lib/invoices'
@@ -49,6 +51,7 @@ export type PublicInvoice = {
     currency: string
     taxRateBps: number
   }
+  advance: InvoiceAdvance | null
   client: { name: string; company: string; email: string; address: string }
   business: {
     name: string
@@ -210,6 +213,7 @@ export async function createInvoice(
         currency,
         taxRateBps: data.taxRate,
         discount: data.discount,
+        advanceBps: data.advance,
       }),
       ...data.items.map((item, index) =>
         db.insert(invoiceItems).values({
@@ -272,6 +276,7 @@ export async function updateInvoice(
         dueDate: data.dueDate,
         taxRateBps: data.taxRate,
         discount: data.discount,
+        advanceBps: data.advance,
       })
       .where(and(eq(invoices.id, id), eq(invoices.status, 'draft')))
       .returning({ id: invoices.id }),
@@ -366,6 +371,11 @@ export async function getPublicInvoice(
       .orderBy(asc(invoiceItems.sortOrder), asc(invoiceItems.id)),
   ])
 
+  const totals = computeInvoiceTotals(
+    items,
+    invoice.taxRateBps,
+    invoice.discount,
+  )
   return {
     invoice: {
       number: invoice.number,
@@ -375,6 +385,11 @@ export async function getPublicInvoice(
       currency: invoice.currency,
       taxRateBps: invoice.taxRateBps,
     },
+    advance: advanceFor(
+      totals.total,
+      invoice.advanceBps,
+      invoice.advancePaidAt,
+    ),
     client: {
       name: client[0].name,
       company: client[0].company,
@@ -396,6 +411,47 @@ export async function getPublicInvoice(
       hasLogo: Boolean(business?.logoKey),
     },
     items,
-    totals: computeInvoiceTotals(items, invoice.taxRateBps, invoice.discount),
+    totals,
   }
+}
+
+export type SetAdvancePaidResult =
+  { ok: true; paidAt: string | null } | { ok: false; error: string }
+
+/** Records or clears the date the advance was paid. The invoice status is not touched. */
+export async function setAdvancePaid(
+  db: Db,
+  id: string,
+  paid: boolean,
+  now = new Date(),
+): Promise<SetAdvancePaidResult> {
+  const existing = (
+    await db.select().from(invoices).where(eq(invoices.id, id)).limit(1)
+  )[0]
+  if (!existing) return { ok: false, error: 'Invoice not found.' }
+  if (!existing.advanceBps) {
+    return { ok: false, error: 'This invoice has no advance.' }
+  }
+  if (existing.status !== 'sent' && existing.status !== 'overdue') {
+    return {
+      ok: false,
+      error: 'Only a sent or overdue invoice can have its advance marked paid.',
+    }
+  }
+
+  const paidAt = paid ? now.toISOString() : null
+  const [updated] = await db
+    .update(invoices)
+    .set({ advancePaidAt: paidAt })
+    .where(
+      and(eq(invoices.id, id), inArray(invoices.status, ['sent', 'overdue'])),
+    )
+    .returning({ id: invoices.id })
+  if (!updated) {
+    return {
+      ok: false,
+      error: 'The invoice status changed meanwhile. Reload and try again.',
+    }
+  }
+  return { ok: true, paidAt }
 }

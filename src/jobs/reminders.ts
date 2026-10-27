@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { schema, type Db } from '#/db'
 import { formatMinor } from '#/lib/decimal'
 import { createId } from '#/lib/id'
-import { addDays, computeInvoiceTotals } from '#/lib/invoices'
+import { addDays, amountDue, computeInvoiceTotals } from '#/lib/invoices'
 import {
   MAX_REMINDERS_PER_RUN,
   REMINDER_TEMPLATES,
@@ -60,6 +60,8 @@ export async function sendDueReminders(
         currency: invoices.currency,
         taxRateBps: invoices.taxRateBps,
         discount: invoices.discount,
+        advanceBps: invoices.advanceBps,
+        advancePaidAt: invoices.advancePaidAt,
         publicToken: invoices.publicToken,
         clientEmail: clients.email,
       })
@@ -151,7 +153,10 @@ export async function sendDueReminders(
         {
           businessName: settings.businessName,
           number: invoice.number,
-          total: formatMinor(totals.total, invoice.currency),
+          total: formatMinor(
+            amountDue(totals.total, invoice.advanceBps, invoice.advancePaidAt),
+            invoice.currency,
+          ),
           dueDate: invoice.dueDate,
           url: `${deps.origin}/i/${invoice.publicToken}`,
         },

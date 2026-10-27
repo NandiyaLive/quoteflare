@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input'
 import { bpsToPercent, formatMinor, minorToDecimal } from '#/lib/decimal'
 import {
   DEFAULT_PAYMENT_TERM_DAYS,
+  advanceFor,
   MAX_INVOICE_ITEMS,
   addDays,
   emptyInvoiceItem,
@@ -56,6 +57,7 @@ const initialValues = (
       dueDate: addDays(issueDate, DEFAULT_PAYMENT_TERM_DAYS),
       taxRate: bpsToPercent(context.taxRateBps),
       discount: '0',
+      advance: '',
       items: [{ ...emptyInvoiceItem }],
     }
   }
@@ -66,6 +68,9 @@ const initialValues = (
     dueDate: invoice.invoice.dueDate,
     taxRate: bpsToPercent(invoice.invoice.taxRateBps),
     discount: minorToDecimal(invoice.invoice.discount),
+    advance: invoice.invoice.advanceBps
+      ? bpsToPercent(invoice.invoice.advanceBps)
+      : '',
     items: invoice.items.map((item) => ({
       description: item.description,
       quantity: String(item.quantity),
@@ -124,7 +129,7 @@ export function InvoiceEditor({
     serverErrors[key] ? [...errors, { message: serverErrors[key] }] : errors
 
   const textField = (
-    name: 'issueDate' | 'dueDate' | 'taxRate' | 'discount',
+    name: 'issueDate' | 'dueDate' | 'taxRate' | 'discount' | 'advance',
     label: string,
     props: React.ComponentProps<typeof Input> = {},
   ) => (
@@ -237,6 +242,10 @@ export function InvoiceEditor({
                 {textField('taxRate', 'Tax rate (%)', { inputMode: 'decimal' })}
                 {textField('discount', `Discount (${currency})`, {
                   inputMode: 'decimal',
+                })}
+                {textField('advance', 'Advance (%), optional', {
+                  inputMode: 'decimal',
+                  placeholder: 'No advance',
                 })}
               </FieldGroup>
             </CardContent>
@@ -439,11 +448,20 @@ export function InvoiceEditor({
             <form.Subscribe selector={(s) => s.values}>
               {(values) => {
                 const bps = Number(values.taxRate) * 100
+                const totals = previewTotals(values)
+                const advance = invoiceSchema.shape.advance.safeParse(
+                  values.advance,
+                )
                 return (
                   <InvoiceTotalsList
-                    totals={previewTotals(values)}
+                    totals={totals}
                     currency={currency}
                     taxRateBps={Number.isFinite(bps) ? Math.round(bps) : 0}
+                    advance={advanceFor(
+                      totals.total,
+                      advance.success ? advance.data : null,
+                      invoice?.invoice.advancePaidAt ?? null,
+                    )}
                   />
                 )
               }}

@@ -4,6 +4,8 @@ import { createDb, schema, type Db } from '#/db'
 import { createTestD1 } from '#/db/test-db'
 import { isCuid } from '#/lib/id'
 import {
+  advanceFor,
+  amountDue,
   computeInvoiceTotals,
   invoiceSchema,
   previewTotals,
@@ -15,6 +17,7 @@ import {
   getInvoice,
   getPublicInvoice,
   listInvoices,
+  setAdvancePaid,
   updateInvoice,
 } from './invoices'
 
@@ -496,5 +499,99 @@ describe('status workflow', () => {
       .set({ status: 'draft' })
       .where(eq(schema.invoices.id, id))
     expect(await getPublicInvoice(db, token)).toBeNull()
+  })
+})
+
+describe('advance payments', () => {
+  const create = async (advance = '30') => {
+    const result = await createInvoice(db, data({ advance }))
+    if (!result.ok) throw new Error(result.error)
+    return result.id
+  }
+
+  it('parses an optional percentage into basis points', () => {
+    expect(data().advance).toBeNull()
+    expect(data({ advance: '' }).advance).toBeNull()
+    expect(data({ advance: '30' }).advance).toBe(3000)
+    expect(data({ advance: '12.5' }).advance).toBe(1250)
+  })
+
+  it.each(['0', '100', '-5', 'abc', '1.234'])('rejects %s', (advance) => {
+    expect(invoiceSchema.safeParse(form({ advance })).success).toBe(false)
+  })
+
+  it('splits the total and moves the amount due from the advance to the balance', () => {
+    expect(advanceFor(10000, null, null)).toBeNull()
+    expect(advanceFor(10001, 3000, null)).toEqual({
+      bps: 3000,
+      paidAt: null,
+      advanceAmount: 3000,
+      balanceAmount: 7001,
+    })
+    expect(amountDue(10000, null, null)).toBe(10000)
+    expect(amountDue(10000, 3000, null)).toBe(3000)
+    expect(amountDue(10000, 3000, '2026-03-12T00:00:00.000Z')).toBe(7000)
+  })
+
+  it('stores the advance on create and edit while the invoice is a draft', async () => {
+    const id = await create('30')
+    expect((await getInvoice(db, id))?.invoice.advanceBps).toBe(3000)
+    await updateInvoice(db, id, data({ advance: '' }))
+    expect((await getInvoice(db, id))?.invoice.advanceBps).toBeNull()
+  })
+
+  it('marks the advance paid and unpaid without changing the status', async () => {
+    const id = await create()
+    await changeInvoiceStatus(db, id, 'sent')
+    const now = new Date('2026-03-12T09:00:00Z')
+
+    expect(await setAdvancePaid(db, id, true, now)).toEqual({
+      ok: true,
+      paidAt: '2026-03-12T09:00:00.000Z',
+    })
+    const paid = await getInvoice(db, id)
+    expect(paid?.invoice).toMatchObject({
+      status: 'sent',
+      advancePaidAt: '2026-03-12T09:00:00.000Z',
+    })
+
+    expect(await setAdvancePaid(db, id, false)).toEqual({
+      ok: true,
+      paidAt: null,
+    })
+    expect((await getInvoice(db, id))?.invoice.advancePaidAt).toBeNull()
+  })
+
+  it('refuses a draft, a paid invoice and an invoice without an advance', async () => {
+    const id = await create()
+    expect((await setAdvancePaid(db, id, true)).ok).toBe(false)
+
+    await changeInvoiceStatus(db, id, 'sent')
+    await changeInvoiceStatus(db, id, 'paid')
+    expect((await setAdvancePaid(db, id, true)).ok).toBe(false)
+
+    const plain = await create('')
+    await changeInvoiceStatus(db, plain, 'sent')
+    expect(await setAdvancePaid(db, plain, true)).toEqual({
+      ok: false,
+      error: 'This invoice has no advance.',
+    })
+    expect((await setAdvancePaid(db, 'missing', true)).ok).toBe(false)
+  })
+
+  it('shows the advance on the public invoice', async () => {
+    const id = await create('30')
+    const sent = await changeInvoiceStatus(db, id, 'sent')
+    if (!sent.ok || !sent.publicToken) throw new Error('send failed')
+    const before = await getPublicInvoice(db, sent.publicToken)
+    expect(before?.advance).toMatchObject({ bps: 3000, paidAt: null })
+    expect(
+      before!.advance!.advanceAmount + before!.advance!.balanceAmount,
+    ).toBe(before!.totals.total)
+
+    await setAdvancePaid(db, id, true)
+    expect(
+      (await getPublicInvoice(db, sent.publicToken))?.advance?.paidAt,
+    ).not.toBeNull()
   })
 })

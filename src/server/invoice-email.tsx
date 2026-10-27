@@ -13,7 +13,7 @@ import {
 } from '#/lib/email-template'
 import { InvoiceEmail } from '#/emails/invoice-email'
 import { createId, createPublicToken } from '#/lib/id'
-import { EMAILABLE_STATUSES } from '#/lib/invoices'
+import { amountDue, EMAILABLE_STATUSES } from '#/lib/invoices'
 import { sendEmail } from './email'
 import { changeInvoiceStatus, getInvoice } from './invoices'
 
@@ -96,7 +96,10 @@ export async function sendInvoiceEmail(
       {
         businessName: settings?.businessName ?? '',
         number: invoice.number,
-        total: formatMinor(totals.total, invoice.currency),
+        total: formatMinor(
+          amountDue(totals.total, invoice.advanceBps, invoice.advancePaidAt),
+          invoice.currency,
+        ),
         dueDate: invoice.dueDate,
         url: `${deps.origin}/i/${token}`,
       },
