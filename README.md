@@ -62,3 +62,15 @@ bun run db:seed            # insert sample data locally (safe to run twice)
 ## UI components
 
 The UI uses shadcn/ui on Base UI (`components.json`, preset `nova`). Add components with `bunx --bun shadcn@latest add <name>`; they land in `src/components/ui`. Custom components are written only when shadcn has no equivalent.
+
+## Admin access
+
+Everything under `/admin` sits behind Cloudflare Access (one-time PIN, one allowed email). The Worker also verifies the `Cf-Access-Jwt-Assertion` header on its own, so a request that skips Access still gets a 401. A request-level middleware (`src/start.ts`) guards every `/admin` path, and `requireAdmin` in `src/server/admin-middleware.ts` guards admin server functions. Declare admin server functions with `createServerFn().middleware([requireAdmin])` directly in the file that uses them, because the compiler only extracts handlers from literal `createServerFn` calls.
+
+Configuration:
+
+- `ACCESS_TEAM_DOMAIN` is a plain var in `wrangler.toml`.
+- `ACCESS_AUD` is the Access application's audience tag. Set it with `bunx wrangler secret put ACCESS_AUD`.
+- `ACCESS_DEV_EMAIL` is for local development only. Copy `.dev.vars.example` to `.dev.vars` and `/admin` accepts that identity, but only when the request host is `localhost`, `127.0.0.1` or `[::1]`. Never set it in production.
+
+The Access application covers `invoices.neranjana.me/admin/*` with a single Allow policy for the owner's email and the One-time PIN login method. The Worker is attached to that hostname through `routes` in `wrangler.toml`.

@@ -1,0 +1,4 @@
+# Local only. Identity used for /admin when running on localhost.
+ACCESS_DEV_EMAIL=dev@example.test
+# Real value comes from `wrangler secret put ACCESS_AUD` in production.
+ACCESS_AUD=
