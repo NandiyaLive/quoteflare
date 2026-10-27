@@ -1,6 +1,6 @@
 import { SignJWT, createLocalJWKSet, exportJWK, generateKeyPair } from 'jose'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { ACCESS_JWT_HEADER, authenticateAdmin } from './access'
+import { ACCESS_JWT_COOKIE, ACCESS_JWT_HEADER, authenticateAdmin } from './access'
 
 const teamDomain = 'team.cloudflareaccess.com'
 const audience = 'aud-123'
@@ -40,6 +40,16 @@ describe('authenticateAdmin', () => {
     expect(await authenticateAdmin(requestWith(token), config, getKey)).toEqual(
       { email: 'me@example.com' },
     )
+  })
+
+  it('accepts the token from the CF_Authorization cookie', async () => {
+    const token = await sign(privateKey)
+    const request = new Request('https://quote.example.com/_serverFn/abc', {
+      headers: { Cookie: `theme=dark; ${ACCESS_JWT_COOKIE}=${token}` },
+    })
+    expect(await authenticateAdmin(request, config, getKey)).toEqual({
+      email: 'me@example.com',
+    })
   })
 
   it('rejects a missing header', async () => {

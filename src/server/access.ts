@@ -2,6 +2,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 import type { JWTVerifyGetKey } from 'jose'
 
 export const ACCESS_JWT_HEADER = 'Cf-Access-Jwt-Assertion'
+export const ACCESS_JWT_COOKIE = 'CF_Authorization'
 
 export type AccessConfig = {
   teamDomain?: string
@@ -26,6 +27,19 @@ function keySetFor(teamDomain: string): JWTVerifyGetKey {
   return keys
 }
 
+// Access only adds the header to paths its application covers (/admin/*).
+// Server function calls go to /_serverFn/*, so they carry the same JWT only in
+// the CF_Authorization cookie.
+function accessToken(request: Request): string | null {
+  const header = request.headers.get(ACCESS_JWT_HEADER)
+  if (header) return header
+  for (const part of (request.headers.get('Cookie') ?? '').split(';')) {
+    const [name, ...value] = part.trim().split('=')
+    if (name === ACCESS_JWT_COOKIE) return value.join('=') || null
+  }
+  return null
+}
+
 export async function authenticateAdmin(
   request: Request,
   config: AccessConfig,
@@ -35,7 +49,7 @@ export async function authenticateAdmin(
     return { email: config.devEmail }
   }
 
-  const token = request.headers.get(ACCESS_JWT_HEADER)
+  const token = accessToken(request)
   if (!token || !config.teamDomain || !config.audience) return null
 
   try {
