@@ -34,7 +34,7 @@ EMAIL_FROM = "Invoices <invoices@neranjana.me>"
 [[d1_databases]]
 binding = "DB"
 database_name = "quoteflare"
-database_id = "e8527523-f135-403c-8325-ea1f32a8a519"
+database_id = "8d4d4fd9-b587-40c8-a158-1fd725639241"
 migrations_dir = "drizzle"
 
 [[r2_buckets]]
