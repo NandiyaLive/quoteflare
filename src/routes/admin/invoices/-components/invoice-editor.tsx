@@ -42,7 +42,8 @@ import {
   getInvoiceFormContext,
   saveInvoiceAction,
 } from '#/server/invoices-actions'
-import { InvoiceTotalsList } from './invoice-totals-list'
+import { InvoiceStatusActions } from './invoice-status-actions'
+import { InvoiceTotalsList } from '@/components/common/invoice-totals-list'
 
 type Context = Awaited<ReturnType<typeof getInvoiceFormContext>>
 
@@ -178,6 +179,17 @@ export function InvoiceEditor({
         >
           Back to invoices
         </Button>
+        {invoice && (
+          <form.Subscribe selector={(s) => s.isDirty}>
+            {(dirty) => (
+              <InvoiceStatusActions
+                invoiceId={invoice.invoice.id}
+                status={invoice.invoice.status}
+                disabled={dirty}
+              />
+            )}
+          </form.Subscribe>
+        )}
         <form.Subscribe selector={(s) => s.isSubmitting}>
           {(submitting) => (
             <Button type="submit" disabled={submitting}>

@@ -20,6 +20,7 @@ import { Route as AdminQuotesIndexRouteImport } from './routes/admin/quotes/inde
 import { Route as AdminServicesIndexRouteImport } from './routes/admin/services/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as FilesLogoIndexRouteImport } from './routes/files/logo/index'
+import { Route as ITokenIndexRouteImport } from './routes/i/$token/index'
 import { Route as SiteCalculatorOptionsIndexRouteImport } from './routes/_site/_calculator/options/index'
 import { Route as SiteCalculatorReviewIndexRouteImport } from './routes/_site/_calculator/review/index'
 import { Route as SiteCalculatorScopeIndexRouteImport } from './routes/_site/_calculator/scope/index'
@@ -81,6 +82,11 @@ const FilesLogoIndexRoute = FilesLogoIndexRouteImport.update({
   path: '/files/logo/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ITokenIndexRoute = ITokenIndexRouteImport.update({
+  id: '/i/$token/',
+  path: '/i/$token/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SiteCalculatorOptionsIndexRoute =
   SiteCalculatorOptionsIndexRouteImport.update({
     id: '/options/',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
+  '/i/$token/': typeof ITokenIndexRoute
   '/options/': typeof SiteCalculatorOptionsIndexRoute
   '/review/': typeof SiteCalculatorReviewIndexRoute
   '/scope/': typeof SiteCalculatorScopeIndexRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/admin/services': typeof AdminServicesIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/files/logo': typeof FilesLogoIndexRoute
+  '/i/$token': typeof ITokenIndexRoute
   '/options': typeof SiteCalculatorOptionsIndexRoute
   '/review': typeof SiteCalculatorReviewIndexRoute
   '/scope': typeof SiteCalculatorScopeIndexRoute
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
+  '/i/$token/': typeof ITokenIndexRoute
   '/_site/_calculator/options/': typeof SiteCalculatorOptionsIndexRoute
   '/_site/_calculator/review/': typeof SiteCalculatorReviewIndexRoute
   '/_site/_calculator/scope/': typeof SiteCalculatorScopeIndexRoute
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
+    | '/i/$token/'
     | '/options/'
     | '/review/'
     | '/scope/'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/admin/services'
     | '/admin/settings'
     | '/files/logo'
+    | '/i/$token'
     | '/options'
     | '/review'
     | '/scope'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
+    | '/i/$token/'
     | '/_site/_calculator/options/'
     | '/_site/_calculator/review/'
     | '/_site/_calculator/scope/'
@@ -240,6 +252,7 @@ export interface RootRouteChildren {
   SiteRouteRoute: typeof SiteRouteRouteWithChildren
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   FilesLogoIndexRoute: typeof FilesLogoIndexRoute
+  ITokenIndexRoute: typeof ITokenIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -319,6 +332,13 @@ declare module '@tanstack/react-router' {
       path: '/files/logo'
       fullPath: '/files/logo/'
       preLoaderRoute: typeof FilesLogoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/i/$token/': {
+      id: '/i/$token/'
+      path: '/i/$token'
+      fullPath: '/i/$token/'
+      preLoaderRoute: typeof ITokenIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_site/_calculator/options/': {
@@ -436,6 +456,7 @@ const rootRouteChildren: RootRouteChildren = {
   SiteRouteRoute: SiteRouteRouteWithChildren,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   FilesLogoIndexRoute: FilesLogoIndexRoute,
+  ITokenIndexRoute: ITokenIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,13 +1,15 @@
-import { and, asc, desc, eq, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, ne, sql } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { Db } from '#/db'
 import { schema } from '#/db'
+import type { InvoiceStatus } from '#/db/schema'
 import {
+  canTransition,
   computeInvoiceTotals,
   type InvoiceData,
   type InvoiceTotals,
 } from '#/lib/invoices'
-import { createId } from '#/lib/id'
+import { createId, createPublicToken, isPublicToken } from '#/lib/id'
 
 const { invoices, invoiceItems, clients, settings } = schema
 
@@ -17,7 +19,7 @@ export type InvoiceListRow = {
   clientId: string
   clientName: string
   clientCompany: string
-  status: (typeof invoices.$inferSelect)['status']
+  status: InvoiceStatus
   issueDate: string
   dueDate: string
   currency: string
@@ -36,6 +38,31 @@ export type InvoiceDetail = {
   items: InvoiceItemRow[]
   totals: InvoiceTotals
 }
+
+export type PublicInvoice = {
+  invoice: {
+    number: string
+    status: InvoiceStatus
+    issueDate: string
+    dueDate: string
+    currency: string
+    taxRateBps: number
+  }
+  client: { name: string; company: string; email: string; address: string }
+  business: {
+    name: string
+    address: string
+    email: string
+    paymentInstructions: string
+    hasLogo: boolean
+  }
+  items: InvoiceItemRow[]
+  totals: InvoiceTotals
+}
+
+export type ChangeStatusResult =
+  | { ok: true; status: InvoiceStatus; publicToken: string | null }
+  | { ok: false; error: string }
 
 export type SaveInvoiceResult =
   { ok: true; id: string; number: string } | { ok: false; error: string }
@@ -250,4 +277,102 @@ export async function updateInvoice(
     return { ok: false, error: 'Only draft invoices can be edited.' }
   }
   return { ok: true, id, number: existing.number }
+}
+
+export async function changeInvoiceStatus(
+  db: Db,
+  id: string,
+  to: InvoiceStatus,
+): Promise<ChangeStatusResult> {
+  const existing = (
+    await db.select().from(invoices).where(eq(invoices.id, id)).limit(1)
+  )[0]
+  if (!existing) return { ok: false, error: 'Invoice not found.' }
+  if (!canTransition(existing.status, to)) {
+    return {
+      ok: false,
+      error: `An invoice cannot move from ${existing.status} to ${to}.`,
+    }
+  }
+
+  // The update matches on the status read above, so a concurrent change
+  // makes this a no-op instead of an unchecked transition.
+  const [updated] = await db
+    .update(invoices)
+    .set({
+      status: to,
+      ...(to === 'sent'
+        ? {
+            publicToken: sql`coalesce(${invoices.publicToken}, ${createPublicToken()})`,
+            sentAt: sql`coalesce(${invoices.sentAt}, ${new Date().toISOString()})`,
+          }
+        : {}),
+    })
+    .where(and(eq(invoices.id, id), eq(invoices.status, existing.status)))
+    .returning({ status: invoices.status, publicToken: invoices.publicToken })
+
+  if (!updated) {
+    return {
+      ok: false,
+      error: 'The invoice status changed meanwhile. Reload and try again.',
+    }
+  }
+  return { ok: true, ...updated }
+}
+
+export async function getPublicInvoice(
+  db: Db,
+  token: string,
+): Promise<PublicInvoice | null> {
+  if (!isPublicToken(token)) return null
+
+  const invoice = (
+    await db
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.publicToken, token), ne(invoices.status, 'draft')))
+      .limit(1)
+  )[0]
+  if (!invoice) return null
+
+  const [client, business, items] = await Promise.all([
+    db.select().from(clients).where(eq(clients.id, invoice.clientId)).limit(1),
+    db.query.settings.findFirst(),
+    db
+      .select({
+        id: invoiceItems.id,
+        description: invoiceItems.description,
+        quantity: invoiceItems.quantity,
+        unitPrice: invoiceItems.unitPrice,
+      })
+      .from(invoiceItems)
+      .where(eq(invoiceItems.invoiceId, invoice.id))
+      .orderBy(asc(invoiceItems.sortOrder), asc(invoiceItems.id)),
+  ])
+
+  return {
+    invoice: {
+      number: invoice.number,
+      status: invoice.status,
+      issueDate: invoice.issueDate,
+      dueDate: invoice.dueDate,
+      currency: invoice.currency,
+      taxRateBps: invoice.taxRateBps,
+    },
+    client: {
+      name: client[0].name,
+      company: client[0].company,
+      email: client[0].email,
+      address: client[0].address,
+    },
+    business: {
+      name: business?.businessName ?? '',
+      address: business?.address ?? '',
+      email: business?.email ?? '',
+      paymentInstructions: business?.paymentInstructions ?? '',
+      hasLogo: Boolean(business?.logoKey),
+    },
+    items,
+    totals: computeInvoiceTotals(items, invoice.taxRateBps, invoice.discount),
+  }
 }

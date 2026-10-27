@@ -13,8 +13,9 @@ import {
 import { formatDate } from '@/lib/format'
 import { formatMinor } from '#/lib/decimal'
 import type { InvoiceDetail } from '#/server/invoices'
+import { InvoiceStatusActions } from './invoice-status-actions'
 import { InvoiceStatusBadge } from './invoice-status-badge'
-import { InvoiceTotalsList } from './invoice-totals-list'
+import { InvoiceTotalsList } from '@/components/common/invoice-totals-list'
 
 export function InvoiceView({ invoice: detail }: { invoice: InvoiceDetail }) {
   const { invoice, client, items, totals } = detail
@@ -44,6 +45,7 @@ export function InvoiceView({ invoice: detail }: { invoice: InvoiceDetail }) {
         >
           Back to invoices
         </Button>
+        <InvoiceStatusActions invoiceId={invoice.id} status={invoice.status} />
       </PageHeader>
       <div className="grid items-start gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -95,6 +97,19 @@ export function InvoiceView({ invoice: detail }: { invoice: InvoiceDetail }) {
                 <span className="text-muted-foreground">Due </span>
                 {formatDate(`${invoice.dueDate}T00:00:00`)}
               </p>
+              {invoice.publicToken && (
+                <p className="break-all">
+                  <span className="text-muted-foreground">Public link </span>
+                  <a
+                    href={`/i/${invoice.publicToken}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline-offset-4 hover:underline"
+                  >
+                    {`/i/${invoice.publicToken}`}
+                  </a>
+                </p>
+              )}
               <p className="text-muted-foreground">
                 Only draft invoices can be edited.
               </p>

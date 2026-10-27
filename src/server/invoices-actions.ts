@@ -1,11 +1,13 @@
 import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
-import { invoiceSchema } from '#/lib/invoices'
+import { invoiceSchema, invoiceStatusChangeSchema } from '#/lib/invoices'
 import { requireAdmin } from './admin-middleware'
 import { listActiveClients } from './clients'
 import {
+  changeInvoiceStatus,
   createInvoice,
+  getPublicInvoice,
   getInvoice,
   listInvoices,
   updateInvoice,
@@ -70,3 +72,14 @@ export const saveInvoiceAction = createServerFn({ method: 'POST' })
       : await createInvoice(db, parsed.data)
     return result.ok ? result : { ok: false, errors: { form: result.error } }
   })
+
+export const changeInvoiceStatusAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => invoiceStatusChangeSchema.parse(input))
+  .middleware([requireAdmin])
+  .handler(({ data }) =>
+    changeInvoiceStatus(createDb(env.DB), data.id, data.status),
+  )
+
+export const getPublicInvoiceAction = createServerFn()
+  .validator((input: unknown) => String(input))
+  .handler(({ data }) => getPublicInvoice(createDb(env.DB), data))

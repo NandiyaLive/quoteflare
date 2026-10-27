@@ -10,8 +10,10 @@ import {
   type InvoiceFormValues,
 } from '#/lib/invoices'
 import {
+  changeInvoiceStatus,
   createInvoice,
   getInvoice,
+  getPublicInvoice,
   listInvoices,
   updateInvoice,
 } from './invoices'
@@ -333,5 +335,107 @@ describe('editing an invoice', () => {
     expect(
       await updateInvoice(db, created.id, data({ clientId: other.id })),
     ).toMatchObject({ ok: false })
+  })
+})
+
+describe('status workflow', () => {
+  const create = async () => {
+    const result = await createInvoice(db, data())
+    if (!result.ok) throw new Error(result.error)
+    return result.id
+  }
+  const statusOf = async (id: string) => (await getInvoice(db, id))!.invoice
+
+  it('creates no public token for a draft', async () => {
+    const id = await create()
+    expect((await statusOf(id)).publicToken).toBeNull()
+  })
+
+  it('issues a 32 character token when first sent and keeps it after undo', async () => {
+    const id = await create()
+    const sent = await changeInvoiceStatus(db, id, 'sent')
+    expect(sent.ok && sent.publicToken).toMatch(/^[0-9a-f]{32}$/)
+    const token = sent.ok ? sent.publicToken : null
+    expect((await statusOf(id)).sentAt).not.toBeNull()
+
+    expect((await changeInvoiceStatus(db, id, 'paid')).ok).toBe(true)
+    const undone = await changeInvoiceStatus(db, id, 'sent')
+    expect(undone.ok && undone.publicToken).toBe(token)
+  })
+
+  it.each([
+    ['draft', 'paid'],
+    ['draft', 'overdue'],
+    ['draft', 'draft'],
+    ['sent', 'draft'],
+    ['overdue', 'sent'],
+    ['paid', 'draft'],
+    ['paid', 'void'],
+    ['paid', 'overdue'],
+    ['void', 'sent'],
+    ['void', 'draft'],
+  ] as const)('rejects %s to %s', async (from, to) => {
+    const id = await create()
+    await db
+      .update(schema.invoices)
+      .set({ status: from })
+      .where(eq(schema.invoices.id, id))
+    const result = await changeInvoiceStatus(db, id, to)
+    expect(result.ok).toBe(false)
+    expect((await statusOf(id)).status).toBe(from)
+  })
+
+  it.each([
+    ['draft', 'sent'],
+    ['draft', 'void'],
+    ['sent', 'paid'],
+    ['sent', 'overdue'],
+    ['sent', 'void'],
+    ['overdue', 'paid'],
+    ['overdue', 'void'],
+    ['paid', 'sent'],
+  ] as const)('allows %s to %s', async (from, to) => {
+    const id = await create()
+    await db
+      .update(schema.invoices)
+      .set({ status: from })
+      .where(eq(schema.invoices.id, id))
+    expect((await changeInvoiceStatus(db, id, to)).ok).toBe(true)
+    expect((await statusOf(id)).status).toBe(to)
+  })
+
+  it('does not issue a token for draft to void', async () => {
+    const id = await create()
+    await changeInvoiceStatus(db, id, 'void')
+    expect((await statusOf(id)).publicToken).toBeNull()
+  })
+
+  it('rejects an unknown invoice', async () => {
+    expect((await changeInvoiceStatus(db, 'missing', 'sent')).ok).toBe(false)
+  })
+
+  it('serves a public invoice only for a sent token', async () => {
+    const id = await create()
+    expect(await getPublicInvoice(db, 'a'.repeat(32))).toBeNull()
+    const sent = await changeInvoiceStatus(db, id, 'sent')
+    const token = sent.ok ? sent.publicToken! : ''
+    const view = await getPublicInvoice(db, token)
+    expect(view?.items).toHaveLength(2)
+    expect(view?.totals.total).toBe((await getInvoice(db, id))!.totals.total)
+    expect(view?.business.name).toBe('Studio')
+    expect(await getPublicInvoice(db, 'a'.repeat(32))).toBeNull()
+    expect(await getPublicInvoice(db, 'short')).toBeNull()
+    expect(await getPublicInvoice(db, token.toUpperCase())).toBeNull()
+  })
+
+  it('hides a public invoice that goes back to draft', async () => {
+    const id = await create()
+    const sent = await changeInvoiceStatus(db, id, 'sent')
+    const token = sent.ok ? sent.publicToken! : ''
+    await db
+      .update(schema.invoices)
+      .set({ status: 'draft' })
+      .where(eq(schema.invoices.id, id))
+    expect(await getPublicInvoice(db, token)).toBeNull()
   })
 })
