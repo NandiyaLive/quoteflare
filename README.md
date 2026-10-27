@@ -4,10 +4,10 @@ A single-user invoicing platform on Cloudflare's free tier. It has a public pric
 
 ## Business decisions
 
-| Setting | Value |
-|---|---|
-| Business name | QuoteKit |
-| Default currency | USD |
+| Setting               | Value                                        |
+| --------------------- | -------------------------------------------- |
+| Business name         | QuoteKit                                     |
+| Default currency      | USD                                          |
 | Invoice number format | `INV-YYYY-NNNN`, for example `INV-2026-0001` |
 
 ## Requirements
@@ -40,9 +40,13 @@ curl "http://localhost:3000/cdn-cgi/handler/scheduled?cron=*+*+*+*+*"
 
 Other scripts: `bun run build`, `bun run deploy`, and `bun run cf-typegen` to regenerate `worker-configuration.d.ts` after editing `wrangler.toml`.
 
+Checks: `bun run test` (Vitest), `bun run lint` (ESLint), `bun run typecheck` (tsc) and `bun run format` (Prettier).
+
 ## Project layout
 
 Routes are directory based. Each route folder under `src/routes` owns its components, for example `src/routes/calculator/components/footer.tsx`. Any folder named `components` is skipped by the route generator (`routeFileIgnorePattern` in `vite.config.ts`). Components shared across routes go in `src/components/common`.
+
+Other folders: `src/db` (Drizzle schema), `src/lib` (shared helpers), `src/server` (server-only code), `src/jobs` (scheduled jobs).
 
 ## UI components
 

@@ -37,6 +37,8 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     const initialMode = getInitialMode()
+    // localStorage is only readable after hydration; reading it during render would mismatch the server HTML.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMode(initialMode)
     applyThemeMode(initialMode)
   }, [])

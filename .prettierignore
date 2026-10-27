@@ -1,0 +1,7 @@
+dist
+.wrangler
+.tanstack
+bun.lock
+src/routeTree.gen.ts
+worker-configuration.d.ts
+src/components/ui
