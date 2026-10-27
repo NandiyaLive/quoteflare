@@ -224,6 +224,16 @@ describe('Resend webhook', () => {
     expect(await statusOf(id)).toBe('sent')
   })
 
+  it('rejects an oversized body before checking the signature', async () => {
+    const body = JSON.stringify({ pad: 'x'.repeat(1024 * 1024) })
+    const response = await call('/api/webhooks/resend', {
+      method: 'POST',
+      body,
+      headers: await sign(body),
+    })
+    expect(response.status).toBe(413)
+  })
+
   it('returns 400 for a signed body that is not JSON', async () => {
     const body = 'not json'
     const response = await call('/api/webhooks/resend', {
@@ -358,7 +368,7 @@ describe('public quote', () => {
 
   it('stores a quote with the server-calculated total', async () => {
     const id = await createService()
-    const response = await post(payload(id, { total: 1 }))
+    const response = await post(payload(id))
     expect(response.status).toBe(201)
     expect(response.headers.get('access-control-allow-origin')).toBe(ORIGIN)
     const json = (await response.json()) as { ok: boolean; id: string }
@@ -370,6 +380,33 @@ describe('public quote', () => {
       status: 'new',
       total: 22000,
     })
+  })
+
+  it('rejects unknown fields, including a client-sent total', async () => {
+    const id = await createService()
+    expect((await post(payload(id, { total: 1 }))).status).toBe(400)
+    expect(
+      (
+        await post(
+          payload(id, {
+            selections: [
+              { serviceId: id, quantity: 1, optionIds: [], price: 1 },
+            ],
+          }),
+        )
+      ).status,
+    ).toBe(400)
+    expect(await db.select().from(schema.quotes)).toHaveLength(0)
+  })
+
+  it('rejects an oversized body with 413 and stores nothing', async () => {
+    const id = await createService()
+    const response = await post(
+      payload(id, { message: 'x'.repeat(1024 * 1024) }),
+    )
+    expect(response.status).toBe(413)
+    expect(response.headers.get('access-control-allow-origin')).toBe(ORIGIN)
+    expect(await db.select().from(schema.quotes)).toHaveLength(0)
   })
 
   it('rejects a failed Turnstile check and stores nothing', async () => {

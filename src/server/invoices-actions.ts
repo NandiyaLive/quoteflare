@@ -103,5 +103,5 @@ export const sendInvoiceEmailAction = createServerFn({ method: 'POST' })
   )
 
 export const getPublicInvoiceAction = createServerFn()
-  .validator((input: unknown) => String(input))
+  .validator((input: unknown) => String(input).slice(0, 64))
   .handler(({ data }) => getPublicInvoice(createDb(env.DB), data))

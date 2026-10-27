@@ -33,7 +33,7 @@ export async function markOverdueInvoices(
   return rows.length
 }
 
-export async function runDailyJobs(
+async function executeDailyJobs(
   env: DailyEnv,
   now: Date = new Date(),
   fetcher?: typeof fetch,
@@ -79,5 +79,18 @@ export async function runDailyJobs(
     recurringCreated: recurring.created,
     recurringSent: recurring.sent,
     recurringFailed: recurring.failed,
+  }
+}
+
+export async function runDailyJobs(
+  env: DailyEnv,
+  now: Date = new Date(),
+  fetcher?: typeof fetch,
+): Promise<DailyJobResult> {
+  try {
+    return await executeDailyJobs(env, now, fetcher)
+  } catch (error) {
+    console.error('daily: job failed', error)
+    throw error
   }
 }

@@ -105,7 +105,10 @@ describe('submitting a quote', () => {
     const id = await create('Web')
     const result = await submitQuote(
       db,
-      request([{ serviceId: id, quantity: 1, optionIds: [] }], { total: 1 }),
+      {
+        ...request([{ serviceId: id, quantity: 1, optionIds: [] }]),
+        total: 1,
+      } as ReturnType<typeof request>,
       human,
     )
     expect(result.ok).toBe(true)
@@ -198,6 +201,11 @@ describe('quote request validation', () => {
       { ...ok, selections: [] },
       { ...ok, selections: [{ serviceId: 'a', quantity: 0, optionIds: [] }] },
       { ...ok, message: 'x'.repeat(2001) },
+      { ...ok, total: 1 },
+      {
+        ...ok,
+        selections: [{ serviceId: 'a', quantity: 1, optionIds: [], price: 1 }],
+      },
     ]) {
       expect(quoteRequestSchema.safeParse(bad).success).toBe(false)
     }

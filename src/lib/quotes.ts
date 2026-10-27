@@ -13,6 +13,8 @@ export const QUOTE_STATUS_LABELS = {
 
 export const MAX_QUOTE_SERVICES = 100
 
+export const MAX_PUBLIC_BODY_BYTES = 64 * 1024
+
 const selectionSchema = z.strictObject({
   serviceId: z.string().min(1).max(64),
   quantity: z.number().int().min(1).max(1_000_000),
@@ -38,7 +40,8 @@ export const quoteDetailsSchema = z.object({
   message: messageSchema,
 })
 
-export const quoteRequestSchema = quoteDetailsSchema.extend({
+export const quoteRequestSchema = z.strictObject({
+  ...quoteDetailsSchema.shape,
   message: messageSchema.default(''),
   turnstileToken: z
     .string()

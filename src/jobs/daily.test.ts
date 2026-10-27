@@ -1,4 +1,12 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
 import { eq } from 'drizzle-orm'
 import { createDb, schema, type Db } from '#/db'
 import { createTestD1 } from '#/db/test-db'
@@ -101,5 +109,25 @@ describe('runDailyJobs', () => {
     await addInvoice('A-1', 'sent', '2026-06-14')
     expect((await runDailyJobs(env(), now)).markedOverdue).toBe(1)
     expect((await runDailyJobs(env(), now)).markedOverdue).toBe(0)
+  })
+
+  it('logs the error and rethrows when a step fails', async () => {
+    const failure = new Error('database unavailable')
+    const broken = {
+      ...env(),
+      DB: {
+        prepare: () => {
+          throw failure
+        },
+        batch: () => Promise.reject(failure),
+      } as unknown as D1Database,
+    }
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await expect(runDailyJobs(broken, now)).rejects.toThrow(
+      'database unavailable',
+    )
+    expect(spy).toHaveBeenCalledWith('daily: job failed', failure)
+    spy.mockRestore()
   })
 })

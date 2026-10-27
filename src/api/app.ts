@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { createDb } from '#/db'
-import { quoteRequestSchema } from '#/lib/quotes'
+import { MAX_PUBLIC_BODY_BYTES, quoteRequestSchema } from '#/lib/quotes'
 import { loadCalculatorCatalog } from '#/server/calculator'
 import { submitQuote } from '#/server/quotes'
 import { verifyTurnstile } from '#/server/turnstile'
@@ -31,6 +32,13 @@ export function createApi({ fetcher = fetch }: Deps = {}) {
       maxAge: 86400,
     }),
   )
+
+  const tooLarge = bodyLimit({
+    maxSize: MAX_PUBLIC_BODY_BYTES,
+    onError: (c) => c.json({ ok: false, error: 'The body is too large.' }, 413),
+  })
+  app.use('/public/*', tooLarge)
+  app.use('/webhooks/*', tooLarge)
 
   app.post('/webhooks/resend', async (c) => {
     const body = await c.req.text()

@@ -3,6 +3,7 @@ import { getRequestHeader } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
 import {
+  MAX_PUBLIC_BODY_BYTES,
   quoteFilterSchema,
   quoteIdSchema,
   quoteRequestSchema,
@@ -27,6 +28,10 @@ export const getQuoteConfig = createServerFn().handler(() => ({
 export const submitQuoteAction = createServerFn({ method: 'POST' })
   .validator((input: unknown) => input)
   .handler(async ({ data }): Promise<SubmitQuoteResult> => {
+    const length = Number(getRequestHeader('content-length') ?? 0)
+    if (length > MAX_PUBLIC_BODY_BYTES) {
+      return { ok: false, error: 'The request is too large.' }
+    }
     const parsed = quoteRequestSchema.safeParse(data)
     if (!parsed.success) {
       return {

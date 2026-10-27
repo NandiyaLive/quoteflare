@@ -19,6 +19,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:export": "mkdir -p backups && wrangler d1 export DB --remote --output=backups/quoteflare-$(date -u +%Y%m%dT%H%M%SZ).sql",
+    "db:export:local": "mkdir -p backups && wrangler d1 export DB --local --output=backups/local-$(date -u +%Y%m%dT%H%M%SZ).sql",
     "db:seed": "wrangler d1 execute DB --local --file=src/db/seed.sql && bun scripts/import-services.ts src/db/seed-services.json",
     "services:import": "bun scripts/import-services.ts",
     "services:import:remote": "npx tsx scripts/import-services.ts --remote"

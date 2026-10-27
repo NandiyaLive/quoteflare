@@ -1,4 +1,5 @@
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
+import StatusPage from '#/components/common/status-page'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
@@ -8,12 +9,16 @@ export function getRouter() {
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
     defaultNotFoundComponent: () => (
-      <main className="mx-auto max-w-xl p-8">
-        <h1 className="text-2xl font-semibold">Page not found</h1>
-        <p className="text-muted-foreground mt-2">
-          The page you requested does not exist.
-        </p>
-      </main>
+      <StatusPage
+        title="Page not found"
+        message="The page you requested does not exist."
+      />
+    ),
+    defaultErrorComponent: () => (
+      <StatusPage
+        title="Something went wrong"
+        message="The page could not be loaded. Try again in a moment."
+      />
     ),
   })
 

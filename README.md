@@ -157,6 +157,32 @@ Setup for the webhook:
 - Copy its signing secret (starts with `whsec_`) and store it with `bunx wrangler secret put RESEND_WEBHOOK_SECRET`. Locally put it in `.dev.vars`.
 - `/api/*` is not behind Cloudflare Access, so keep it off any Access policy that covers the whole domain.
 
+## Limits and error handling
+
+- Public inputs reject unknown fields. The quote request schema is strict, so a `total` or any other extra key returns a 400.
+- `/api/public/*` and `/api/webhooks/*` reject bodies over 64 KB with a 413 before parsing them. The calculator's quote server function applies the same limit.
+- Unknown pages show a 404 page and unexpected errors show a generic 500 page. Neither shows error details. Errors are logged to the Worker console, which feeds observability.
+- `/robots.txt` disallows `/admin`, `/i/` and `/api/`.
+- If the daily job throws, it logs `daily: job failed` with the error and rethrows, so the cron invocation shows as failed in observability.
+
+## Backups
+
+```bash
+bun run db:export         # remote database to backups/quoteflare-<UTC timestamp>.sql
+bun run db:export:local   # local database, same format
+```
+
+`backups/` is gitignored. Export files hold client and invoice data, so keep them off shared storage. Restore into an empty database with `wrangler d1 execute DB --remote --file=<export>.sql`. The export blocks the database while it runs, which takes a moment at this size. D1 Time Travel also restores the database to any point in the last 7 days:
+
+```bash
+bunx wrangler d1 time-travel info DB
+bunx wrangler d1 time-travel restore DB --timestamp=<unix timestamp>
+```
+
+## Usage
+
+Free plan limits are 100,000 Worker requests, 5 million D1 rows read and 100,000 D1 rows written per day. `bunx wrangler d1 info DB` prints the last 24 hours of D1 activity. On 2026-10-27, a day that included applying migrations and testing, it showed 230 read queries and 3,627 rows read, 123 write queries and 389 rows written, and a database size of 233 kB. Worker request counts are in the dashboard under Workers & Pages, quoteflare, Metrics.
+
 ## IDs
 
 Every database ID is a CUID (CUID2, 24 characters) created with `createId` from `src/lib/id.ts`. ESLint rejects `crypto.randomUUID`. The only fixed ID is `main`, the key of the single settings row.
