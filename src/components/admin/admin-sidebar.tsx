@@ -5,6 +5,7 @@ import {
   InboxIcon,
   LayoutDashboardIcon,
   PackageIcon,
+  UsersIcon,
   SettingsIcon,
   type LucideIcon,
 } from 'lucide-react'
@@ -35,7 +36,12 @@ import {
 
 type NavItem = {
   title: string
-  to: '/admin' | '/admin/quotes' | '/admin/services' | '/admin/settings'
+  to:
+    | '/admin'
+    | '/admin/clients'
+    | '/admin/quotes'
+    | '/admin/services'
+    | '/admin/settings'
   icon: LucideIcon
   exact?: boolean
 }
@@ -51,6 +57,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
         exact: true,
       },
       { title: 'Quotes', to: '/admin/quotes', icon: InboxIcon },
+      { title: 'Clients', to: '/admin/clients', icon: UsersIcon },
     ],
   },
   {
