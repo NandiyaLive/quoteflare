@@ -7,7 +7,7 @@ A single-user invoicing platform on Cloudflare's free tier. It has a public pric
 | Setting               | Value                                        |
 | --------------------- | -------------------------------------------- |
 | Business name         | QuoteKit                                     |
-| Default currency      | USD                                          |
+| Default currency      | LKR                                          |
 | Invoice number format | `INV-YYYY-NNNN`, for example `INV-2026-0001` |
 
 ## Requirements
@@ -58,6 +58,8 @@ bun run db:migrate:local   # apply migrations to the local database
 bun run db:migrate:remote  # apply migrations to the remote database
 bun run db:seed            # insert sample data locally (safe to run twice)
 ```
+
+`db:seed` loads settings, two clients and one invoice from `src/db/seed.sql`, then imports the service catalogue in `src/db/seed-services.json` (categories, services, options and dependencies) with the same importer as `bun run services:import`. Prices are in LKR. A second run creates nothing.
 
 ## UI components
 

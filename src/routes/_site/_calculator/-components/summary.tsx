@@ -39,11 +39,11 @@ export function Summary({
   return (
     <>
       <aside id="summary" className="lg:sticky lg:top-20 lg:self-start">
-        <Card>
+        <Card className="[--card-spacing:--spacing(5)]">
           <CardHeader>
             <CardTitle>Your estimate</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
+          <CardContent className="flex flex-col gap-4">
             <dl className="flex flex-col gap-2">
               {breakdown.lines.map((line) => (
                 <div

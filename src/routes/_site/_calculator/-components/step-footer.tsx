@@ -14,7 +14,7 @@ export function StepFooter() {
   if (!next) return null
 
   return (
-    <div className="flex justify-between gap-3 border-t pt-5">
+    <div className="flex justify-between gap-3 border-t pt-6">
       {previous ? (
         <Button
           variant="outline"

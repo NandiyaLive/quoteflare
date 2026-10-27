@@ -40,9 +40,9 @@ export function ScopeStep() {
   }
 
   return (
-    <>
+    <div className="flex flex-col gap-10">
       {sections.map((section) => (
-        <section key={section.id} className="flex flex-col gap-3">
+        <section key={section.id} className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold">{section.name}</h2>
           {section.services.map((service) => (
             <ServiceCard
@@ -61,6 +61,6 @@ export function ScopeStep() {
           ))}
         </section>
       ))}
-    </>
+    </div>
   )
 }

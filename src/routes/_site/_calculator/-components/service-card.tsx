@@ -1,3 +1,5 @@
+import { InfoIcon } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -79,8 +81,8 @@ export function ServiceCard({
   }
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-4">
+    <Card className="[--card-spacing:--spacing(5)]">
+      <CardContent className="flex flex-col gap-5">
         <div className="flex items-start gap-3">
           <Checkbox
             id={id}
@@ -89,7 +91,7 @@ export function ServiceCard({
             onCheckedChange={onToggle}
             className="mt-1"
           />
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
             <label
               htmlFor={id}
               className="flex flex-wrap items-baseline gap-x-2"
@@ -116,7 +118,10 @@ export function ServiceCard({
               )}
             </div>
             {service.note && (
-              <p className="text-sm text-muted-foreground">{service.note}</p>
+              <Alert>
+                <InfoIcon />
+                <AlertDescription>{service.note}</AlertDescription>
+              </Alert>
             )}
             {locked && (
               <p className="text-sm text-muted-foreground">
@@ -127,7 +132,7 @@ export function ServiceCard({
         </div>
 
         {choice && (
-          <div className="flex flex-col gap-4 border-t pt-4 sm:pl-7">
+          <div className="flex flex-col gap-5 border-t pt-5 sm:pl-7">
             {!single && (
               <Field>
                 <FieldLabel htmlFor={`${id}-quantity`}>Quantity</FieldLabel>

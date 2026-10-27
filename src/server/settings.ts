@@ -19,7 +19,7 @@ const emptySettings: SettingsFormValues = {
   businessName: '',
   address: '',
   email: '',
-  currency: 'USD',
+  currency: 'LKR',
   taxRate: '0',
   invoicePrefix: 'INV',
   nextInvoiceNumber: '1',

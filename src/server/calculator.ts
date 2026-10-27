@@ -14,7 +14,7 @@ export async function loadCalculatorCatalog(
 
   return {
     businessName: settings?.businessName ?? '',
-    currency: settings?.currency ?? 'USD',
+    currency: settings?.currency ?? 'LKR',
     taxRateBps: settings?.taxRateBps ?? 0,
     categories,
     services: services.map((s) => ({

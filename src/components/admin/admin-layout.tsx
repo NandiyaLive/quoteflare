@@ -15,7 +15,7 @@ export function AdminLayout({ email }: { email: string }) {
     <TooltipProvider>
       <SidebarProvider>
         <AdminSidebar email={email} />
-        <SidebarInset>
+        <SidebarInset className="min-w-0">
           <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -27,8 +27,10 @@ export function AdminLayout({ email }: { email: string }) {
               <ThemeToggle />
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-            <Outlet />
+          <div className="flex flex-1 flex-col p-4 md:p-6 lg:p-8">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+              <Outlet />
+            </div>
           </div>
         </SidebarInset>
       </SidebarProvider>

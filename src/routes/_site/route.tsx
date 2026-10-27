@@ -8,10 +8,12 @@ export const Route = createFileRoute('/_site')({
 
 function SiteLayout() {
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <Header />
-      <Outlet />
+      <main className="flex-1 py-8 sm:py-12">
+        <Outlet />
+      </main>
       <Footer />
-    </>
+    </div>
   )
 }
