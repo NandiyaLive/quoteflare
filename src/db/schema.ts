@@ -9,6 +9,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
 import { createId } from '#/lib/id'
+import type { PricingBreakdown } from '#/lib/pricing'
 
 // Money is stored in minor units (cents). Tax rates and percentage price
 // modifiers are stored in basis points (1500 = 15%). Dates are `YYYY-MM-DD`
@@ -60,6 +61,7 @@ export type QuoteSelection = {
   serviceId: string
   quantity: number
   optionIds: string[]
+  priceOverride?: number
 }[]
 
 export type RecurringItem = {
@@ -222,9 +224,12 @@ export const quotes = sqliteTable(
     id: id(),
     contactName: text('contact_name').notNull(),
     contactEmail: text('contact_email').notNull(),
+    message: text('message').notNull().default(''),
     selection: text('selection', { mode: 'json' })
       .$type<QuoteSelection>()
       .notNull(),
+    breakdown: text('breakdown', { mode: 'json' }).$type<PricingBreakdown>(),
+    currency: text('currency').notNull().default('LKR'),
     total: integer('total').notNull(),
     status: text('status', { enum: quoteStatuses }).notNull().default('new'),
     createdAt: createdAt(),

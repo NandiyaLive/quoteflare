@@ -14,12 +14,14 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as SiteCalculatorRouteRouteImport } from './routes/_site/_calculator/route'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as SiteCalculatorIndexRouteImport } from './routes/_site/_calculator/index'
+import { Route as AdminQuotesIndexRouteImport } from './routes/admin/quotes/index'
 import { Route as AdminServicesIndexRouteImport } from './routes/admin/services/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as FilesLogoIndexRouteImport } from './routes/files/logo/index'
 import { Route as SiteCalculatorOptionsIndexRouteImport } from './routes/_site/_calculator/options/index'
 import { Route as SiteCalculatorReviewIndexRouteImport } from './routes/_site/_calculator/review/index'
 import { Route as SiteCalculatorScopeIndexRouteImport } from './routes/_site/_calculator/scope/index'
+import { Route as AdminQuotesQuoteIdIndexRouteImport } from './routes/admin/quotes/$quoteId/index'
 
 const SiteRouteRoute = SiteRouteRouteImport.update({
   id: '/_site',
@@ -43,6 +45,11 @@ const SiteCalculatorIndexRoute = SiteCalculatorIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SiteCalculatorRouteRoute,
+} as any)
+const AdminQuotesIndexRoute = AdminQuotesIndexRouteImport.update({
+  id: '/quotes/',
+  path: '/quotes/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminServicesIndexRoute = AdminServicesIndexRouteImport.update({
   id: '/services/',
@@ -77,27 +84,36 @@ const SiteCalculatorScopeIndexRoute =
     path: '/scope/',
     getParentRoute: () => SiteCalculatorRouteRoute,
   } as any)
+const AdminQuotesQuoteIdIndexRoute = AdminQuotesQuoteIdIndexRouteImport.update({
+  id: '/quotes/$quoteId/',
+  path: '/quotes/$quoteId/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof SiteCalculatorIndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
+  '/admin/quotes/': typeof AdminQuotesIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
   '/options/': typeof SiteCalculatorOptionsIndexRoute
   '/review/': typeof SiteCalculatorReviewIndexRoute
   '/scope/': typeof SiteCalculatorScopeIndexRoute
+  '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof SiteCalculatorIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/quotes': typeof AdminQuotesIndexRoute
   '/admin/services': typeof AdminServicesIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/files/logo': typeof FilesLogoIndexRoute
   '/options': typeof SiteCalculatorOptionsIndexRoute
   '/review': typeof SiteCalculatorReviewIndexRoute
   '/scope': typeof SiteCalculatorScopeIndexRoute
+  '/admin/quotes/$quoteId': typeof AdminQuotesQuoteIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,12 +122,14 @@ export interface FileRoutesById {
   '/_site/_calculator': typeof SiteCalculatorRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/_site/_calculator/': typeof SiteCalculatorIndexRoute
+  '/admin/quotes/': typeof AdminQuotesIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
   '/_site/_calculator/options/': typeof SiteCalculatorOptionsIndexRoute
   '/_site/_calculator/review/': typeof SiteCalculatorReviewIndexRoute
   '/_site/_calculator/scope/': typeof SiteCalculatorScopeIndexRoute
+  '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,22 +137,26 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/admin/'
+    | '/admin/quotes/'
     | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
     | '/options/'
     | '/review/'
     | '/scope/'
+    | '/admin/quotes/$quoteId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/admin/quotes'
     | '/admin/services'
     | '/admin/settings'
     | '/files/logo'
     | '/options'
     | '/review'
     | '/scope'
+    | '/admin/quotes/$quoteId'
   id:
     | '__root__'
     | '/_site'
@@ -142,12 +164,14 @@ export interface FileRouteTypes {
     | '/_site/_calculator'
     | '/admin/'
     | '/_site/_calculator/'
+    | '/admin/quotes/'
     | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
     | '/_site/_calculator/options/'
     | '/_site/_calculator/review/'
     | '/_site/_calculator/scope/'
+    | '/admin/quotes/$quoteId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -193,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteCalculatorIndexRouteImport
       parentRoute: typeof SiteCalculatorRouteRoute
     }
+    '/admin/quotes/': {
+      id: '/admin/quotes/'
+      path: '/quotes'
+      fullPath: '/admin/quotes/'
+      preLoaderRoute: typeof AdminQuotesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/services/': {
       id: '/admin/services/'
       path: '/services'
@@ -235,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteCalculatorScopeIndexRouteImport
       parentRoute: typeof SiteCalculatorRouteRoute
     }
+    '/admin/quotes/$quoteId/': {
+      id: '/admin/quotes/$quoteId/'
+      path: '/quotes/$quoteId'
+      fullPath: '/admin/quotes/$quoteId/'
+      preLoaderRoute: typeof AdminQuotesQuoteIdIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
 
@@ -269,14 +307,18 @@ const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
 
 interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminQuotesIndexRoute: typeof AdminQuotesIndexRoute
   AdminServicesIndexRoute: typeof AdminServicesIndexRoute
   AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
+  AdminQuotesQuoteIdIndexRoute: typeof AdminQuotesQuoteIdIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminQuotesIndexRoute: AdminQuotesIndexRoute,
   AdminServicesIndexRoute: AdminServicesIndexRoute,
   AdminSettingsIndexRoute: AdminSettingsIndexRoute,
+  AdminQuotesQuoteIdIndexRoute: AdminQuotesQuoteIdIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(

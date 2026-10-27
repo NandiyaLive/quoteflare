@@ -2,6 +2,7 @@ import { Link, useMatchRoute } from '@tanstack/react-router'
 import {
   ChevronsUpDownIcon,
   FileTextIcon,
+  InboxIcon,
   LayoutDashboardIcon,
   PackageIcon,
   SettingsIcon,
@@ -34,7 +35,7 @@ import {
 
 type NavItem = {
   title: string
-  to: '/admin' | '/admin/services' | '/admin/settings'
+  to: '/admin' | '/admin/quotes' | '/admin/services' | '/admin/settings'
   icon: LucideIcon
   exact?: boolean
 }
@@ -49,6 +50,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
         icon: LayoutDashboardIcon,
         exact: true,
       },
+      { title: 'Quotes', to: '/admin/quotes', icon: InboxIcon },
     ],
   },
   {

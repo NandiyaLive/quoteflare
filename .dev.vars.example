@@ -2,3 +2,7 @@
 ACCESS_DEV_EMAIL=dev@example.test
 # Real value comes from `wrangler secret put ACCESS_AUD` in production.
 ACCESS_AUD=
+# Cloudflare's published always-pass Turnstile test keys. Production uses a
+# real site key as a var and `wrangler secret put TURNSTILE_SECRET`.
+TURNSTILE_SITE_KEY=1x00000000000000000000AA
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
