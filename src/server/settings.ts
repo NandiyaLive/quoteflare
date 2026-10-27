@@ -59,6 +59,15 @@ export async function loadSettings(db: Db) {
   return { values, logoKey: row.logoKey }
 }
 
+/** Public-safe subset of the settings, for pages anyone can open. */
+export async function loadBranding(db: Db) {
+  const row = await db.query.settings.findFirst()
+  return {
+    name: row?.businessName.trim() ?? '',
+    hasLogo: Boolean(row?.logoKey),
+  }
+}
+
 export async function saveSettings(db: Db, data: SettingsData) {
   const columns = {
     businessName: data.businessName,

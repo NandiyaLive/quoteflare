@@ -10,6 +10,7 @@ import { settingsSchema } from '#/lib/settings'
 import { requireAdmin } from './admin-middleware'
 import { buildInvoiceEmail } from './invoice-email'
 import {
+  loadBranding,
   loadInvoiceEmailTemplate,
   loadSettings,
   saveInvoiceEmailTemplate,
@@ -23,6 +24,10 @@ export type SaveSettingsResult =
 export const getSettings = createServerFn()
   .middleware([requireAdmin])
   .handler(() => loadSettings(createDb(env.DB)))
+
+export const getBranding = createServerFn().handler(() =>
+  loadBranding(createDb(env.DB)),
+)
 
 export const updateSettings = createServerFn({ method: 'POST' })
   .validator((input: unknown) => input)
