@@ -28,7 +28,7 @@ export function AdminLayout({ email }: { email: string }) {
             </div>
           </header>
           <div className="flex flex-1 flex-col p-4 md:p-6 lg:p-8">
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+            <div className="flex w-full min-w-0 flex-col gap-8">
               <Outlet />
             </div>
           </div>

@@ -9,17 +9,14 @@ const remote = args.includes('--remote')
 const file = args.find((a) => !a.startsWith('--'))
 
 if (!file) {
-  console.error('Usage: bun run services:import <file.json> [--dry-run] [--remote]')
+  console.error(
+    'Usage: bun run services:import <file.json> [--dry-run] [--remote]',
+  )
   process.exit(1)
 }
 
 const { env, dispose } = await getPlatformProxy<{ DB: D1Database }>(
-  remote
-    ? {
-        configPath: 'scripts/wrangler.remote.toml',
-        experimental: { remoteBindings: true },
-      }
-    : {},
+  remote ? { configPath: 'scripts/wrangler.remote.toml' } : {},
 )
 try {
   const report = await importServices(

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
+import type { ColumnDef } from '@tanstack/react-table'
 import {
   ArchiveIcon,
   ArchiveRestoreIcon,
@@ -7,6 +8,8 @@ import {
   ArrowUpIcon,
   PencilIcon,
   PlusIcon,
+  TextIcon,
+  FolderIcon,
 } from 'lucide-react'
 import PageHeader from '@/components/common/page-header'
 import { Badge } from '@/components/ui/badge'
@@ -18,14 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { ButtonGroup } from '@/components/ui/button-group'
+import { DataTable } from '@/components/data-table/data-table'
+import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
+import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
+import { useDataTable } from '@/hooks/use-data-table'
+import type { DataTableFeatures } from '@/lib/data-table-features'
 import { bpsToPercent, formatMinor } from '#/lib/decimal'
 import { BILLING_LABELS, type ServiceStatusFilter } from '#/lib/services'
 import type { CategoryRow, ServiceRow } from '#/server/services'
@@ -90,6 +91,193 @@ export function ServicesManager({
       }),
     )
 
+  const columns = useMemo<ColumnDef<DataTableFeatures, ServiceRow>[]>(
+    () => [
+      {
+        id: 'name',
+        accessorKey: 'name',
+        size: 280,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} label="Service" />
+        ),
+        cell: ({ row }) => {
+          const service = row.original
+          return (
+            <div className="py-1 whitespace-normal" data-testid="service-row">
+              <div className="font-medium">{service.name}</div>
+              {service.description && (
+                <div className="line-clamp-2 text-xs text-muted-foreground">
+                  {service.description}
+                </div>
+              )}
+              {service.note && (
+                <div className="line-clamp-2 text-xs text-muted-foreground italic">
+                  {service.note}
+                </div>
+              )}
+            </div>
+          )
+        },
+        meta: {
+          label: 'Service',
+          placeholder: 'Search services...',
+          variant: 'text',
+          icon: TextIcon,
+        },
+        enableColumnFilter: true,
+      },
+      {
+        id: 'category',
+        accessorFn: (service) => service.categoryName ?? '',
+        size: 240,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} label="Category" />
+        ),
+        cell: ({ row }) =>
+          row.original.categoryName ?? (
+            <span className="text-muted-foreground">None</span>
+          ),
+        meta: {
+          label: 'Category',
+          variant: 'multiSelect',
+          icon: FolderIcon,
+          options: categories.map((c) => ({ label: c.name, value: c.name })),
+        },
+        enableColumnFilter: true,
+      },
+      {
+        id: 'price',
+        size: 280,
+        enableSorting: false,
+        header: 'Price',
+        cell: ({ row }) => {
+          const service = row.original
+          return (
+            <div className="whitespace-normal">
+              <div>
+                {service.pricingMode === 'custom' ? 'From ' : ''}
+                {formatMinor(service.unitPrice, currency)} / {service.unitLabel}
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {service.billing !== 'one_time' && (
+                  <Badge variant="secondary">
+                    {BILLING_LABELS[service.billing]}
+                  </Badge>
+                )}
+                {service.pricingMode === 'custom' && (
+                  <Badge variant="outline">Set per quote</Badge>
+                )}
+                {!service.taxable && <Badge variant="outline">No tax</Badge>}
+                {service.requires.length > 0 && (
+                  <Badge variant="outline">
+                    Requires {service.requires.map((r) => r.name).join(', ')}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )
+        },
+      },
+      {
+        id: 'options',
+        size: 220,
+        enableSorting: false,
+        header: 'Options',
+        cell: ({ row }) =>
+          row.original.options.length === 0 ? (
+            <span className="text-muted-foreground">None</span>
+          ) : (
+            <ul className="flex flex-col gap-0.5 text-xs whitespace-normal">
+              {row.original.options.map((option) => (
+                <li key={option.id}>
+                  {option.name}{' '}
+                  <span className="text-muted-foreground">
+                    {option.modifierType === 'flat'
+                      ? `+${formatMinor(option.modifierValue, currency)}`
+                      : `+${bpsToPercent(option.modifierValue)}%`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ),
+      },
+      {
+        id: 'status',
+        accessorFn: (service) => (service.active ? 'Active' : 'Archived'),
+        size: 110,
+        enableSorting: false,
+        header: 'Status',
+        cell: ({ row }) => (
+          <Badge variant={row.original.active ? 'default' : 'secondary'}>
+            {row.original.active ? 'Active' : 'Archived'}
+          </Badge>
+        ),
+      },
+      {
+        id: 'actions',
+        size: 170,
+        enableSorting: false,
+        enableHiding: false,
+        header: () => <div className="text-right">Actions</div>,
+        cell: ({ row }) => {
+          const service = row.original
+          const index = services.findIndex((s) => s.id === service.id)
+          return (
+            <div className="flex justify-end">
+              <ButtonGroup>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={`Move ${service.name} up`}
+                  disabled={busy || index === 0}
+                  onClick={() => void move(index, -1)}
+                >
+                  <ArrowUpIcon />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={`Move ${service.name} down`}
+                  disabled={busy || index === services.length - 1}
+                  onClick={() => void move(index, 1)}
+                >
+                  <ArrowDownIcon />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={`Edit ${service.name}`}
+                  onClick={() => setEditing(service)}
+                >
+                  <PencilIcon />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={`${service.active ? 'Archive' : 'Restore'} ${service.name}`}
+                  disabled={busy}
+                  onClick={() => void toggle(service)}
+                >
+                  {service.active ? <ArchiveIcon /> : <ArchiveRestoreIcon />}
+                </Button>
+              </ButtonGroup>
+            </div>
+          )
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [services, categories, currency, busy],
+  )
+
+  const { table } = useDataTable({
+    data: services,
+    columns,
+    mode: 'client',
+    getRowId: (service) => service.id,
+    initialState: { pagination: { pageSize: 20, pageIndex: 0 } },
+  })
+
   return (
     <>
       <PageHeader
@@ -131,148 +319,9 @@ export function ServicesManager({
         </p>
       )}
 
-      <div className="overflow-hidden rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Service</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Options</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {services.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  {status === 'active'
-                    ? 'No active services. Create one to get started.'
-                    : 'No services to show.'}
-                </TableCell>
-              </TableRow>
-            )}
-            {services.map((service, index) => (
-              <TableRow key={service.id} data-testid="service-row">
-                <TableCell className="max-w-64 min-w-40 py-3 whitespace-normal">
-                  <div className="font-medium">{service.name}</div>
-                  {service.description && (
-                    <div className="line-clamp-2 text-xs text-muted-foreground">
-                      {service.description}
-                    </div>
-                  )}
-                  {service.note && (
-                    <div className="line-clamp-2 text-xs text-muted-foreground italic">
-                      {service.note}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {service.categoryName ?? (
-                    <span className="text-muted-foreground">None</span>
-                  )}
-                </TableCell>
-                <TableCell className="whitespace-normal">
-                  <div>
-                    {service.pricingMode === 'custom' ? 'From ' : ''}
-                    {formatMinor(service.unitPrice, currency)} /{' '}
-                    {service.unitLabel}
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {service.billing !== 'one_time' && (
-                      <Badge variant="secondary">
-                        {BILLING_LABELS[service.billing]}
-                      </Badge>
-                    )}
-                    {service.pricingMode === 'custom' && (
-                      <Badge variant="outline">Set per quote</Badge>
-                    )}
-                    {!service.taxable && (
-                      <Badge variant="outline">No tax</Badge>
-                    )}
-                    {service.requires.length > 0 && (
-                      <Badge variant="outline">
-                        Requires{' '}
-                        {service.requires.map((r) => r.name).join(', ')}
-                      </Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="whitespace-normal">
-                  {service.options.length === 0 ? (
-                    <span className="text-muted-foreground">None</span>
-                  ) : (
-                    <ul className="flex flex-col gap-0.5 text-xs">
-                      {service.options.map((option) => (
-                        <li key={option.id}>
-                          {option.name}{' '}
-                          <span className="text-muted-foreground">
-                            {option.modifierType === 'flat'
-                              ? `+${formatMinor(option.modifierValue, currency)}`
-                              : `+${bpsToPercent(option.modifierValue)}%`}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={service.active ? 'default' : 'secondary'}>
-                    {service.active ? 'Active' : 'Archived'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Move ${service.name} up`}
-                      disabled={busy || index === 0}
-                      onClick={() => void move(index, -1)}
-                    >
-                      <ArrowUpIcon />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Move ${service.name} down`}
-                      disabled={busy || index === services.length - 1}
-                      onClick={() => void move(index, 1)}
-                    >
-                      <ArrowDownIcon />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Edit ${service.name}`}
-                      onClick={() => setEditing(service)}
-                    >
-                      <PencilIcon />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`${service.active ? 'Archive' : 'Restore'} ${service.name}`}
-                      disabled={busy}
-                      onClick={() => void toggle(service)}
-                    >
-                      {service.active ? (
-                        <ArchiveIcon />
-                      ) : (
-                        <ArchiveRestoreIcon />
-                      )}
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable table={table}>
+        <DataTableToolbar table={table} />
+      </DataTable>
 
       <CategoriesDialog
         open={editingCategories}
