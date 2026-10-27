@@ -1,119 +1,117 @@
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useMemo } from 'react'
+import { Link } from '@tanstack/react-router'
+import type { ColumnDef } from '@tanstack/react-table'
+import { CircleDotIcon, SearchIcon } from 'lucide-react'
 import PageHeader from '@/components/common/page-header'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { DataTable } from '@/components/data-table/data-table'
+import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
+import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
+import { useDataTable } from '@/hooks/use-data-table'
+import type { DataTableFeatures } from '@/lib/data-table-features'
 import { formatDate } from '@/lib/format'
 import { formatMinor } from '#/lib/decimal'
-import {
-  QUOTE_STATUS_FILTERS,
-  QUOTE_STATUS_LABELS,
-  type QuoteStatusFilter,
-} from '#/lib/quotes'
+import { QUOTE_STATUS_LABELS } from '#/lib/quotes'
 import type { QuoteRow } from '#/server/quotes'
 import { QuoteStatusBadge } from './quote-status-badge'
 
-const FILTER_LABELS: Record<QuoteStatusFilter, string> = {
-  all: 'All quotes',
-  ...QUOTE_STATUS_LABELS,
-}
+export function QuotesList({ quotes }: { quotes: QuoteRow[] }) {
+  const columns = useMemo<ColumnDef<DataTableFeatures, QuoteRow>[]>(
+    () => [
+      {
+        id: 'received',
+        accessorFn: (quote) => new Date(quote.createdAt).getTime(),
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} label="Received" />
+        ),
+        cell: ({ row }) => (
+          <Link
+            to="/admin/quotes/$quoteId"
+            params={{ quoteId: row.original.id }}
+            className="font-medium underline-offset-4 hover:underline"
+          >
+            {formatDate(row.original.createdAt, { month: 'short' })}
+          </Link>
+        ),
+        meta: { label: 'Received' },
+      },
+      {
+        id: 'contact',
+        accessorFn: (quote) => `${quote.contactName} ${quote.contactEmail}`,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} label="Contact" />
+        ),
+        cell: ({ row }) => (
+          <>
+            <div className="font-medium">{row.original.contactName}</div>
+            <div className="text-muted-foreground">
+              {row.original.contactEmail}
+            </div>
+          </>
+        ),
+        meta: {
+          label: 'Contact',
+          placeholder: 'Search by name or email',
+          variant: 'text',
+          icon: SearchIcon,
+        },
+        enableColumnFilter: true,
+      },
+      {
+        id: 'status',
+        accessorFn: (quote) => quote.status,
+        enableSorting: false,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} label="Status" />
+        ),
+        cell: ({ row }) => <QuoteStatusBadge status={row.original.status} />,
+        meta: {
+          label: 'Status',
+          variant: 'multiSelect',
+          icon: CircleDotIcon,
+          options: Object.entries(QUOTE_STATUS_LABELS).map(
+            ([value, label]) => ({ value, label }),
+          ),
+        },
+        enableColumnFilter: true,
+      },
+      {
+        id: 'total',
+        accessorFn: (quote) => quote.total,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            label="Total"
+            className="justify-end"
+          />
+        ),
+        cell: ({ row }) => (
+          <div className="text-right">
+            {formatMinor(row.original.total, row.original.currency)}
+          </div>
+        ),
+        meta: { label: 'Total' },
+      },
+    ],
+    [],
+  )
 
-export function QuotesList({
-  quotes,
-  status,
-}: {
-  quotes: QuoteRow[]
-  status: QuoteStatusFilter
-}) {
-  const navigate = useNavigate({ from: '/admin/quotes/' })
+  const { table } = useDataTable({
+    data: quotes,
+    columns,
+    mode: 'client',
+    getRowId: (quote) => quote.id,
+    initialState: { pagination: { pageSize: 20, pageIndex: 0 } },
+  })
 
   return (
     <>
       <PageHeader
         title="Quotes"
         description="Requests submitted from the calculator."
-      >
-        <Select
-          value={status}
-          onValueChange={(value) =>
-            void navigate({
-              search: { status: value as QuoteStatusFilter },
-            })
-          }
-        >
-          <SelectTrigger className="w-44" aria-label="Filter by status">
-            <SelectValue>{FILTER_LABELS[status]}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {QUOTE_STATUS_FILTERS.map((value) => (
-              <SelectItem key={value} value={value}>
-                {FILTER_LABELS[value]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </PageHeader>
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Received</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {quotes.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No quotes yet.
-                </TableCell>
-              </TableRow>
-            )}
-            {quotes.map((quote) => (
-              <TableRow key={quote.id}>
-                <TableCell>
-                  <Link
-                    to="/admin/quotes/$quoteId"
-                    params={{ quoteId: quote.id }}
-                    className="font-medium underline-offset-4 hover:underline"
-                  >
-                    {formatDate(quote.createdAt, { month: 'short' })}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <div className="font-medium">{quote.contactName}</div>
-                  <div className="text-muted-foreground">
-                    {quote.contactEmail}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <QuoteStatusBadge status={quote.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatMinor(quote.total, quote.currency)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      />
+      <DataTable table={table}>
+        <DataTableToolbar table={table} />
+      </DataTable>
     </>
   )
 }

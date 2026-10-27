@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useRouter } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
   ArchiveIcon,
@@ -10,17 +10,11 @@ import {
   PlusIcon,
   TextIcon,
   FolderIcon,
+  CircleDotIcon,
 } from 'lucide-react'
 import PageHeader from '@/components/common/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
@@ -28,7 +22,7 @@ import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
 import { useDataTable } from '@/hooks/use-data-table'
 import type { DataTableFeatures } from '@/lib/data-table-features'
 import { bpsToPercent, formatMinor } from '#/lib/decimal'
-import { BILLING_LABELS, type ServiceStatusFilter } from '#/lib/services'
+import { BILLING_LABELS } from '#/lib/services'
 import type { CategoryRow, ServiceRow } from '#/server/services'
 import {
   reorderServicesAction,
@@ -37,27 +31,18 @@ import {
 import { CategoriesDialog } from './categories-dialog'
 import { ServiceDialog, type ServiceChoice } from './service-dialog'
 
-const FILTER_LABELS: Record<ServiceStatusFilter, string> = {
-  active: 'Active services',
-  archived: 'Archived services',
-  all: 'All services',
-}
-
 export function ServicesManager({
   services,
   categories,
   choices,
   currency,
-  status,
 }: {
   services: ServiceRow[]
   categories: CategoryRow[]
   choices: ServiceChoice[]
   currency: string
-  status: ServiceStatusFilter
 }) {
   const router = useRouter()
-  const navigate = useNavigate({ from: '/admin/services/' })
   const [editing, setEditing] = useState<ServiceRow | 'new' | null>(null)
   const [editingCategories, setEditingCategories] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -206,12 +191,24 @@ export function ServicesManager({
         accessorFn: (service) => (service.active ? 'Active' : 'Archived'),
         size: 110,
         enableSorting: false,
-        header: 'Status',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} label="Status" />
+        ),
         cell: ({ row }) => (
           <Badge variant={row.original.active ? 'default' : 'secondary'}>
             {row.original.active ? 'Active' : 'Archived'}
           </Badge>
         ),
+        meta: {
+          label: 'Status',
+          variant: 'multiSelect',
+          icon: CircleDotIcon,
+          options: [
+            { label: 'Active', value: 'Active' },
+            { label: 'Archived', value: 'Archived' },
+          ],
+        },
+        enableColumnFilter: true,
       },
       {
         id: 'actions',
@@ -275,7 +272,10 @@ export function ServicesManager({
     columns,
     mode: 'client',
     getRowId: (service) => service.id,
-    initialState: { pagination: { pageSize: 20, pageIndex: 0 } },
+    initialState: {
+      pagination: { pageSize: 20, pageIndex: 0 },
+      columnFilters: [{ id: 'status', value: ['Active'] }],
+    },
   })
 
   return (
@@ -284,26 +284,6 @@ export function ServicesManager({
         title="Services"
         description="What the price calculator offers, with its options and requirements."
       >
-        <Select
-          value={status}
-          onValueChange={(value) =>
-            value &&
-            void navigate({
-              search: { status: value as ServiceStatusFilter },
-            })
-          }
-        >
-          <SelectTrigger aria-label="Filter services" className="w-44">
-            <SelectValue>{FILTER_LABELS[status]}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(FILTER_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         <Button variant="outline" onClick={() => setEditingCategories(true)}>
           Categories
         </Button>
