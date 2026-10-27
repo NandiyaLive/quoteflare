@@ -7,6 +7,9 @@ workers_dev = true
 preview_urls = false
 routes = [{ pattern = "invoices.neranjana.me", custom_domain = true }]
 
+[triggers]
+crons = ["30 3 * * *"]
+
 [observability]
 enabled = true
 head_sampling_rate = 1
