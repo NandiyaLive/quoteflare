@@ -26,6 +26,7 @@ const emptySettings: SettingsFormValues = {
   invoicePrefix: 'INV',
   nextInvoiceNumber: '1',
   paymentInstructions: '',
+  paymentTermDays: '14',
   sendReminders: false,
 }
 
@@ -42,6 +43,7 @@ export async function loadSettings(db: Db) {
     invoicePrefix: row.invoicePrefix,
     nextInvoiceNumber: String(row.nextInvoiceNumber),
     paymentInstructions: row.paymentInstructions,
+    paymentTermDays: String(row.paymentTermDays),
     sendReminders: row.sendReminders,
   }
   return { values, logoKey: row.logoKey }
@@ -58,6 +60,7 @@ export async function saveSettings(db: Db, data: SettingsData) {
     invoicePrefix: data.invoicePrefix,
     nextInvoiceNumber: data.nextInvoiceNumber,
     paymentInstructions: data.paymentInstructions,
+    paymentTermDays: data.paymentTermDays,
     sendReminders: data.sendReminders,
   }
   await db

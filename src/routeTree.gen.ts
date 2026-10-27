@@ -16,10 +16,12 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminClientsRouteRouteImport } from './routes/admin/clients/route'
 import { Route as AdminInvoicesRouteRouteImport } from './routes/admin/invoices/route'
 import { Route as AdminQuotesRouteRouteImport } from './routes/admin/quotes/route'
+import { Route as AdminRecurringRouteRouteImport } from './routes/admin/recurring/route'
 import { Route as SiteCalculatorIndexRouteImport } from './routes/_site/_calculator/index'
 import { Route as AdminClientsIndexRouteImport } from './routes/admin/clients/index'
 import { Route as AdminInvoicesIndexRouteImport } from './routes/admin/invoices/index'
 import { Route as AdminQuotesIndexRouteImport } from './routes/admin/quotes/index'
+import { Route as AdminRecurringIndexRouteImport } from './routes/admin/recurring/index'
 import { Route as AdminServicesIndexRouteImport } from './routes/admin/services/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as FilesLogoIndexRouteImport } from './routes/files/logo/index'
@@ -31,6 +33,8 @@ import { Route as AdminClientsClientIdIndexRouteImport } from './routes/admin/cl
 import { Route as AdminInvoicesInvoiceIdIndexRouteImport } from './routes/admin/invoices/$invoiceId/index'
 import { Route as AdminInvoicesNewIndexRouteImport } from './routes/admin/invoices/new/index'
 import { Route as AdminQuotesQuoteIdIndexRouteImport } from './routes/admin/quotes/$quoteId/index'
+import { Route as AdminRecurringScheduleIdIndexRouteImport } from './routes/admin/recurring/$scheduleId/index'
+import { Route as AdminRecurringNewIndexRouteImport } from './routes/admin/recurring/new/index'
 
 const SiteRouteRoute = SiteRouteRouteImport.update({
   id: '/_site',
@@ -65,6 +69,11 @@ const AdminQuotesRouteRoute = AdminQuotesRouteRouteImport.update({
   path: '/quotes',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminRecurringRouteRoute = AdminRecurringRouteRouteImport.update({
+  id: '/recurring',
+  path: '/recurring',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const SiteCalculatorIndexRoute = SiteCalculatorIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -84,6 +93,11 @@ const AdminQuotesIndexRoute = AdminQuotesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminQuotesRouteRoute,
+} as any)
+const AdminRecurringIndexRoute = AdminRecurringIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRecurringRouteRoute,
 } as any)
 const AdminServicesIndexRoute = AdminServicesIndexRouteImport.update({
   id: '/services/',
@@ -145,6 +159,17 @@ const AdminQuotesQuoteIdIndexRoute = AdminQuotesQuoteIdIndexRouteImport.update({
   path: '/$quoteId/',
   getParentRoute: () => AdminQuotesRouteRoute,
 } as any)
+const AdminRecurringScheduleIdIndexRoute =
+  AdminRecurringScheduleIdIndexRouteImport.update({
+    id: '/$scheduleId/',
+    path: '/$scheduleId/',
+    getParentRoute: () => AdminRecurringRouteRoute,
+  } as any)
+const AdminRecurringNewIndexRoute = AdminRecurringNewIndexRouteImport.update({
+  id: '/new/',
+  path: '/new/',
+  getParentRoute: () => AdminRecurringRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof SiteCalculatorIndexRoute
@@ -152,10 +177,12 @@ export interface FileRoutesByFullPath {
   '/admin/clients': typeof AdminClientsRouteRouteWithChildren
   '/admin/invoices': typeof AdminInvoicesRouteRouteWithChildren
   '/admin/quotes': typeof AdminQuotesRouteRouteWithChildren
+  '/admin/recurring': typeof AdminRecurringRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/admin/clients/': typeof AdminClientsIndexRoute
   '/admin/invoices/': typeof AdminInvoicesIndexRoute
   '/admin/quotes/': typeof AdminQuotesIndexRoute
+  '/admin/recurring/': typeof AdminRecurringIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
@@ -167,6 +194,8 @@ export interface FileRoutesByFullPath {
   '/admin/invoices/$invoiceId/': typeof AdminInvoicesInvoiceIdIndexRoute
   '/admin/invoices/new/': typeof AdminInvoicesNewIndexRoute
   '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
+  '/admin/recurring/$scheduleId/': typeof AdminRecurringScheduleIdIndexRoute
+  '/admin/recurring/new/': typeof AdminRecurringNewIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof SiteCalculatorIndexRoute
@@ -174,6 +203,7 @@ export interface FileRoutesByTo {
   '/admin/clients': typeof AdminClientsIndexRoute
   '/admin/invoices': typeof AdminInvoicesIndexRoute
   '/admin/quotes': typeof AdminQuotesIndexRoute
+  '/admin/recurring': typeof AdminRecurringIndexRoute
   '/admin/services': typeof AdminServicesIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/files/logo': typeof FilesLogoIndexRoute
@@ -185,6 +215,8 @@ export interface FileRoutesByTo {
   '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdIndexRoute
   '/admin/invoices/new': typeof AdminInvoicesNewIndexRoute
   '/admin/quotes/$quoteId': typeof AdminQuotesQuoteIdIndexRoute
+  '/admin/recurring/$scheduleId': typeof AdminRecurringScheduleIdIndexRoute
+  '/admin/recurring/new': typeof AdminRecurringNewIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -194,11 +226,13 @@ export interface FileRoutesById {
   '/admin/clients': typeof AdminClientsRouteRouteWithChildren
   '/admin/invoices': typeof AdminInvoicesRouteRouteWithChildren
   '/admin/quotes': typeof AdminQuotesRouteRouteWithChildren
+  '/admin/recurring': typeof AdminRecurringRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/_site/_calculator/': typeof SiteCalculatorIndexRoute
   '/admin/clients/': typeof AdminClientsIndexRoute
   '/admin/invoices/': typeof AdminInvoicesIndexRoute
   '/admin/quotes/': typeof AdminQuotesIndexRoute
+  '/admin/recurring/': typeof AdminRecurringIndexRoute
   '/admin/services/': typeof AdminServicesIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
@@ -210,6 +244,8 @@ export interface FileRoutesById {
   '/admin/invoices/$invoiceId/': typeof AdminInvoicesInvoiceIdIndexRoute
   '/admin/invoices/new/': typeof AdminInvoicesNewIndexRoute
   '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
+  '/admin/recurring/$scheduleId/': typeof AdminRecurringScheduleIdIndexRoute
+  '/admin/recurring/new/': typeof AdminRecurringNewIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -219,10 +255,12 @@ export interface FileRouteTypes {
     | '/admin/clients'
     | '/admin/invoices'
     | '/admin/quotes'
+    | '/admin/recurring'
     | '/admin/'
     | '/admin/clients/'
     | '/admin/invoices/'
     | '/admin/quotes/'
+    | '/admin/recurring/'
     | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
@@ -234,6 +272,8 @@ export interface FileRouteTypes {
     | '/admin/invoices/$invoiceId/'
     | '/admin/invoices/new/'
     | '/admin/quotes/$quoteId/'
+    | '/admin/recurring/$scheduleId/'
+    | '/admin/recurring/new/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -241,6 +281,7 @@ export interface FileRouteTypes {
     | '/admin/clients'
     | '/admin/invoices'
     | '/admin/quotes'
+    | '/admin/recurring'
     | '/admin/services'
     | '/admin/settings'
     | '/files/logo'
@@ -252,6 +293,8 @@ export interface FileRouteTypes {
     | '/admin/invoices/$invoiceId'
     | '/admin/invoices/new'
     | '/admin/quotes/$quoteId'
+    | '/admin/recurring/$scheduleId'
+    | '/admin/recurring/new'
   id:
     | '__root__'
     | '/_site'
@@ -260,11 +303,13 @@ export interface FileRouteTypes {
     | '/admin/clients'
     | '/admin/invoices'
     | '/admin/quotes'
+    | '/admin/recurring'
     | '/admin/'
     | '/_site/_calculator/'
     | '/admin/clients/'
     | '/admin/invoices/'
     | '/admin/quotes/'
+    | '/admin/recurring/'
     | '/admin/services/'
     | '/admin/settings/'
     | '/files/logo/'
@@ -276,6 +321,8 @@ export interface FileRouteTypes {
     | '/admin/invoices/$invoiceId/'
     | '/admin/invoices/new/'
     | '/admin/quotes/$quoteId/'
+    | '/admin/recurring/$scheduleId/'
+    | '/admin/recurring/new/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -336,6 +383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminQuotesRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/recurring': {
+      id: '/admin/recurring'
+      path: '/recurring'
+      fullPath: '/admin/recurring'
+      preLoaderRoute: typeof AdminRecurringRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_site/_calculator/': {
       id: '/_site/_calculator/'
       path: '/'
@@ -363,6 +417,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/quotes/'
       preLoaderRoute: typeof AdminQuotesIndexRouteImport
       parentRoute: typeof AdminQuotesRouteRoute
+    }
+    '/admin/recurring/': {
+      id: '/admin/recurring/'
+      path: '/'
+      fullPath: '/admin/recurring/'
+      preLoaderRoute: typeof AdminRecurringIndexRouteImport
+      parentRoute: typeof AdminRecurringRouteRoute
     }
     '/admin/services/': {
       id: '/admin/services/'
@@ -441,6 +502,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminQuotesQuoteIdIndexRouteImport
       parentRoute: typeof AdminQuotesRouteRoute
     }
+    '/admin/recurring/$scheduleId/': {
+      id: '/admin/recurring/$scheduleId/'
+      path: '/$scheduleId'
+      fullPath: '/admin/recurring/$scheduleId/'
+      preLoaderRoute: typeof AdminRecurringScheduleIdIndexRouteImport
+      parentRoute: typeof AdminRecurringRouteRoute
+    }
+    '/admin/recurring/new/': {
+      id: '/admin/recurring/new/'
+      path: '/new'
+      fullPath: '/admin/recurring/new/'
+      preLoaderRoute: typeof AdminRecurringNewIndexRouteImport
+      parentRoute: typeof AdminRecurringRouteRoute
+    }
   }
 }
 
@@ -514,10 +589,26 @@ const AdminQuotesRouteRouteChildren: AdminQuotesRouteRouteChildren = {
 const AdminQuotesRouteRouteWithChildren =
   AdminQuotesRouteRoute._addFileChildren(AdminQuotesRouteRouteChildren)
 
+interface AdminRecurringRouteRouteChildren {
+  AdminRecurringIndexRoute: typeof AdminRecurringIndexRoute
+  AdminRecurringScheduleIdIndexRoute: typeof AdminRecurringScheduleIdIndexRoute
+  AdminRecurringNewIndexRoute: typeof AdminRecurringNewIndexRoute
+}
+
+const AdminRecurringRouteRouteChildren: AdminRecurringRouteRouteChildren = {
+  AdminRecurringIndexRoute: AdminRecurringIndexRoute,
+  AdminRecurringScheduleIdIndexRoute: AdminRecurringScheduleIdIndexRoute,
+  AdminRecurringNewIndexRoute: AdminRecurringNewIndexRoute,
+}
+
+const AdminRecurringRouteRouteWithChildren =
+  AdminRecurringRouteRoute._addFileChildren(AdminRecurringRouteRouteChildren)
+
 interface AdminRouteRouteChildren {
   AdminClientsRouteRoute: typeof AdminClientsRouteRouteWithChildren
   AdminInvoicesRouteRoute: typeof AdminInvoicesRouteRouteWithChildren
   AdminQuotesRouteRoute: typeof AdminQuotesRouteRouteWithChildren
+  AdminRecurringRouteRoute: typeof AdminRecurringRouteRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
   AdminServicesIndexRoute: typeof AdminServicesIndexRoute
   AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
@@ -527,6 +618,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminClientsRouteRoute: AdminClientsRouteRouteWithChildren,
   AdminInvoicesRouteRoute: AdminInvoicesRouteRouteWithChildren,
   AdminQuotesRouteRoute: AdminQuotesRouteRouteWithChildren,
+  AdminRecurringRouteRoute: AdminRecurringRouteRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,
   AdminServicesIndexRoute: AdminServicesIndexRoute,
   AdminSettingsIndexRoute: AdminSettingsIndexRoute,

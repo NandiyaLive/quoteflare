@@ -39,6 +39,7 @@ const input = {
   invoicePrefix: 'ACM',
   nextInvoiceNumber: '5',
   paymentInstructions: 'IBAN 123',
+  paymentTermDays: '14',
   sendReminders: false,
 }
 
@@ -89,6 +90,18 @@ describe('reminder toggle', () => {
     expect(
       settingsSchema.safeParse({ ...input, sendReminders: 'yes' }).success,
     ).toBe(false)
+  })
+})
+
+describe('payment term', () => {
+  it('persists and loads back', async () => {
+    await saveSettings(
+      db,
+      settingsSchema.parse({ ...input, paymentTermDays: '45' }),
+    )
+    expect((await loadSettings(db)).values.paymentTermDays).toBe('45')
+    const [row] = await db.select().from(schema.settings)
+    expect(row.paymentTermDays).toBe(45)
   })
 })
 

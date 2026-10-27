@@ -1,0 +1,1 @@
+ALTER TABLE `settings` ADD `payment_term_days` integer DEFAULT 14 NOT NULL;

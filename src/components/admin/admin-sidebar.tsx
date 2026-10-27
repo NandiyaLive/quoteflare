@@ -2,6 +2,7 @@ import { Link, useMatchRoute } from '@tanstack/react-router'
 import {
   ChevronsUpDownIcon,
   FileTextIcon,
+  RepeatIcon,
   InboxIcon,
   ReceiptTextIcon,
   LayoutDashboardIcon,
@@ -43,6 +44,7 @@ type NavItem = {
     | '/admin/clients'
     | '/admin/invoices'
     | '/admin/quotes'
+    | '/admin/recurring'
     | '/admin/services'
     | '/admin/settings'
   icon: LucideIcon
@@ -61,6 +63,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       },
       { title: 'Quotes', to: '/admin/quotes', icon: InboxIcon },
       { title: 'Invoices', to: '/admin/invoices', icon: ReceiptTextIcon },
+      { title: 'Recurring', to: '/admin/recurring', icon: RepeatIcon },
       { title: 'Clients', to: '/admin/clients', icon: UsersIcon },
     ],
   },

@@ -133,6 +133,14 @@ Each invoice gets each type once. A log row of that type that is not `failed` bl
 
 Links in these emails use `APP_ORIGIN` (a var in `wrangler.toml`, and in `.dev.vars` locally), because a cron run has no request to read the origin from.
 
+### Recurring invoices
+
+`/admin/recurring` holds schedules: a client, line items, an interval (weekly, monthly, quarterly or yearly), the next run date and an "auto send" switch. After the reminders, the daily job creates one invoice for each active schedule whose next run date is today or earlier. The issue date is today and the due date is today plus the "Payment term (days)" setting. The tax rate and currency come from settings at run time.
+
+The invoice, its lines, the invoice number and the new run date are written in one D1 batch that applies only while the schedule still has the run date the job read, so a repeated run cannot create a second invoice for a period. If several periods were missed, the job creates one invoice and moves the run date to the first date after today. Month steps clamp to the last day of a shorter month and do not return to the original day afterwards.
+
+With auto send on, the invoice is emailed through the same function as the "Send to client" action, which marks it `sent` and writes an `email_log` row. If that send fails, the invoice stays a draft and the schedule still advances. Paused schedules and schedules whose client is archived are skipped. A run handles at most 5 schedules to stay within the free plan's subrequest limit, and the rest are picked up the next day.
+
 ## IDs
 
 Every database ID is a CUID (CUID2, 24 characters) created with `createId` from `src/lib/id.ts`. ESLint rejects `crypto.randomUUID`. The only fixed ID is `main`, the key of the single settings row.

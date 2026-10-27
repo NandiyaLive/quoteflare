@@ -181,6 +181,12 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
               { inputMode: 'numeric' },
               'Lowering this below a number already issued will cause a duplicate.',
             )}
+            {text(
+              'paymentTermDays',
+              'Payment term (days)',
+              { inputMode: 'numeric' },
+              'Days between the issue date and the due date on recurring invoices.',
+            )}
             <form.Field name="paymentInstructions">
               {(field) => {
                 const errors = fieldErrors(field.name, field.state.meta.errors)

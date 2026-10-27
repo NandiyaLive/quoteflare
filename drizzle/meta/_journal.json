@@ -57,6 +57,13 @@
       "when": 1793099900629,
       "tag": "0007_add_reminder_toggle",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793100703356,
+      "tag": "0008_add_payment_term",
+      "breakpoints": true
     }
   ]
 }

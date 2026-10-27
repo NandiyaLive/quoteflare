@@ -74,6 +74,12 @@ export const settingsSchema = z.strictObject({
     .string()
     .trim()
     .max(2000, 'Payment instructions must be 2000 characters or fewer'),
+  paymentTermDays: z
+    .string()
+    .trim()
+    .regex(/^\d{1,3}$/, 'Enter a whole number of days')
+    .transform(Number)
+    .refine((n) => n <= 365, 'Use 365 days or fewer'),
   sendReminders: z.boolean(),
 })
 

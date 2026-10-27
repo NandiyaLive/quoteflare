@@ -11,6 +11,7 @@ const valid = {
   invoicePrefix: 'INV',
   nextInvoiceNumber: '12',
   paymentInstructions: 'Pay by bank transfer.',
+  paymentTermDays: '14',
   sendReminders: false,
 }
 
@@ -30,6 +31,23 @@ describe('settings schema', () => {
     expect(settingsSchema.parse({ ...valid, taxRate: '100' }).taxRate).toBe(
       10000,
     )
+  })
+
+  it.each(['', '-1', '1.5', 'abc', '366', '1000'])(
+    'rejects payment term %j',
+    (paymentTermDays) => {
+      expect(issuesFor({ paymentTermDays })).toEqual(['paymentTermDays'])
+    },
+  )
+
+  it.each([
+    ['0', 0],
+    ['30', 30],
+    ['365', 365],
+  ])('accepts payment term %j', (paymentTermDays, days) => {
+    expect(settingsSchema.parse({ ...valid, paymentTermDays })).toMatchObject({
+      paymentTermDays: days,
+    })
   })
 
   it.each(['-5', 'abc', '', '100.01', '1.234', '1e2', '5%'])(

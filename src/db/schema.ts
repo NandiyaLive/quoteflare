@@ -68,6 +68,7 @@ export type RecurringItem = {
   description: string
   quantity: number
   unitPrice: number
+  taxable?: boolean
 }
 
 const id = () =>
@@ -103,6 +104,7 @@ export const settings = sqliteTable(
     sendReminders: integer('send_reminders', { mode: 'boolean' })
       .notNull()
       .default(false),
+    paymentTermDays: integer('payment_term_days').notNull().default(14),
   },
   (t) => [
     check('settings_single_row', sql`${t.id} = 'main'`),

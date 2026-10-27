@@ -48,7 +48,7 @@ const isRealDate = (value: string) => {
   )
 }
 
-const dateSchema = z
+export const dateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a date')
   .refine(isRealDate, 'Enter a valid date')

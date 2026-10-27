@@ -1,6 +1,7 @@
 import { and, eq, lt } from 'drizzle-orm'
 import { createDb, schema, type Db } from '#/db'
 import { sendDueReminders } from './reminders'
+import { runRecurringSchedules } from './recurring'
 
 export type DailyEnv = Pick<Env, 'DB' | 'RESEND_API_KEY' | 'EMAIL_FROM'> & {
   APP_ORIGIN: string
@@ -10,6 +11,9 @@ export interface DailyJobResult {
   markedOverdue: number
   remindersSent: number
   remindersFailed: number
+  recurringCreated: number
+  recurringSent: number
+  recurringFailed: number
 }
 
 export async function markOverdueInvoices(
@@ -54,9 +58,26 @@ export async function runDailyJobs(
     `daily: sent ${reminders.sent} reminders, ${reminders.failed} failed`,
   )
 
+  const recurring = await runRecurringSchedules(
+    db,
+    {
+      apiKey: env.RESEND_API_KEY,
+      from: env.EMAIL_FROM,
+      origin: env.APP_ORIGIN,
+      fetcher,
+    },
+    now,
+  )
+  console.log(
+    `daily: created ${recurring.created} recurring invoices, sent ${recurring.sent}, ${recurring.failed} failed`,
+  )
+
   return {
     markedOverdue,
     remindersSent: reminders.sent,
     remindersFailed: reminders.failed,
+    recurringCreated: recurring.created,
+    recurringSent: recurring.sent,
+    recurringFailed: recurring.failed,
   }
 }
