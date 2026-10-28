@@ -75,10 +75,10 @@ The `.dev.vars.example` file uses Cloudflare's always-pass Turnstile test keys. 
 
 ### One click
 
-The button above copies the repository to your GitHub account, creates the D1 database and R2 bucket, and deploys the Worker to `workers.dev`. It asks for the secrets listed in `.dev.vars.example`. Afterwards:
+The button above copies the repository to your GitHub account, creates the D1 database and R2 bucket, and deploys the Worker. The Worker has no public URL until you add your domain in step 2, because `wrangler.toml` turns off `workers.dev`. The button asks for the secrets listed in `.dev.vars.example`. Afterwards:
 
 1. Run `bunx wrangler d1 migrations apply DB --remote` from a clone of your copy.
-2. Set the vars in `wrangler.toml` (`ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`) and push.
+2. Set the vars in `wrangler.toml` (`ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`), add your domain to `routes`, and push.
 3. Create a Cloudflare Access application for `/admin/*` with one allow policy for your email, then set `ACCESS_AUD` to its audience tag.
 
 Until step 3 is done, `/admin` rejects every request.
