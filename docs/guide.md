@@ -48,10 +48,10 @@ D1 (binding `DB`, database `quoteflare`) is accessed through Drizzle. The schema
 bun run db:generate        # write a new migration to drizzle/ after editing the schema
 bun run db:migrate:local   # apply migrations to the local database
 bun run db:migrate:remote  # apply migrations to the remote database
-bun run db:seed            # insert sample data locally (safe to run twice)
+bun run db:seed            # insert the sample service catalogue locally (safe to run twice)
 ```
 
-`db:seed` loads settings, two clients and one invoice from `src/db/seed.sql`, then imports the service catalogue in `src/db/seed-services.json` (categories, services, options, dependencies, package categories and packages) with the same importer as `bun run services:import`. Prices are in USD. A second run creates nothing.
+`db:seed` imports the service catalogue in `src/db/seed-services.json` (categories, services, options, dependencies, package categories and packages) with the same importer as `bun run services:import`. It does not create settings, clients or invoices. Prices are in USD. A second run creates nothing.
 
 ## UI components
 

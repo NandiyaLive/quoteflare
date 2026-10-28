@@ -22,7 +22,7 @@
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote -c wrangler.production.toml",
     "db:export": "mkdir -p backups && wrangler d1 export DB --remote -c wrangler.production.toml --output=backups/quoteflare-$(date -u +%Y%m%dT%H%M%SZ).sql",
     "db:export:local": "mkdir -p backups && wrangler d1 export DB --local --output=backups/local-$(date -u +%Y%m%dT%H%M%SZ).sql",
-    "db:seed": "wrangler d1 execute DB --local --file=src/db/seed.sql && bun scripts/import-services.ts src/db/seed-services.json",
+    "db:seed": "bun scripts/import-services.ts src/db/seed-services.json",
     "services:import": "bun scripts/import-services.ts",
     "services:import:remote": "npx tsx scripts/import-services.ts --remote"
   },

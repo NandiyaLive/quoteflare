@@ -68,7 +68,7 @@ The `.dev.vars.example` file uses Cloudflare's always-pass Turnstile test keys. 
 | `bun run lint` / `typecheck` / `format` | ESLint, `tsc --noEmit` and Prettier      |
 | `bun run db:generate`                   | Write a migration after a schema change  |
 | `bun run db:migrate:local` / `:remote`  | Apply migrations                         |
-| `bun run db:seed`                       | Load sample data locally                 |
+| `bun run db:seed`                       | Load sample services locally             |
 | `bun run db:export`                     | Export the remote database to `backups/` |
 
 ## Deploying
