@@ -105,7 +105,7 @@ export function PackagesManager({
         <div className="grid gap-4">
           {packages.map((pkg, index) => (
             <Card key={pkg.id} data-testid="package-row">
-              <CardContent className="flex flex-wrap items-start justify-between gap-4">
+              <CardContent className="flex items-start justify-between gap-16">
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <div className="flex items-center gap-2">
                     <h2 className="font-semibold">{pkg.name}</h2>

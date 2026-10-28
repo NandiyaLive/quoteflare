@@ -6,6 +6,7 @@ import {
   ReceiptTextIcon,
   LayoutDashboardIcon,
   LayersIcon,
+  LogOutIcon,
   PackageIcon,
   UsersIcon,
   SettingsIcon,
@@ -68,6 +69,10 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
 ]
+
+// Cloudflare Access serves this path on every host it protects. It clears the
+// CF_Authorization cookie and ends the Access session. Local dev has no Access.
+const LOGOUT_URL = '/cdn-cgi/access/logout'
 
 export function AdminSidebar({ email }: { email: string }) {
   const matchRoute = useMatchRoute()
@@ -160,6 +165,17 @@ export function AdminSidebar({ email }: { email: string }) {
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          {!import.meta.env.DEV && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip="Log out"
+                render={<a href={LOGOUT_URL} />}
+              >
+                <LogOutIcon />
+                <span>Log out</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
