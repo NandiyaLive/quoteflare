@@ -3,6 +3,7 @@ import {
   Button,
   Container,
   Html,
+  Link,
   Preview,
   Section,
   Text,
@@ -67,6 +68,24 @@ export function InvoiceEmail({
               {buttonLabel}
             </Button>
           </Section>
+        </Container>
+        <Container style={{ maxWidth: 520, margin: '0 auto' }}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: '#71717a',
+              margin: '0 0 24px',
+              textAlign: 'center',
+            }}
+          >
+            Powered by{' '}
+            <Link
+              href="https://neranjana.me/projects/quoteflare"
+              style={{ color: '#71717a' }}
+            >
+              Quoteflare
+            </Link>
+          </Text>
         </Container>
       </Body>
     </Html>

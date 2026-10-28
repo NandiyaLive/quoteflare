@@ -1,0 +1,47 @@
+name = "quoteflare"
+main = "src/server.ts"
+compatibility_date = "2025-09-02"
+compatibility_flags = ["nodejs_compat"]
+upload_source_maps = true
+workers_dev = false
+preview_urls = false
+routes = [{ pattern = "invoices.neranjana.me", custom_domain = true }]
+
+[triggers]
+crons = ["30 3 * * *"]
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+redact_query_string = false
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 1
+persist = true
+
+[observability.issues]
+enabled = true
+
+[vars]
+ACCESS_TEAM_DOMAIN = "neranjana.cloudflareaccess.com"
+TURNSTILE_SITE_KEY = "0x4AAAAAAFLs7TZo8Q7quaZ0"
+EMAIL_FROM = "Invoices <invoices@neranjana.me>"
+APP_ORIGIN = "https://invoices.neranjana.me"
+ALLOWED_ORIGINS = "https://invoices.neranjana.me"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "quoteflare"
+database_id = "8d4d4fd9-b587-40c8-a158-1fd725639241"
+migrations_dir = "drizzle"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "quoteflare-files"

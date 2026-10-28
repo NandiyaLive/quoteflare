@@ -13,6 +13,8 @@ Quoteflare is a self-hosted invoicing app for a single owner. Visitors build a q
 
 It does not take payments. Invoices carry a status that you set yourself.
 
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/NandiyaLive/quoteflare)
+
 ## Features
 
 - **Pricing calculator.** A public page where a visitor picks services, options and quantities. The server recomputes the total from current prices, so the client cannot change it. Turnstile guards the submit.
@@ -71,8 +73,20 @@ The `.dev.vars.example` file uses Cloudflare's always-pass Turnstile test keys. 
 
 ## Deploying
 
+### One click
+
+The button above copies the repository to your GitHub account, creates the D1 database and R2 bucket, and deploys the Worker to `workers.dev`. It asks for the secrets listed in `.dev.vars.example`. Afterwards:
+
+1. Run `bunx wrangler d1 migrations apply DB --remote` from a clone of your copy.
+2. Set the vars in `wrangler.toml` (`ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`) and push.
+3. Create a Cloudflare Access application for `/admin/*` with one allow policy for your email, then set `ACCESS_AUD` to its audience tag.
+
+Until step 3 is done, `/admin` rejects every request.
+
+### By hand
+
 1. Sign in with `bunx wrangler login`.
-2. Create the D1 database and the R2 bucket, then put the database ID in `wrangler.toml`.
+2. Create the D1 database and the R2 bucket, then put the database ID in `wrangler.toml`. The repository's own deployment uses `wrangler.production.toml` and `bun run deploy:production`.
 3. Edit the `[vars]` block and the route in `wrangler.toml` for your own domain.
 4. Apply migrations with `bun run db:migrate:remote`.
 5. Set the secrets `ACCESS_AUD`, `TURNSTILE_SECRET`, `RESEND_API_KEY` and `RESEND_WEBHOOK_SECRET` with `bunx wrangler secret put <name>`.

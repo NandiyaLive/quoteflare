@@ -16,7 +16,7 @@ function SiteLayout() {
       <main className="flex-1 py-8 sm:py-12">
         <Outlet />
       </main>
-      <Footer />
+      <Footer businessName={branding.name} />
     </div>
   )
 }
