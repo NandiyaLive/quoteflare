@@ -11,7 +11,7 @@
     "build": "vite build",
     "preview": "bun run build && vite preview",
     "deploy": "bun run build && wrangler deploy",
-    "deploy:production": "WRANGLER_CONFIG=wrangler.production.toml bun run build && wrangler deploy -c wrangler.production.toml",
+    "deploy:production": "WRANGLER_CONFIG=wrangler.production.toml bun run build && wrangler deploy",
     "cf-typegen": "wrangler types",
     "test": "vitest run",
     "lint": "eslint .",
