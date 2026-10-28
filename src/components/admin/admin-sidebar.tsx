@@ -1,19 +1,4 @@
-import { Link, useMatchRoute } from '@tanstack/react-router'
-import {
-  GlobeIcon,
-  RepeatIcon,
-  InboxIcon,
-  ReceiptTextIcon,
-  LayoutDashboardIcon,
-  LayersIcon,
-  LogOutIcon,
-  PackageIcon,
-  UsersIcon,
-  SettingsIcon,
-  type LucideIcon,
-} from 'lucide-react'
 import Logo from '@/components/common/logo'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +13,20 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { Link, useMatchRoute } from '@tanstack/react-router'
+import {
+  GlobeIcon,
+  InboxIcon,
+  LayersIcon,
+  LayoutDashboardIcon,
+  LogOutIcon,
+  PackageIcon,
+  ReceiptTextIcon,
+  RepeatIcon,
+  SettingsIcon,
+  UsersIcon,
+  type LucideIcon,
+} from 'lucide-react'
 
 type NavItem = {
   title: string
@@ -74,7 +73,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
 // CF_Authorization cookie and ends the Access session. Local dev has no Access.
 const LOGOUT_URL = '/cdn-cgi/access/logout'
 
-export function AdminSidebar({ email }: { email: string }) {
+export function AdminSidebar() {
   const matchRoute = useMatchRoute()
   const { isMobile, setOpenMobile } = useSidebar()
 
@@ -94,6 +93,7 @@ export function AdminSidebar({ email }: { email: string }) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -146,28 +146,13 @@ export function AdminSidebar({ email }: { email: string }) {
           </SidebarGroup>
         ))}
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              tooltip={email}
-              className="cursor-default"
-            >
-              <Avatar className="size-8 rounded-lg">
-                <AvatarFallback className="rounded-lg">
-                  {email.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">Administrator</span>
-                <span className="truncate text-xs">{email}</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          {!import.meta.env.DEV && (
+          {import.meta.env.DEV && (
             <SidebarMenuItem>
               <SidebarMenuButton
+                variant="destructive"
                 tooltip="Log out"
                 render={<a href={LOGOUT_URL} />}
               >
