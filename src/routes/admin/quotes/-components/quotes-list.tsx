@@ -18,23 +18,6 @@ export function QuotesList({ quotes }: { quotes: QuoteRow[] }) {
   const columns = useMemo<ColumnDef<DataTableFeatures, QuoteRow>[]>(
     () => [
       {
-        id: 'received',
-        accessorFn: (quote) => new Date(quote.createdAt).getTime(),
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} label="Received" />
-        ),
-        cell: ({ row }) => (
-          <Link
-            to="/admin/quotes/$quoteId"
-            params={{ quoteId: row.original.id }}
-            className="font-medium underline-offset-4 hover:underline"
-          >
-            {formatDate(row.original.createdAt, { month: 'short' })}
-          </Link>
-        ),
-        meta: { label: 'Received' },
-      },
-      {
         id: 'contact',
         accessorFn: (quote) => `${quote.contactName} ${quote.contactEmail}`,
         header: ({ column }) => (
@@ -42,7 +25,13 @@ export function QuotesList({ quotes }: { quotes: QuoteRow[] }) {
         ),
         cell: ({ row }) => (
           <>
-            <div className="font-medium">{row.original.contactName}</div>
+            <Link
+              to="/admin/quotes/$quoteId"
+              params={{ quoteId: row.original.id }}
+              className="font-medium underline-offset-4 hover:underline"
+            >
+              {row.original.contactName}
+            </Link>
             <div className="text-muted-foreground">
               {row.original.contactEmail}
             </div>
@@ -55,6 +44,16 @@ export function QuotesList({ quotes }: { quotes: QuoteRow[] }) {
           icon: SearchIcon,
         },
         enableColumnFilter: true,
+      },
+      {
+        id: 'received',
+        accessorFn: (quote) => new Date(quote.createdAt).getTime(),
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} label="Received" />
+        ),
+        cell: ({ row }) =>
+          formatDate(row.original.createdAt, { month: 'short' }),
+        meta: { label: 'Received' },
       },
       {
         id: 'status',

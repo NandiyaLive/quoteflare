@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import PoweredBy from '@/components/common/powered-by'
 import { getQuoteConfig } from '#/server/quote-actions'
+import { createFileRoute } from '@tanstack/react-router'
 import { QuoteForm } from './-components/quote-form'
 
 export const Route = createFileRoute('/_site/_calculator/review/')({
