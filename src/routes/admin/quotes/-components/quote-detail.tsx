@@ -283,65 +283,69 @@ export function QuoteDetail({
             )}
           </CardContent>
         </Card>
-        {!invoice && quote.status === 'new' && breakdown && (
+
+        <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Advance payment</CardTitle>
+              <CardTitle>Contact</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3 text-sm">
-              <label className="flex items-center gap-2">
-                <Checkbox
-                  checked={advance}
-                  onCheckedChange={(checked) => setAdvance(checked === true)}
-                />
-                Ask for an advance before starting
-              </label>
-              {advance && (
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="advance-percent" className="font-medium">
-                    Advance (% of the total)
-                  </label>
-                  <Input
-                    id="advance-percent"
-                    inputMode="numeric"
-                    value={advancePercent}
-                    aria-invalid={!advanceValid}
-                    onChange={(e) => setAdvancePercent(e.target.value)}
-                  />
-                  {!advanceValid && (
-                    <p className="text-destructive">
-                      Enter a whole number from {MIN_ADVANCE_PERCENT} to{' '}
-                      {MAX_ADVANCE_PERCENT}.
-                    </p>
-                  )}
-                </div>
-              )}
+            <CardContent className="flex flex-col gap-4 text-sm">
+              <div>
+                <div className="font-medium">{quote.contactName}</div>
+                <a
+                  href={`mailto:${quote.contactEmail}`}
+                  className="text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  {quote.contactEmail}
+                </a>
+              </div>
+              <Separator />
+              <div>
+                <p className="mb-1 font-medium">Message</p>
+                <p className="whitespace-pre-wrap text-muted-foreground">
+                  {quote.message || 'No message.'}
+                </p>
+              </div>
             </CardContent>
           </Card>
-        )}
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4 text-sm">
-            <div>
-              <div className="font-medium">{quote.contactName}</div>
-              <a
-                href={`mailto:${quote.contactEmail}`}
-                className="text-muted-foreground underline-offset-4 hover:underline"
-              >
-                {quote.contactEmail}
-              </a>
-            </div>
-            <Separator />
-            <div>
-              <p className="mb-1 font-medium">Message</p>
-              <p className="whitespace-pre-wrap text-muted-foreground">
-                {quote.message || 'No message.'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+
+          {!invoice && quote.status === 'new' && breakdown && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Advance payment</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3 text-sm">
+                <label className="flex items-center gap-2">
+                  <Checkbox
+                    checked={advance}
+                    onCheckedChange={(checked) => setAdvance(checked === true)}
+                  />
+                  Ask for an advance before starting
+                </label>
+                {advance && (
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="advance-percent" className="font-medium">
+                      Advance (% of the total)
+                    </label>
+                    <Input
+                      id="advance-percent"
+                      inputMode="numeric"
+                      value={advancePercent}
+                      aria-invalid={!advanceValid}
+                      onChange={(e) => setAdvancePercent(e.target.value)}
+                    />
+                    {!advanceValid && (
+                      <p className="text-destructive">
+                        Enter a whole number from {MIN_ADVANCE_PERCENT} to{' '}
+                        {MAX_ADVANCE_PERCENT}.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
       {dialog}
     </>
