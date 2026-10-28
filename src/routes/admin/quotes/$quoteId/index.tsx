@@ -1,6 +1,42 @@
-import { createFileRoute, notFound } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  notFound,
+  useNavigate,
+  useRouter,
+} from '@tanstack/react-router'
 import { getQuoteDetail } from '#/server/quote-actions'
-import { QuoteDetail } from '../-components/quote-detail'
+import { useState } from 'react'
+import { useConfirm } from '@/components/common/confirm-dialog'
+import BackButton from '@/components/common/back-button'
+import PageHeader from '@/components/common/page-header'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { formatDate } from '@/lib/format'
+import { formatMinor } from '#/lib/decimal'
+import { MAX_ADVANCE_PERCENT, MIN_ADVANCE_PERCENT } from '#/lib/invoices'
+import type { PricedLine } from '#/lib/pricing'
+import { quoteRecurringIntervals } from '#/lib/quotes'
+import { RECURRING_INTERVAL_LABELS } from '#/lib/recurring'
+import { BILLING_LABELS } from '#/lib/services'
+import {
+  convertQuoteAction,
+  setQuoteStatusAction,
+} from '#/server/quote-actions'
+import { QuoteStatusBadge } from '../-components/quote-status-badge'
+import { toast } from 'sonner'
+import { callAction } from '#/lib/action-errors'
 
 export const Route = createFileRoute('/admin/quotes/$quoteId/')({
   staticData: { breadcrumb: 'Quote' },
@@ -15,7 +51,317 @@ export const Route = createFileRoute('/admin/quotes/$quoteId/')({
   component: QuotePage,
 })
 
+function LinesTable({
+  lines,
+  currency,
+  recurring,
+}: {
+  lines: PricedLine[]
+  currency: string
+  recurring?: boolean
+}) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Item</TableHead>
+          <TableHead className="text-right">Qty</TableHead>
+          <TableHead className="text-right">Unit price</TableHead>
+          <TableHead className="text-right">Amount</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {lines.map((line) => (
+          <TableRow key={line.serviceId}>
+            <TableCell>
+              <div className="font-medium">
+                {line.name}
+                {recurring && (
+                  <span className="font-normal text-muted-foreground">
+                    {' '}
+                    ({BILLING_LABELS[line.billing].toLowerCase()})
+                  </span>
+                )}
+              </div>
+              {line.options.map((option) => (
+                <div key={option.optionId} className="text-muted-foreground">
+                  {option.name}: {formatMinor(option.amount, currency)}
+                </div>
+              ))}
+            </TableCell>
+            <TableCell className="text-right">{line.quantity}</TableCell>
+            <TableCell className="text-right">
+              {formatMinor(line.unitPrice, currency)}
+            </TableCell>
+            <TableCell className="text-right">
+              {formatMinor(line.amount, currency)}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
+}
+
 function QuotePage() {
   const { quote, invoice } = Route.useLoaderData()
-  return <QuoteDetail quote={quote} invoice={invoice} />
+  const router = useRouter()
+  const navigate = useNavigate()
+  const [busy, setBusy] = useState(false)
+  const [advance, setAdvance] = useState(false)
+  const [advancePercent, setAdvancePercent] = useState('50')
+  const percent = Number(advancePercent)
+  const advanceValid =
+    Number.isInteger(percent) &&
+    percent >= MIN_ADVANCE_PERCENT &&
+    percent <= MAX_ADVANCE_PERCENT
+  const { breakdown, currency } = quote
+  const recurringIntervals = breakdown ? quoteRecurringIntervals(breakdown) : []
+
+  const { confirm, dialog } = useConfirm()
+
+  const change = async (status: 'new' | 'dismissed') => {
+    if (
+      status === 'dismissed' &&
+      !(await confirm({
+        title: 'Dismiss this quote?',
+        description: 'You can reopen it later from the quote page.',
+        confirmLabel: 'Dismiss quote',
+      }))
+    )
+      return
+    setBusy(true)
+    try {
+      const result = await callAction(
+        () => setQuoteStatusAction({ data: { id: quote.id, status } }),
+        'Could not update the quote. Try again.',
+      )
+      if (result?.ok)
+        toast.success(status === 'new' ? 'Quote reopened.' : 'Quote dismissed.')
+      else if (result) toast.error('This quote can no longer be changed.')
+      await router.invalidate()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const createInvoice = async () => {
+    setBusy(true)
+    try {
+      const result = await callAction(
+        () =>
+          convertQuoteAction({
+            data: { id: quote.id, advancePercent: advance ? percent : null },
+          }),
+        'Could not create the invoice. Try again.',
+      )
+      if (!result) return
+      if (!result.ok) {
+        toast.error(result.error)
+        return
+      }
+      await navigate({
+        to: '/admin/invoices/$invoiceId',
+        params: { invoiceId: result.invoiceId },
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <PageHeader
+        back={
+          <BackButton
+            link={<Link to="/admin/quotes" search={{ status: 'all' }} />}
+          >
+            Back to quotes
+          </BackButton>
+        }
+        title={`Quote from ${quote.contactName}`}
+        description={
+          <span className="inline-flex items-center gap-2">
+            <QuoteStatusBadge status={quote.status} />
+            {formatDate(quote.createdAt)}
+          </span>
+        }
+      >
+        {invoice && (
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={
+              <Link
+                to="/admin/invoices/$invoiceId"
+                params={{ invoiceId: invoice.id }}
+              />
+            }
+          >
+            View invoice {invoice.number}
+          </Button>
+        )}
+        {quote.status !== 'dismissed' &&
+          recurringIntervals.map((interval) => (
+            <Button
+              key={interval}
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link
+                  to="/admin/recurring/new"
+                  search={{ quoteId: quote.id, interval }}
+                />
+              }
+            >
+              Create recurring schedule
+              {recurringIntervals.length > 1 &&
+                ` (${RECURRING_INTERVAL_LABELS[interval]})`}
+            </Button>
+          ))}
+        {!invoice && quote.status === 'new' && (
+          <>
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => void change('dismissed')}
+            >
+              Dismiss
+            </Button>
+            <Button
+              disabled={busy || (advance && !advanceValid)}
+              onClick={() => void createInvoice()}
+            >
+              Create invoice
+            </Button>
+          </>
+        )}
+        {quote.status === 'dismissed' && (
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={() => void change('new')}
+          >
+            Reopen
+          </Button>
+        )}
+      </PageHeader>
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Items</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-6">
+            {breakdown ? (
+              <>
+                <LinesTable lines={breakdown.lines} currency={currency} />
+                {breakdown.recurring.lines.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-medium">Recurring charges</p>
+                    <LinesTable
+                      lines={breakdown.recurring.lines}
+                      currency={currency}
+                      recurring
+                    />
+                    <p className="text-right text-sm">
+                      Recurring total{' '}
+                      <span data-testid="quote-recurring-total">
+                        {formatMinor(breakdown.recurring.total, currency)}
+                      </span>
+                    </p>
+                  </div>
+                )}
+                <Separator />
+                <dl className="ml-auto flex w-full max-w-xs flex-col gap-1 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt>Subtotal</dt>
+                    <dd>{formatMinor(breakdown.subtotal, currency)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Tax</dt>
+                    <dd>{formatMinor(breakdown.taxAmount, currency)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 text-base font-semibold">
+                    <dt>Total</dt>
+                    <dd data-testid="quote-total">
+                      {formatMinor(quote.total, currency)}
+                    </dd>
+                  </div>
+                </dl>
+              </>
+            ) : (
+              <p className="text-muted-foreground">
+                No itemised breakdown was stored. Total{' '}
+                {formatMinor(quote.total, currency)}.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4 text-sm">
+              <div>
+                <div className="font-medium">{quote.contactName}</div>
+                <a
+                  href={`mailto:${quote.contactEmail}`}
+                  className="text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  {quote.contactEmail}
+                </a>
+              </div>
+              <Separator />
+              <div>
+                <p className="mb-1 font-medium">Message</p>
+                <p className="whitespace-pre-wrap text-muted-foreground">
+                  {quote.message || 'No message.'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {!invoice && quote.status === 'new' && breakdown && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Advance payment</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3 text-sm">
+                <label className="flex items-center gap-2">
+                  <Checkbox
+                    checked={advance}
+                    onCheckedChange={(checked) => setAdvance(checked === true)}
+                  />
+                  Ask for an advance before starting
+                </label>
+                {advance && (
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="advance-percent" className="font-medium">
+                      Advance (% of the total)
+                    </label>
+                    <Input
+                      id="advance-percent"
+                      inputMode="numeric"
+                      value={advancePercent}
+                      aria-invalid={!advanceValid}
+                      onChange={(e) => setAdvancePercent(e.target.value)}
+                    />
+                    {!advanceValid && (
+                      <p className="text-destructive">
+                        Enter a whole number from {MIN_ADVANCE_PERCENT} to{' '}
+                        {MAX_ADVANCE_PERCENT}.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+      {dialog}
+    </>
+  )
 }

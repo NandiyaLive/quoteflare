@@ -18,10 +18,8 @@ export const Route = createFileRoute('/admin/recurring/$scheduleId/')({
   notFoundComponent: () => (
     <p className="text-muted-foreground">This schedule does not exist.</p>
   ),
-  component: SchedulePage,
+  component: function SchedulePage() {
+    const { schedule, context } = Route.useLoaderData()
+    return <RecurringEditor context={context} schedule={schedule} />
+  },
 })
-
-function SchedulePage() {
-  const { schedule, context } = Route.useLoaderData()
-  return <RecurringEditor context={context} schedule={schedule} />
-}

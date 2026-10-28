@@ -29,10 +29,10 @@ export const Route = createFileRoute('/admin/recurring/new/')({
     ])
     return { context, prefill }
   },
-  component: NewSchedulePage,
+  component: function NewSchedulePage() {
+    const { context, prefill } = Route.useLoaderData()
+    return (
+      <RecurringEditor context={context} schedule={null} prefill={prefill} />
+    )
+  },
 })
-
-function NewSchedulePage() {
-  const { context, prefill } = Route.useLoaderData()
-  return <RecurringEditor context={context} schedule={null} prefill={prefill} />
-}

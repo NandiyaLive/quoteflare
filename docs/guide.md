@@ -36,7 +36,7 @@ Checks: `bun run test` (Vitest), `bun run lint` (ESLint), `bun run typecheck` (t
 
 ## Project layout
 
-Routes are directory based. Each route folder under `src/routes` owns its components in a `-components` folder, for example `src/routes/_site/_calculator/-components/summary.tsx`. TanStack Router ignores files and folders whose names start with `-`, so they never become routes. Components shared across routes go in `src/components/common`.
+Routes are directory based. A page's `index.tsx` holds the route options and the page component itself. Components that two or more routes share, or that a page composes, live in the route folder's `-components` folder, for example `src/routes/_site/_calculator/-components/summary.tsx`. The two invoice editors and the recurring editor are shared by their `new` and `$id` routes, so those pages render them with a short inline component. TanStack Router ignores files and folders whose names start with `-`, so they never become routes. Components shared across routes go in `src/components/common`.
 
 Other folders: `src/db` (Drizzle schema), `src/lib` (shared helpers), `src/server` (server-only code), `src/jobs` (scheduled jobs).
 

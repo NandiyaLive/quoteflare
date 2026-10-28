@@ -5,9 +5,7 @@ import { InvoiceEditor } from '../-components/invoice-editor'
 export const Route = createFileRoute('/admin/invoices/new/')({
   staticData: { breadcrumb: 'New invoice' },
   loader: () => getInvoiceFormContext(),
-  component: NewInvoicePage,
+  component: function NewInvoicePage() {
+    return <InvoiceEditor context={Route.useLoaderData()} invoice={null} />
+  },
 })
-
-function NewInvoicePage() {
-  return <InvoiceEditor context={Route.useLoaderData()} invoice={null} />
-}
