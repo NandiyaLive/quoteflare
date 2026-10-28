@@ -1,17 +1,44 @@
+# Generic config for local development and the Deploy to Cloudflare button.
+# Fill in the empty values below for your own deployment. To keep them out of
+# git, copy this file to wrangler.production.toml, which git ignores, and use
+# that file with the `*:production` and `db:*:remote` scripts. Also add
+# remote = true to its D1 binding so `services:import:remote` can reach the
+# deployed database.
 name = "quoteflare"
 main = "src/server.ts"
 compatibility_date = "2025-09-02"
 compatibility_flags = ["nodejs_compat"]
 upload_source_maps = true
 
+# The Worker answers only on your own domain. Add it as a custom domain, for
+# example routes = [{ pattern = "invoices.example.com", custom_domain = true }].
+workers_dev = false
+preview_urls = false
+routes = []
+
 [triggers]
 crons = ["30 3 * * *"]
 
+# /i/<token> is a bearer credential, so keep query strings and invocation logs
+# out of the logs.
 [observability]
 enabled = true
+head_sampling_rate = 1
+redact_query_string = true
 
-# The Deploy to Cloudflare button creates the D1 database and R2 bucket for
-# these bindings in the deployer's account. Set the vars below after deploying.
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = false
+persist = true
+
+[observability.traces]
+enabled = false
+
+[observability.issues]
+enabled = true
+
+# Set the vars below for your deployment.
 [vars]
 ACCESS_TEAM_DOMAIN = ""
 TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
@@ -19,6 +46,9 @@ EMAIL_FROM = ""
 APP_ORIGIN = ""
 ALLOWED_ORIGINS = ""
 
+# The Deploy to Cloudflare button creates the D1 database and R2 bucket for
+# these bindings in the deployer's account. When you create them yourself, add
+# database_id to the D1 binding.
 [[d1_databases]]
 binding = "DB"
 database_name = "quoteflare"
@@ -26,7 +56,7 @@ migrations_dir = "drizzle"
 
 [[r2_buckets]]
 binding = "FILES"
-bucket_name = "quoteflare-files"
+bucket_name = "quoteflare"
 
 # Per-IP limits on the public endpoints. namespace_id only has to be unique
 # within your Cloudflare account.

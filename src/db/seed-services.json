@@ -2,50 +2,35 @@
   "categories": [
     "Website build",
     "Design",
-    "Content management (Sanity)",
+    "Content management",
     "Forms and integrations",
-    "Deployment",
-    "Cloudflare",
-    "Email",
-    "SEO",
-    "General add-ons"
+    "SEO and analytics",
+    "Launch and hosting"
   ],
   "services": [
     {
       "name": "Home page",
-      "description": "A static home page built to your design, responsive on phones, tablets and desktops.",
-      "price": "45000.00",
+      "description": "A home page built to your design, responsive on phones, tablets and desktops.",
+      "price": "600.00",
       "category": "Website build",
       "unitLabel": "page",
       "maxQuantity": 1,
       "estimatedDays": [2, 3],
-      "options": [
-        {
-          "name": "Rush delivery",
-          "type": "percent",
-          "value": "25"
-        }
-      ]
+      "options": [{ "name": "Rush delivery", "type": "percent", "value": "25" }]
     },
     {
       "name": "Additional page",
-      "description": "One more static page, such as About, Services or Contact.",
-      "price": "15000.00",
+      "description": "One more page, such as About, Services or Pricing.",
+      "price": "200.00",
       "category": "Website build",
       "unitLabel": "page",
       "estimatedDays": [1, 2],
-      "options": [
-        {
-          "name": "Rush delivery",
-          "type": "percent",
-          "value": "25"
-        }
-      ]
+      "options": [{ "name": "Rush delivery", "type": "percent", "value": "25" }]
     },
     {
       "name": "Prototype",
-      "description": "A clickable site mockup made before development. Use it to review the layout and user flow, then resolve feedback before the build starts.",
-      "price": "20000.00",
+      "description": "A clickable mockup made before development. Review the layout and flow, then resolve feedback before the build starts.",
+      "price": "300.00",
       "category": "Design",
       "unitLabel": "page",
       "note": "The price is a default. Set the real price per quote.",
@@ -53,324 +38,210 @@
       "estimatedDays": [2, 3]
     },
     {
-      "name": "Sanity CMS setup",
-      "description": "Sets up Sanity so your team can create and edit content without changing code. Includes the Studio, content types and deployment.",
-      "price": "10000.00",
-      "category": "Content management (Sanity)",
-      "estimatedDays": [2, 3],
-      "maxQuantity": 1
+      "name": "Extra revision round",
+      "description": "One more round of changes after the agreed revisions are used up.",
+      "price": "100.00",
+      "category": "Design",
+      "unitLabel": "round"
     },
     {
-      "name": "Content schema",
-      "description": "Defines one CMS content type and its fields, such as a blog post, team member or product.",
-      "price": "5000.00",
-      "category": "Content management (Sanity)",
-      "unitLabel": "schema",
-      "note": "The price is a default. Set the real price per quote.",
-      "pricingMode": "custom",
-      "estimatedDays": [1, 2],
-      "requires": ["Sanity CMS setup"]
+      "name": "CMS setup",
+      "description": "Sets up a headless CMS so your team can edit content without changing code.",
+      "price": "400.00",
+      "category": "Content management",
+      "estimatedDays": [2, 3]
     },
     {
-      "name": "Visual editing",
-      "description": "Lets editors select text or images on the live site and edit them in Sanity.",
-      "price": "10000.00",
-      "category": "Content management (Sanity)",
-      "estimatedDays": [1, 2],
-      "requires": ["Sanity CMS setup"],
-      "maxQuantity": 1
-    },
-    {
-      "name": "Dynamic listing page",
-      "description": "Displays a CMS collection, such as blog posts, team members or portfolio projects. New entries appear without a code change.",
-      "price": "18000.00",
-      "category": "Content management (Sanity)",
-      "unitLabel": "page",
-      "estimatedDays": [2, 3],
-      "requires": ["Sanity CMS setup"]
-    },
-    {
-      "name": "Dynamic detail page",
-      "description": "Builds the template for one entry in a CMS collection, such as a blog post, team profile or product.",
-      "price": "12000.00",
-      "category": "Content management (Sanity)",
-      "unitLabel": "page",
-      "note": "The price is a default. Set the real price per quote.",
-      "pricingMode": "custom",
-      "estimatedDays": [1, 2],
-      "requires": ["Dynamic listing page"]
-    },
-    {
-      "name": "Formspree contact form",
-      "description": "Sends contact form submissions to your email through Formspree.",
-      "price": "5000.00",
-      "category": "Forms and integrations",
-      "note": "Requires a Formspree account. Subscription fees are separate.",
-      "estimatedDays": [0.5, 1],
-      "maxQuantity": 1
-    },
-    {
-      "name": "Custom contact form",
-      "description": "Builds a contact form without a form service. Stores submissions in your CMS and sends notifications through Resend.",
-      "price": "15000.00",
-      "category": "Forms and integrations",
-      "note": "Requires a Resend account.",
-      "estimatedDays": [1, 2],
-      "maxQuantity": 1
-    },
-    {
-      "name": "Third-party API integration",
-      "description": "Connects the site to an API, such as a CRM, inventory system or booking platform.",
-      "price": "0",
-      "category": "Forms and integrations",
-      "unitLabel": "integration",
-      "note": "Price depends on the API and the required work.",
-      "pricingMode": "custom",
-      "estimatedDays": [2, 4]
-    },
-    {
-      "name": "Payment integration",
-      "description": "Adds online payments through Stripe or another gateway, including checkout, confirmation and webhook handling.",
-      "price": "20000.00",
-      "category": "Forms and integrations",
-      "note": "The provider charges transaction fees separately.",
-      "estimatedDays": [2, 3],
-      "maxQuantity": 1
-    },
-    {
-      "name": "Deployment",
-      "description": "Deploys the site to its live URL, connects your domain and configures automatic deploys from code changes.",
-      "price": "10000.00",
-      "category": "Deployment",
-      "estimatedDays": [0.5, 1],
-      "maxQuantity": 1
-    },
-    {
-      "name": "Cloudflare setup",
-      "description": "Connects your domain to Cloudflare for CDN delivery, DDoS protection, HTTPS and DNS management.",
-      "price": "3000.00",
-      "category": "Cloudflare",
-      "note": "Requires a Cloudflare account.",
-      "estimatedDays": [0.5, 1],
-      "maxQuantity": 1
-    },
-    {
-      "name": "Professional email setup",
-      "description": "Sets up domain email through Zoho Mail, including DNS records and mailbox creation.",
-      "price": "5000.00",
-      "category": "Email",
-      "note": "Zoho fees are separate.",
-      "estimatedDays": [0.5, 1],
-      "maxQuantity": 1
-    },
-    {
-      "name": "Transactional email",
-      "description": "Sends emails triggered by site actions, such as form confirmations, booking receipts or password resets, through Resend.",
-      "price": "8000.00",
-      "category": "Email",
-      "note": "Requires a Resend account.",
-      "estimatedDays": [1, 2],
-      "maxQuantity": 1
-    },
-    {
-      "name": "Email template",
-      "description": "Designs an HTML email for newsletters, notifications or receipts and tests it in Gmail, Outlook and Apple Mail.",
-      "price": "5000.00",
-      "category": "Email",
-      "unitLabel": "template",
+      "name": "Content type",
+      "description": "Defines one CMS content type and its fields, such as a blog post or a team member.",
+      "price": "150.00",
+      "category": "Content management",
+      "unitLabel": "type",
+      "requires": ["CMS setup"],
       "estimatedDays": [1, 2]
     },
     {
+      "name": "Listing page",
+      "description": "Shows a collection of CMS entries, such as blog posts or projects.",
+      "price": "250.00",
+      "category": "Content management",
+      "unitLabel": "page",
+      "requires": ["CMS setup", "Content type"],
+      "estimatedDays": [2, 3],
+      "options": [{ "name": "Rush delivery", "type": "percent", "value": "25" }]
+    },
+    {
+      "name": "Detail page",
+      "description": "Shows one CMS entry on its own page.",
+      "price": "250.00",
+      "category": "Content management",
+      "unitLabel": "page",
+      "requires": ["CMS setup", "Content type"],
+      "estimatedDays": [2, 3]
+    },
+    {
+      "name": "Contact form",
+      "description": "Sends form submissions to your email.",
+      "note": "Requires an account with the email provider.",
+      "price": "150.00",
+      "category": "Forms and integrations",
+      "maxQuantity": 1,
+      "estimatedDays": [1, 1],
+      "optionGroups": [
+        { "name": "Spam protection", "selection": "single", "required": true }
+      ],
+      "options": [
+        { "name": "Honeypot field", "value": "0", "group": "Spam protection" },
+        { "name": "CAPTCHA", "value": "25.00", "group": "Spam protection" }
+      ]
+    },
+    {
+      "name": "Booking form",
+      "description": "Collects booking requests with a date, a time and contact details.",
+      "price": "300.00",
+      "category": "Forms and integrations",
+      "maxQuantity": 1,
+      "estimatedDays": [2, 3]
+    },
+    {
+      "name": "Third-party API integration",
+      "description": "Connects the site to an external service through its API.",
+      "note": "The price is a default. Set the real price per quote.",
+      "price": "400.00",
+      "category": "Forms and integrations",
+      "unitLabel": "integration",
+      "pricingMode": "custom"
+    },
+    {
+      "name": "Payment integration",
+      "description": "Accepts one-time payments through a payment provider.",
+      "note": "Requires an account with the payment provider.",
+      "price": "600.00",
+      "category": "Forms and integrations",
+      "maxQuantity": 1,
+      "pricingMode": "custom",
+      "estimatedDays": [3, 5]
+    },
+    {
       "name": "On-page SEO",
-      "description": "Adds page titles, meta descriptions, social sharing tags, canonical URLs and an XML sitemap for Google Search Console.",
-      "price": "6000.00",
-      "category": "SEO",
-      "estimatedDays": [1, 2],
-      "maxQuantity": 1
+      "description": "Page titles, descriptions, headings, image text and a sitemap for every page.",
+      "price": "250.00",
+      "category": "SEO and analytics",
+      "maxQuantity": 1,
+      "estimatedDays": [1, 2]
     },
     {
       "name": "Structured data",
-      "description": "Adds JSON-LD markup for eligible Google results, such as ratings, FAQs, breadcrumbs or events.",
-      "price": "5000.00",
-      "category": "SEO",
-      "estimatedDays": [0.5, 1],
+      "description": "Adds schema markup so search engines can show rich results.",
+      "price": "150.00",
+      "category": "SEO and analytics",
       "maxQuantity": 1
     },
     {
       "name": "Analytics setup",
-      "description": "Sets up Google Analytics 4 for traffic and conversions, then connects Google Search Console for indexing and search data.",
-      "price": "4000.00",
-      "category": "SEO",
-      "note": "Both services are free.",
-      "estimatedDays": [0.5, 1],
+      "description": "Installs privacy-friendly analytics and sets up goals for your key actions.",
+      "price": "100.00",
+      "category": "SEO and analytics",
       "maxQuantity": 1
+    },
+    {
+      "name": "Domain and DNS setup",
+      "description": "Points your domain at the site and configures the DNS records.",
+      "price": "80.00",
+      "category": "Launch and hosting",
+      "maxQuantity": 1
+    },
+    {
+      "name": "Deployment",
+      "description": "Publishes the site to production with a build pipeline, so later changes go live on their own.",
+      "price": "150.00",
+      "category": "Launch and hosting",
+      "maxQuantity": 1,
+      "estimatedDays": [1, 1]
+    },
+    {
+      "name": "Professional email setup",
+      "description": "Creates mailboxes on your own domain and configures SPF, DKIM and DMARC.",
+      "price": "100.00",
+      "category": "Launch and hosting",
+      "unitLabel": "mailbox"
+    },
+    {
+      "name": "Static site hosting",
+      "description": "Fast global hosting for a static site, with HTTPS included.",
+      "price": "15.00",
+      "category": "Launch and hosting",
+      "unitLabel": "month",
+      "billing": "monthly",
+      "taxable": false
     },
     {
       "name": "Maintenance retainer",
-      "description": "Monthly maintenance for updates, security checks, minor content fixes and priority support after launch.",
-      "price": "10000.00",
-      "category": "General add-ons",
+      "description": "Updates, security checks and minor fixes after launch.",
+      "price": "120.00",
+      "category": "Launch and hosting",
       "unitLabel": "month",
-      "billing": "monthly"
+      "billing": "monthly",
+      "taxable": false
     },
     {
-      "name": "Content migration",
-      "description": "Moves text, images and documents from an existing site or platform.",
-      "price": "0",
-      "category": "General add-ons",
-      "note": "Price depends on the amount and format of the content.",
-      "pricingMode": "custom",
-      "estimatedDays": [2, 4],
-      "maxQuantity": 1
-    },
-    {
-      "name": "Extra revision round",
-      "description": "One more round of design changes after the included revisions.",
-      "price": "5000.00",
-      "category": "General add-ons",
-      "unitLabel": "round"
+      "name": "Support hour",
+      "description": "Time for changes and questions that fall outside the maintenance retainer.",
+      "price": "60.00",
+      "category": "Launch and hosting",
+      "unitLabel": "hour"
     }
   ],
+  "packageCategories": ["Websites", "Care plans"],
   "packages": [
     {
       "name": "Landing page",
-      "description": "A single page with a contact form, ready to launch and be found. Good for a campaign, an event or a new business.",
+      "description": "A single page with a contact form, ready to launch. Good for a campaign, an event or a new business.",
+      "category": "Websites",
       "items": [
-        {
-          "service": "Home page"
-        },
-        {
-          "service": "Formspree contact form"
-        },
-        {
-          "service": "On-page SEO"
-        },
-        {
-          "service": "Analytics setup"
-        },
-        {
-          "service": "Cloudflare setup"
-        },
-        {
-          "service": "Deployment"
-        }
+        { "service": "Home page" },
+        { "service": "Contact form", "options": ["Honeypot field"] },
+        { "service": "Analytics setup" },
+        { "service": "Deployment" }
       ]
     },
     {
-      "name": "Business website",
-      "description": "A five page brochure site with your own contact form, a business email address and the SEO basics.",
+      "name": "Starter site",
+      "description": "A five page site with a contact form and the SEO basics. Good for a small business that needs to be online.",
+      "category": "Websites",
       "items": [
-        {
-          "service": "Home page"
-        },
-        {
-          "service": "Additional page",
-          "quantity": 4
-        },
-        {
-          "service": "Custom contact form"
-        },
-        {
-          "service": "Professional email setup"
-        },
-        {
-          "service": "On-page SEO"
-        },
-        {
-          "service": "Structured data"
-        },
-        {
-          "service": "Analytics setup"
-        },
-        {
-          "service": "Cloudflare setup"
-        },
-        {
-          "service": "Deployment"
-        }
+        { "service": "Home page" },
+        { "service": "Additional page", "quantity": 4 },
+        { "service": "Contact form", "options": ["Honeypot field"] },
+        { "service": "On-page SEO" },
+        { "service": "Analytics setup" },
+        { "service": "Domain and DNS setup" },
+        { "service": "Deployment" }
       ]
     },
     {
-      "name": "Content managed website",
-      "description": "A site your team can edit without a developer, with a blog or listing section and visual editing.",
+      "name": "Content site",
+      "description": "A site your team can update without a developer, with a blog or project listing.",
+      "category": "Websites",
       "items": [
-        {
-          "service": "Home page"
-        },
-        {
-          "service": "Additional page",
-          "quantity": 3
-        },
-        {
-          "service": "Sanity CMS setup"
-        },
-        {
-          "service": "Content schema"
-        },
-        {
-          "service": "Visual editing"
-        },
-        {
-          "service": "Dynamic listing page"
-        },
-        {
-          "service": "Dynamic detail page"
-        },
-        {
-          "service": "On-page SEO"
-        },
-        {
-          "service": "Cloudflare setup"
-        },
-        {
-          "service": "Deployment"
-        }
+        { "service": "Home page" },
+        { "service": "Additional page", "quantity": 2 },
+        { "service": "CMS setup" },
+        { "service": "Content type" },
+        { "service": "Listing page" },
+        { "service": "Detail page" },
+        { "service": "Contact form", "options": ["Honeypot field"] },
+        { "service": "On-page SEO" },
+        { "service": "Deployment" }
       ]
     },
     {
-      "name": "Online store",
-      "description": "A site that takes payments and sends order emails, with product pages and a branded confirmation email.",
+      "name": "Hosting and care",
+      "description": "Hosting, updates and security checks after launch.",
+      "category": "Care plans",
       "items": [
-        {
-          "service": "Home page"
-        },
-        {
-          "service": "Additional page",
-          "quantity": 4
-        },
-        {
-          "service": "Payment integration"
-        },
-        {
-          "service": "Transactional email"
-        },
-        {
-          "service": "Email template"
-        },
-        {
-          "service": "Custom contact form"
-        },
-        {
-          "service": "Analytics setup"
-        },
-        {
-          "service": "Cloudflare setup"
-        },
-        {
-          "service": "Deployment"
-        }
-      ]
-    },
-    {
-      "name": "Website care plan",
-      "description": "Monthly maintenance for a live site, with a revision round included for changes you want made.",
-      "items": [
-        {
-          "service": "Maintenance retainer"
-        },
-        {
-          "service": "Extra revision round"
-        }
+        { "service": "Static site hosting" },
+        { "service": "Maintenance retainer" }
       ]
     }
   ]

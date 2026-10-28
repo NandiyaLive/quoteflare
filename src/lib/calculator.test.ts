@@ -35,6 +35,7 @@ const catalog = (
   taxRateBps = 1000,
 ): CalculatorCatalog => ({
   categories: [],
+  packageCategories: [],
   services,
   packages: [],
   currency: 'USD',
@@ -180,6 +181,7 @@ describe('stateForPackage', () => {
   it('applies quantities and options and pulls in requirements', () => {
     const state = stateForPackage(withOptions, {
       id: 'p',
+      categoryId: null,
       name: 'P',
       description: '',
       items: [{ serviceId: 'a', quantity: 3, optionIds: ['o1'] }],
@@ -191,6 +193,7 @@ describe('stateForPackage', () => {
   it('skips services and options that are gone', () => {
     const state = stateForPackage(withOptions, {
       id: 'p',
+      categoryId: null,
       name: 'P',
       description: '',
       items: [

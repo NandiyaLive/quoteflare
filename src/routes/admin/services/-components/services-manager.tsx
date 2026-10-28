@@ -17,6 +17,7 @@ import PageHeader from '@/components/common/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
+import { CategoriesDialog } from '@/components/common/categories-dialog'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
@@ -27,9 +28,9 @@ import { BILLING_LABELS } from '#/lib/services'
 import type { CategoryRow, ServiceRow } from '#/server/services'
 import {
   reorderServicesAction,
+  saveCategoriesAction,
   setServiceActiveAction,
 } from '#/server/services-actions'
-import { CategoriesDialog } from './categories-dialog'
 import { ServiceDialog, type ServiceChoice } from './service-dialog'
 import { toast } from 'sonner'
 import { callAction } from '#/lib/action-errors'
@@ -319,6 +320,8 @@ export function ServicesManager({
       <CategoriesDialog
         open={editingCategories}
         categories={categories}
+        noun="services"
+        save={(values) => saveCategoriesAction({ data: values })}
         onClose={() => setEditingCategories(false)}
       />
       <ServiceDialog

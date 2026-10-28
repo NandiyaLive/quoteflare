@@ -8,7 +8,12 @@ import {
   type ServiceFormValues,
 } from '#/lib/services'
 import { packageSchema, type PackageFormValues } from '#/lib/packages'
-import { listPackages, savePackage } from './packages'
+import {
+  listPackageCategories,
+  listPackages,
+  savePackage,
+  savePackageCategories,
+} from './packages'
 import {
   createsCycle,
   listCategories,
@@ -60,6 +65,7 @@ const importServiceSchema = z.strictObject({
 const importPackageSchema = z.strictObject({
   name,
   description: z.string().default(''),
+  category: z.string().trim().optional(),
   items: z
     .array(
       z.strictObject({
@@ -74,6 +80,7 @@ const importPackageSchema = z.strictObject({
 const servicesImportSchema = z.strictObject({
   categories: z.array(name).default([]),
   services: z.array(importServiceSchema).min(1).max(500),
+  packageCategories: z.array(name).default([]),
   packages: z.array(importPackageSchema).max(50).default([]),
 })
 
@@ -81,6 +88,7 @@ export type ImportReport = {
   created: string[]
   skipped: string[]
   categoriesCreated: string[]
+  packageCategoriesCreated: string[]
   packagesCreated: string[]
   packagesSkipped: string[]
 }
@@ -104,6 +112,7 @@ export async function importServices(
   const {
     categories: listed,
     services: incoming,
+    packageCategories: listedPackageCategories,
     packages: incomingPackages,
   } = parsed.data
 
@@ -230,14 +239,31 @@ export async function importServices(
       (s) => [key(s.name), new Set(s.options.map((o) => key(o.name)))] as const,
     ),
   ])
+  const currentPackageCategories = await listPackageCategories(db)
+  const packageCategoryNames = new Map(
+    currentPackageCategories.map((c) => [key(c.name), c]),
+  )
+  const newPackageCategories = [
+    ...new Map(
+      [
+        ...listedPackageCategories,
+        ...freshPackages.flatMap((p) => (p.category ? [p.category] : [])),
+      ]
+        .filter((c) => !packageCategoryNames.has(key(c)))
+        .map((c) => [key(c), c]),
+    ).values(),
+  ]
+
   // Services are keyed by name here and swapped for ids once they exist.
   const toPackageForm = (
     pkg: (typeof freshPackages)[number],
     serviceKey: (name: string) => string,
     optionKey: (service: string, option: string) => string,
+    categoryId: string,
   ): PackageFormValues => ({
     name: pkg.name,
     description: pkg.description,
+    categoryId,
     items: pkg.items.map((i) => ({
       serviceId: serviceKey(i.service),
       quantity: i.quantity,
@@ -260,7 +286,12 @@ export async function importServices(
       }
     }
     const result = packageSchema.safeParse(
-      toPackageForm(pkg, key, (service, option) => `${key(service)}:${option}`),
+      toPackageForm(
+        pkg,
+        key,
+        (service, option) => `${key(service)}:${option}`,
+        '',
+      ),
     )
     if (!result.success) {
       const issues = result.error.issues.map(
@@ -276,6 +307,7 @@ export async function importServices(
     created: fresh.map((s) => s.name),
     skipped,
     categoriesCreated: newCategories,
+    packageCategoriesCreated: newPackageCategories,
     packagesCreated: freshPackages.map((p) => p.name),
     packagesSkipped: incomingPackages
       .filter((p) => existingPackageNames.has(key(p.name)))
@@ -325,6 +357,17 @@ export async function importServices(
     if (!result.ok) throw new ImportError(`"${service.name}": ${result.error}`)
   }
 
+  if (newPackageCategories.length > 0) {
+    const saved = await savePackageCategories(db, [
+      ...currentPackageCategories,
+      ...newPackageCategories.map((categoryName) => ({ name: categoryName })),
+    ])
+    if (!saved.ok) throw new ImportError(Object.values(saved.errors).join(' '))
+  }
+  const packageCategoryIds = new Map(
+    (await listPackageCategories(db)).map((c) => [key(c.name), c.id]),
+  )
+
   if (freshPackages.length > 0) {
     const optionIds = new Map(
       (await listServices(db, 'all')).flatMap((s) =>
@@ -340,6 +383,9 @@ export async function importServices(
             (service) => idByName.get(key(service))!,
             (service, option) =>
               optionIds.get(`${key(service)}:${key(option)}`)!,
+            pkg.category
+              ? (packageCategoryIds.get(key(pkg.category)) ?? '')
+              : '',
           ),
         ),
       )

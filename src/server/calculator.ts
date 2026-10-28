@@ -1,17 +1,19 @@
 import type { Db } from '#/db'
 import type { CalculatorCatalog } from '#/lib/calculator'
-import { listPackages } from './packages'
+import { listPackageCategories, listPackages } from './packages'
 import { listCategories, listServices } from './services'
 
 export async function loadCalculatorCatalog(
   db: Db,
 ): Promise<CalculatorCatalog & { businessName: string }> {
-  const [services, categories, packages, settings] = await Promise.all([
-    listServices(db, 'active'),
-    listCategories(db),
-    listPackages(db, 'active'),
-    db.query.settings.findFirst(),
-  ])
+  const [services, categories, packageCategories, packages, settings] =
+    await Promise.all([
+      listServices(db, 'active'),
+      listCategories(db),
+      listPackageCategories(db),
+      listPackages(db, 'active'),
+      db.query.settings.findFirst(),
+    ])
   const activeIds = new Set(services.map((s) => s.id))
 
   return {
@@ -19,9 +21,11 @@ export async function loadCalculatorCatalog(
     currency: settings?.currency ?? 'LKR',
     taxRateBps: settings?.taxRateBps ?? 0,
     categories,
+    packageCategories,
     packages: packages
       .map((p) => ({
         id: p.id,
+        categoryId: p.categoryId,
         name: p.name,
         description: p.description,
         items: p.items

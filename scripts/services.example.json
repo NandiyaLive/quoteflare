@@ -52,10 +52,12 @@
       "taxable": false
     }
   ],
+  "packageCategories": ["Websites"],
   "packages": [
     {
       "name": "Starter",
       "description": "CMS with a listing page and a contact form.",
+      "category": "Websites",
       "items": [
         { "service": "CMS setup" },
         {

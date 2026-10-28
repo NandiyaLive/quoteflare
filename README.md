@@ -75,10 +75,10 @@ The `.dev.vars.example` file uses Cloudflare's always-pass Turnstile test keys. 
 
 ### One click
 
-The button above copies the repository to your GitHub account, creates the D1 database and R2 bucket, and deploys the Worker to `workers.dev`. It asks for the secrets listed in `.dev.vars.example`. Afterwards:
+The button above copies the repository to your GitHub account, creates the D1 database and R2 bucket, and deploys the Worker. The Worker has no public URL until you add your domain in step 2, because `wrangler.toml` turns off `workers.dev`. The button asks for the secrets listed in `.dev.vars.example`. Afterwards:
 
 1. Run `bunx wrangler d1 migrations apply DB --remote` from a clone of your copy.
-2. Set the vars in `wrangler.toml` (`ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`) and push.
+2. Set the vars in `wrangler.toml` (`ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`), add your domain to `routes`, and push.
 3. Create a Cloudflare Access application for `/admin/*` with one allow policy for your email, then set `ACCESS_AUD` to its audience tag.
 
 Until step 3 is done, `/admin` rejects every request.
@@ -86,12 +86,12 @@ Until step 3 is done, `/admin` rejects every request.
 ### By hand
 
 1. Sign in with `bunx wrangler login`.
-2. Create the D1 database and the R2 bucket, then put the database ID in `wrangler.toml`. The repository's own deployment uses `wrangler.production.toml` and `bun run deploy:production`.
-3. Edit the `[vars]` block and the route in `wrangler.toml` for your own domain.
+2. Create the D1 database and the R2 bucket, then copy `wrangler.toml` to `wrangler.production.toml` and put the database ID in it. Git ignores that file, so your domain and IDs stay out of the repository.
+3. Edit the `[vars]` block and the route in `wrangler.production.toml` for your own domain.
 4. Apply migrations with `bun run db:migrate:remote`.
 5. Set the secrets `ACCESS_AUD`, `TURNSTILE_SECRET`, `RESEND_API_KEY` and `RESEND_WEBHOOK_SECRET` with `bunx wrangler secret put <name>`.
 6. Create a Cloudflare Access application for `/admin/*` with one allow policy for your email.
-7. Deploy with `bun run deploy`.
+7. Deploy with `bun run deploy:production`.
 
 The [guide](docs/guide.md) covers each step in detail, along with email setup, the webhook, backups and free plan limits.
 

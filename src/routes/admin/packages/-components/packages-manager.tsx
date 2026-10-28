@@ -9,14 +9,16 @@ import {
   PencilIcon,
   PlusIcon,
 } from 'lucide-react'
+import { CategoriesDialog } from '@/components/common/categories-dialog'
 import PageHeader from '@/components/common/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { Card, CardContent } from '@/components/ui/card'
-import type { PackageRow } from '#/server/packages'
+import type { PackageCategoryRow, PackageRow } from '#/server/packages'
 import {
   reorderPackagesAction,
+  savePackageCategoriesAction,
   setPackageActiveAction,
 } from '#/server/packages-actions'
 import { PackageDialog, type ServiceChoice } from './package-dialog'
@@ -25,13 +27,16 @@ import { callAction } from '#/lib/action-errors'
 
 export function PackagesManager({
   packages,
+  categories,
   services,
 }: {
   packages: PackageRow[]
+  categories: PackageCategoryRow[]
   services: ServiceChoice[]
 }) {
   const router = useRouter()
   const [editing, setEditing] = useState<PackageRow | 'new' | null>(null)
+  const [editingCategories, setEditingCategories] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const { confirm, dialog } = useConfirm()
@@ -83,6 +88,9 @@ export function PackagesManager({
         title="Packages"
         description="Ready-made starting points shown first in the price calculator."
       >
+        <Button variant="outline" onClick={() => setEditingCategories(true)}>
+          Categories
+        </Button>
         <Button onClick={() => setEditing('new')}>
           <PlusIcon data-icon="inline-start" />
           New package
@@ -101,6 +109,9 @@ export function PackagesManager({
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <div className="flex items-center gap-2">
                     <h2 className="font-semibold">{pkg.name}</h2>
+                    {pkg.categoryName && (
+                      <Badge variant="outline">{pkg.categoryName}</Badge>
+                    )}
                     {!pkg.active && <Badge variant="secondary">Archived</Badge>}
                   </div>
                   {pkg.description && (
@@ -161,8 +172,16 @@ export function PackagesManager({
         </div>
       )}
 
+      <CategoriesDialog
+        open={editingCategories}
+        categories={categories}
+        noun="packages"
+        save={(values) => savePackageCategoriesAction({ data: values })}
+        onClose={() => setEditingCategories(false)}
+      />
       <PackageDialog
         editing={editing}
+        categories={categories}
         services={services}
         onClose={() => setEditing(null)}
       />

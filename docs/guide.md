@@ -51,7 +51,7 @@ bun run db:migrate:remote  # apply migrations to the remote database
 bun run db:seed            # insert sample data locally (safe to run twice)
 ```
 
-`db:seed` loads settings, two clients and one invoice from `src/db/seed.sql`, then imports the service catalogue in `src/db/seed-services.json` (categories, services, options, dependencies and packages) with the same importer as `bun run services:import`. Prices are in LKR. A second run creates nothing.
+`db:seed` loads settings, two clients and one invoice from `src/db/seed.sql`, then imports the service catalogue in `src/db/seed-services.json` (categories, services, options, dependencies, package categories and packages) with the same importer as `bun run services:import`. Prices are in USD. A second run creates nothing.
 
 ## UI components
 
@@ -63,17 +63,19 @@ Everything under `/admin` sits behind Cloudflare Access (one-time PIN, one allow
 
 Configuration:
 
-- `ACCESS_TEAM_DOMAIN` is a plain var in `wrangler.toml`.
+- `ACCESS_TEAM_DOMAIN` is a plain var in your wrangler config.
 - `ACCESS_AUD` is the Access application's audience tag. Set it with `bunx wrangler secret put ACCESS_AUD`.
 - `ACCESS_DEV_EMAIL` is for local development only. Copy `.dev.vars.example` to `.dev.vars` and `/admin` accepts that identity, but only when the request host is `localhost`, `127.0.0.1` or `[::1]`. Never set it in production.
 
-The Access application covers `<your domain>/admin/*` with a single Allow policy for your email and the One-time PIN login method. The Worker is attached to that hostname through `routes` in `wrangler.toml`.
+The Access application covers `<your domain>/admin/*` with a single Allow policy for your email and the One-time PIN login method. The Worker is attached to that hostname through `routes` in your wrangler config.
 
 ## Production setup
 
+The scripts `deploy:production`, `db:migrate:remote` and `db:export` read `wrangler.production.toml`. Git ignores that file, so your domain, vars and database ID stay out of the repository. Start by copying `wrangler.toml`. The comments at the top of that file list what to change.
+
 One-time setup, in order:
 
-1. Create the D1 database and R2 bucket, then put the database ID in `wrangler.toml`.
+1. Create the D1 database and R2 bucket, then copy `wrangler.toml` to `wrangler.production.toml` and put the database ID in it.
 2. Apply migrations: `bun run db:migrate:remote`.
 3. Set the secrets. Each command prompts for the value:
 
@@ -87,9 +89,9 @@ One-time setup, in order:
 
    `secret list` must show all four names exactly. A misspelled name is silently ignored by the Worker.
 
-4. Set the vars in `wrangler.toml`: `ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`.
+4. Set the vars in `wrangler.production.toml`: `ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`.
 5. Create the Access application for `/admin/*` with one Allow policy for your email, register the Resend webhook, and verify the sending domain in Resend (see the sections above).
-6. Deploy with `bun run deploy`, or push to the branch connected to Workers Builds.
+6. Deploy with `bun run deploy:production`, or push to the branch connected to Workers Builds.
 7. Watch the Worker with `bunx wrangler tail`.
 
 Production starts with no sample data. Never run `db:seed` against the remote database. To start from a clean state, delete the rows in `invoice_items`, `invoices`, `quotes`, `email_log`, `recurring_schedules` and `clients`, then set `settings.next_invoice_number` to 1. Take a backup first (see Backups).
@@ -124,7 +126,9 @@ bun run services:import scripts/services.example.json --dry-run   # validate onl
 bun run services:import scripts/services.example.json
 ```
 
-The file format is shown in `scripts/services.example.json`. Categories, option groups and required services are referenced by name. An optional `packages` list names the services, quantities and options each package preselects. A service or package whose name already exists is skipped, so the command is safe to run twice. The script uses the same validation and save code as the admin page. By default it writes to the local database. To import into the deployed database, run `bun run services:import:remote <file>`, which passes `--remote` and uses `scripts/wrangler.remote.toml`. Run it with `--dry-run` first, and take a backup before a real import. You can also create services in production through `/admin/services`.
+The file format is shown in `scripts/services.example.json`. Categories, option groups and required services are referenced by name. An optional `packages` list names the services, quantities and options each package preselects, and the `packageCategories` entry it belongs to. A service or package whose name already exists is skipped, so the command is safe to run twice. The script uses the same validation and save code as the admin page. By default it writes to the local database. To import into the deployed database, run `bun run services:import:remote <file>`, which passes `--remote` and uses `wrangler.production.toml`. The D1 binding in that file needs `remote = true`. Run it with `--dry-run` first, and take a backup before a real import. You can also create services in production through `/admin/services`.
+
+`db:seed` loads the generic catalogue in `src/db/seed-services.json`. Keep your own catalogue in `local/services.json`, which git ignores, and import it with `bun run services:import local/services.json`.
 
 ## Email
 

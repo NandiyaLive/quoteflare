@@ -18,6 +18,7 @@ export type CalculatorService = PricingService & {
 
 export type CalculatorPackage = {
   id: string
+  categoryId: string | null
   name: string
   description: string
   items: { serviceId: string; quantity: number; optionIds: string[] }[]
@@ -25,6 +26,7 @@ export type CalculatorPackage = {
 
 export type CalculatorCatalog = {
   categories: { id: string; name: string }[]
+  packageCategories: { id: string; name: string }[]
   services: CalculatorService[]
   packages: CalculatorPackage[]
   currency: string

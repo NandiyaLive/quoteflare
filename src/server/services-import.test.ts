@@ -22,6 +22,7 @@ afterAll(() => dispose())
 beforeEach(async () => {
   await db.delete(schema.packageItems)
   await db.delete(schema.packages)
+  await db.delete(schema.packageCategories)
   await db.delete(schema.serviceDependencies)
   await db.delete(schema.serviceOptions)
   await db.delete(schema.serviceOptionGroups)
@@ -45,6 +46,19 @@ const rejects = async (input: unknown) => {
 }
 
 describe('services import', () => {
+  it('accepts the seed catalogue', async () => {
+    const seed = JSON.parse(
+      readFileSync(
+        join(import.meta.dirname, '../db/seed-services.json'),
+        'utf8',
+      ),
+    )
+    const report = await importServices(db, seed)
+    expect(report.created).toHaveLength(seed.services.length)
+    expect(report.packagesCreated).toHaveLength(seed.packages.length)
+    expect(report.packageCategoriesCreated).toEqual(seed.packageCategories)
+  })
+
   it('creates categories, services, groups, options and dependencies', async () => {
     const report = await importServices(db, example)
     expect(report.created).toHaveLength(5)
@@ -122,10 +136,12 @@ describe('services import', () => {
       created: [],
       skipped: example.services.map((s: { name: string }) => s.name),
       categoriesCreated: [],
+      packageCategoriesCreated: [],
       packagesCreated: [],
       packagesSkipped: ['Starter'],
     })
     expect(await listPackages(db)).toHaveLength(1)
+    expect(await db.select().from(schema.packageCategories)).toHaveLength(1)
     expect(await db.select().from(schema.services)).toHaveLength(5)
     expect(await db.select().from(schema.serviceDependencies)).toHaveLength(2)
     expect(await db.select().from(schema.serviceCategories)).toHaveLength(3)
@@ -218,10 +234,19 @@ describe('package import', () => {
     expect(pkg.items[1].optionIds).toHaveLength(1)
   })
 
+  it('files packages under their category, creating it once', async () => {
+    const report = await importServices(db, example)
+    expect(report.packageCategoriesCreated).toEqual(['Websites'])
+    const [pkg] = await listPackages(db)
+    expect(pkg.categoryName).toBe('Websites')
+  })
+
   it('writes nothing in a dry run', async () => {
     const report = await importServices(db, example, { dryRun: true })
     expect(report.packagesCreated).toEqual(['Starter'])
+    expect(report.packageCategoriesCreated).toEqual(['Websites'])
     expect(await listPackages(db)).toHaveLength(0)
+    expect(await db.select().from(schema.packageCategories)).toHaveLength(0)
   })
 
   it('rejects an unknown service or option without writing', async () => {
