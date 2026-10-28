@@ -86,12 +86,12 @@ Until step 3 is done, `/admin` rejects every request.
 ### By hand
 
 1. Sign in with `bunx wrangler login`.
-2. Create the D1 database and the R2 bucket, then put the database ID in `wrangler.toml`. The repository's own deployment uses `wrangler.production.toml` and `bun run deploy:production`.
-3. Edit the `[vars]` block and the route in `wrangler.toml` for your own domain.
+2. Create the D1 database and the R2 bucket, then copy `wrangler.toml` to `wrangler.production.toml` and put the database ID in it. Git ignores that file, so your domain and IDs stay out of the repository.
+3. Edit the `[vars]` block and the route in `wrangler.production.toml` for your own domain.
 4. Apply migrations with `bun run db:migrate:remote`.
 5. Set the secrets `ACCESS_AUD`, `TURNSTILE_SECRET`, `RESEND_API_KEY` and `RESEND_WEBHOOK_SECRET` with `bunx wrangler secret put <name>`.
 6. Create a Cloudflare Access application for `/admin/*` with one allow policy for your email.
-7. Deploy with `bun run deploy`.
+7. Deploy with `bun run deploy:production`.
 
 The [guide](docs/guide.md) covers each step in detail, along with email setup, the webhook, backups and free plan limits.
 

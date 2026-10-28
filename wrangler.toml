@@ -1,3 +1,13 @@
+# Generic config for local development and the Deploy to Cloudflare button.
+# For your own deployment, copy this file to wrangler.production.toml, which git
+# ignores, and change these things there:
+#   - Fill in [vars] and set the database_id on the D1 binding.
+#   - Add remote = true to the D1 binding so `services:import:remote` can reach it.
+#   - Add routes = [{ pattern = "invoices.example.com", custom_domain = true }].
+#   - Add workers_dev = false and preview_urls = false.
+#   - Under [observability], set redact_query_string = true and add
+#     [observability.logs] with invocation_logs = false, because /i/<token> is
+#     a bearer credential.
 name = "quoteflare"
 main = "src/server.ts"
 compatibility_date = "2025-09-02"

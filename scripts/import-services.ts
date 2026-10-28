@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { getPlatformProxy } from 'wrangler'
 import { createDb } from '#/db'
 import { ImportError, importServices } from '#/server/services-import'
@@ -15,8 +15,16 @@ if (!file) {
   process.exit(1)
 }
 
+const remoteConfig = 'wrangler.production.toml'
+if (remote && !existsSync(remoteConfig)) {
+  console.error(
+    `${remoteConfig} not found. Copy wrangler.toml to ${remoteConfig} and set your database_id.`,
+  )
+  process.exit(1)
+}
+
 const { env, dispose } = await getPlatformProxy<{ DB: D1Database }>(
-  remote ? { configPath: 'scripts/wrangler.remote.toml' } : {},
+  remote ? { configPath: remoteConfig } : {},
 )
 try {
   const report = await importServices(

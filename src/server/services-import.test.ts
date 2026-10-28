@@ -46,6 +46,19 @@ const rejects = async (input: unknown) => {
 }
 
 describe('services import', () => {
+  it('accepts the seed catalogue', async () => {
+    const seed = JSON.parse(
+      readFileSync(
+        join(import.meta.dirname, '../db/seed-services.json'),
+        'utf8',
+      ),
+    )
+    const report = await importServices(db, seed)
+    expect(report.created).toHaveLength(seed.services.length)
+    expect(report.packagesCreated).toHaveLength(seed.packages.length)
+    expect(report.packageCategoriesCreated).toEqual(seed.packageCategories)
+  })
+
   it('creates categories, services, groups, options and dependencies', async () => {
     const report = await importServices(db, example)
     expect(report.created).toHaveLength(5)

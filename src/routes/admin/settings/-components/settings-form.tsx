@@ -158,7 +158,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                           id="address"
                           name="address"
                           rows={3}
-                          placeholder={'12 Galle Road\nColombo 03\nSri Lanka'}
+                          placeholder={'12 Example Street\nSpringfield\nUSA'}
                           value={field.state.value}
                           aria-invalid={invalid}
                           onBlur={field.handleBlur}
@@ -254,7 +254,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                 {text('bankName', 'Bank name', {
                   placeholder: 'Commercial Bank',
                 })}
-                {text('bankBranch', 'Branch', { placeholder: 'Colombo 03' })}
+                {text('bankBranch', 'Branch', { placeholder: 'Main Street' })}
                 {text('bankAccountName', 'Account name', {
                   placeholder: 'Acme Studio (Pvt) Ltd',
                 })}

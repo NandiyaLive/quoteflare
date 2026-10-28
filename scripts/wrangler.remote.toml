@@ -1,9 +1,0 @@
-# Used by `services:import --remote`. Points the DB binding at the deployed D1 database.
-name = "quoteflare"
-compatibility_date = "2025-09-02"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "quoteflare"
-database_id = "8d4d4fd9-b587-40c8-a158-1fd725639241"
-remote = true
