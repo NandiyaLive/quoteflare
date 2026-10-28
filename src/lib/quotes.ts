@@ -3,7 +3,7 @@ import { quoteStatuses, type RecurringInterval } from '#/db/schema'
 import { MAX_ADVANCE_PERCENT, MIN_ADVANCE_PERCENT } from './invoices'
 import type { PricedLine, PricingBreakdown } from './pricing'
 
-export const QUOTE_STATUS_FILTERS = ['all', ...quoteStatuses] as const
+const QUOTE_STATUS_FILTERS = ['all', ...quoteStatuses] as const
 export type QuoteStatusFilter = (typeof QUOTE_STATUS_FILTERS)[number]
 
 export const QUOTE_STATUS_LABELS = {
@@ -12,7 +12,7 @@ export const QUOTE_STATUS_LABELS = {
   dismissed: 'Dismissed',
 } as const
 
-export const MAX_QUOTE_SERVICES = 100
+const MAX_QUOTE_SERVICES = 100
 
 export const MAX_PUBLIC_BODY_BYTES = 64 * 1024
 
@@ -60,8 +60,6 @@ export const quoteStatusUpdateSchema = z.object({
   id: z.string().min(1).max(64),
   status: z.enum(['new', 'dismissed']),
 })
-
-export const quoteIdSchema = z.strictObject({ id: z.string().min(1).max(64) })
 
 export const convertQuoteSchema = z.strictObject({
   id: z.string().min(1).max(64),

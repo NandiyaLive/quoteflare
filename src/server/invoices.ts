@@ -27,7 +27,7 @@ export type InvoiceListRow = {
   currency: string
 } & InvoiceTotals
 
-export type InvoiceItemRow = {
+type InvoiceItemRow = {
   id: string
   description: string
   quantity: number

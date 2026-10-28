@@ -1,13 +1,6 @@
 import { z } from 'zod'
 
-export const CLIENT_STATUS_FILTERS = ['active', 'archived', 'all'] as const
-export type ClientStatusFilter = (typeof CLIENT_STATUS_FILTERS)[number]
-
-export const CLIENT_STATUS_LABELS: Record<ClientStatusFilter, string> = {
-  active: 'Active clients',
-  archived: 'Archived clients',
-  all: 'All clients',
-}
+const CLIENT_STATUS_FILTERS = ['active', 'archived', 'all'] as const
 
 export const clientSchema = z.strictObject({
   id: z.string().min(1).max(64).optional(),

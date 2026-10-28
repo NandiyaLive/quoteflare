@@ -14,8 +14,6 @@ import type {
   FilterVariant,
 } from '@/lib/data-table-types'
 
-import { formatDate } from '@/lib/format'
-
 export const FILTER_VARIANTS = [
   'text',
   'number',
@@ -45,11 +43,6 @@ export const FILTER_OPERATORS = {
 } as const
 
 export const JOIN_OPERATORS = ['and', 'or'] as const
-
-export const SORT_ORDERS = [
-  { label: 'Asc', value: 'asc' },
-  { label: 'Desc', value: 'desc' },
-] as const
 
 const TEXT_OPERATORS = [
   { label: 'Contains', value: 'iLike' },
@@ -196,66 +189,14 @@ export function getFilterOperators(filterVariant: FilterVariant) {
   return FILTER_OPERATORS_BY_VARIANT[filterVariant] ?? []
 }
 
-export function getDefaultFilterOperator(filterVariant: FilterVariant) {
+function getDefaultFilterOperator(filterVariant: FilterVariant) {
   const operators = getFilterOperators(filterVariant)
 
   return operators[0]?.value ?? (filterVariant === 'text' ? 'iLike' : 'eq')
 }
 
-export function getIsEditableTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) return false
-
-  return (
-    target.isContentEditable ||
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    target instanceof HTMLSelectElement
-  )
-}
-
 export function getIsValuelessOperator(operator: FilterOperator) {
   return operator === 'isEmpty' || operator === 'isNotEmpty'
-}
-
-export function coerceFilterValue(
-  operator: FilterOperator,
-  value: string | string[],
-) {
-  if (getIsValuelessOperator(operator)) return ''
-
-  if (operator === 'inArray' || operator === 'notInArray') {
-    if (Array.isArray(value)) return value
-    return value ? [value] : []
-  }
-
-  if (operator === 'isBetween') {
-    return Array.isArray(value) ? value : [value, '']
-  }
-
-  if (Array.isArray(value)) return value.find((item) => item !== '') ?? ''
-
-  return value
-}
-
-export function getDefaultFilter<TData extends RowData>(
-  column: Column<DataTableFeatures, TData>,
-) {
-  const variant = column.columnDef.meta?.variant ?? 'text'
-
-  return {
-    id: column.id,
-    variant,
-    operator: getDefaultFilterOperator(variant),
-    value: '',
-  }
-}
-
-export function getSelectFilterValue(filter: ColumnFilterItem) {
-  if (filter.variant === 'multiSelect') {
-    return Array.isArray(filter.value) ? filter.value : []
-  }
-
-  return typeof filter.value === 'string' ? filter.value : undefined
 }
 
 const CALENDAR_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
@@ -284,7 +225,7 @@ export function parseFilterDate(value: unknown): Date | undefined {
   return getValidDate(new Date(Number.isNaN(numeric) ? text : numeric))
 }
 
-export function formatFilterDate(date: Date) {
+function formatFilterDate(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${date.getFullYear()}-${month}-${day}`
@@ -299,7 +240,7 @@ function stringifyFilterDate(value: unknown) {
   return date ? formatFilterDate(date) : ''
 }
 
-export function getIsDateVariant(variant: FilterVariant) {
+function getIsDateVariant(variant: FilterVariant) {
   return variant === 'date' || variant === 'dateRange'
 }
 
@@ -312,33 +253,6 @@ function getFilterValueStringifier(
     : stringifyFilterValue
 }
 
-export function getFilterDates(value: ColumnFilterItem['value']) {
-  return (Array.isArray(value) ? value : [value]).flatMap((item) => {
-    const date = parseFilterDate(item)
-    return date ? [date] : []
-  })
-}
-
-export function getFilterDateValue(date: Date | undefined) {
-  return date ? formatFilterDate(date) : ''
-}
-
-export function getDateFilterLabel(filter: ColumnFilterItem) {
-  const [startDate, endDate] = getFilterDates(filter.value)
-  if (!startDate) return undefined
-
-  const start = formatDate(startDate, { month: 'short' })
-  if (
-    filter.operator !== 'isBetween' ||
-    !endDate ||
-    startDate.toDateString() === endDate.toDateString()
-  ) {
-    return start
-  }
-
-  return `${start} - ${formatDate(endDate, { month: 'short' })}`
-}
-
 export function stringifyFilterValue(value: unknown): string {
   if (value == null) return ''
   if (value instanceof Date) return value.toISOString()
@@ -346,7 +260,7 @@ export function stringifyFilterValue(value: unknown): string {
   return String(value as string | number | boolean | bigint)
 }
 
-export function getIsMultiValueVariant(variant: FilterVariant) {
+function getIsMultiValueVariant(variant: FilterVariant) {
   return MULTI_VALUE_FILTER_VARIANTS.includes(variant)
 }
 
@@ -363,7 +277,7 @@ export function getIsPlainFilter(filter: ColumnFilterItem) {
   )
 }
 
-export function getPlainFilterId(columnId: string) {
+function getPlainFilterId(columnId: string) {
   return `${columnId}-filter`
 }
 

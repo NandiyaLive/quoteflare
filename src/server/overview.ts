@@ -7,7 +7,7 @@ import { listSchedules, type RecurringRow } from './recurring'
 const CHART_MONTHS = 6
 const LIST_SIZE = 5
 
-export type OverviewInvoice = {
+type OverviewInvoice = {
   id: string
   number: string
   clientName: string
@@ -16,14 +16,14 @@ export type OverviewInvoice = {
   overdue: boolean
 }
 
-export type OverviewQuote = {
+type OverviewQuote = {
   id: string
   contactName: string
   total: number
   createdAt: string
 }
 
-export type OverviewSchedule = {
+type OverviewSchedule = {
   id: string
   clientName: string
   interval: RecurringRow['interval']
@@ -32,7 +32,7 @@ export type OverviewSchedule = {
   autoSend: boolean
 }
 
-export type OverviewStatus = {
+type OverviewStatus = {
   status: InvoiceStatus
   count: number
   amount: number

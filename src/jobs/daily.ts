@@ -16,10 +16,7 @@ export interface DailyJobResult {
   recurringFailed: number
 }
 
-export async function markOverdueInvoices(
-  db: Db,
-  today: string,
-): Promise<number> {
+async function markOverdueInvoices(db: Db, today: string): Promise<number> {
   const rows = await db
     .update(schema.invoices)
     .set({ status: 'overdue' })

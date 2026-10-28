@@ -71,13 +71,11 @@ const importPackageSchema = z.strictObject({
     .min(1),
 })
 
-export const servicesImportSchema = z.strictObject({
+const servicesImportSchema = z.strictObject({
   categories: z.array(name).default([]),
   services: z.array(importServiceSchema).min(1).max(500),
   packages: z.array(importPackageSchema).max(50).default([]),
 })
-
-export type ServicesImport = z.input<typeof servicesImportSchema>
 
 export type ImportReport = {
   created: string[]

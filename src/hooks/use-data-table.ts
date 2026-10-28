@@ -358,4 +358,4 @@ function getServerLocationSearch() {
   return ''
 }
 
-export { useDataTable, type UseDataTableProps }
+export { useDataTable }

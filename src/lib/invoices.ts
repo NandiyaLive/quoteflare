@@ -143,13 +143,6 @@ export type InvoiceTotals = {
   total: number
 }
 
-export const zeroTotals: InvoiceTotals = {
-  subtotal: 0,
-  discountAmount: 0,
-  taxAmount: 0,
-  total: 0,
-}
-
 type TotalsItem = { quantity: number; unitPrice: number; taxable?: boolean }
 
 /** Prices invoice lines with the shared pricing function. Every line is a one-time, fixed-price line, taxable unless flagged otherwise. */

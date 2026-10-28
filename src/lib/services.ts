@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { decimalToMinor, percentToBps } from './decimal'
 
-export const SERVICE_STATUS_FILTERS = ['active', 'archived', 'all'] as const
+const SERVICE_STATUS_FILTERS = ['active', 'archived', 'all'] as const
 export type ServiceStatusFilter = (typeof SERVICE_STATUS_FILTERS)[number]
 
 export const PRICING_MODES = ['fixed', 'custom'] as const
@@ -40,7 +40,7 @@ export const SELECTION_LABELS: Record<
 
 export const MAX_OPTIONS_PER_SERVICE = 20
 export const MAX_GROUPS_PER_SERVICE = 10
-export const MAX_DEPENDENCIES_PER_SERVICE = 30
+const MAX_DEPENDENCIES_PER_SERVICE = 30
 export const MAX_CATEGORIES = 50
 
 const MONEY_PATTERN = /^\d{1,9}(\.\d{1,2})?$/

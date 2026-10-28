@@ -17,10 +17,10 @@
  * - Tax is calculated once on the discounted taxable base and rounds half up.
  */
 
-export type PricingMode = 'fixed' | 'custom'
-export type Billing = 'one_time' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
+type PricingMode = 'fixed' | 'custom'
+type Billing = 'one_time' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
 
-export type PricingOption = {
+type PricingOption = {
   id: string
   name: string
   groupId: string | null
@@ -30,7 +30,7 @@ export type PricingOption = {
   active: boolean
 }
 
-export type PricingOptionGroup = {
+type PricingOptionGroup = {
   id: string
   name: string
   selection: 'single' | 'multiple'
@@ -64,7 +64,7 @@ export type PricingInput = {
   discount: number
 }
 
-export type PricedOption = {
+type PricedOption = {
   optionId: string
   name: string
   amount: number
@@ -96,14 +96,14 @@ export type PricingErrorCode =
   | 'multiple_in_single_group'
   | 'required_group_missing'
 
-export type PricingError = {
+type PricingError = {
   code: PricingErrorCode
   serviceId?: string
   optionId?: string
   groupId?: string
 }
 
-export type RecurringTotals = {
+type RecurringTotals = {
   lines: PricedLine[]
   subtotal: number
   taxAmount: number

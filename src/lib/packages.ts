@@ -1,6 +1,5 @@
 import { z } from 'zod'
 
-export const MAX_PACKAGES = 50
 export const MAX_ITEMS_PER_PACKAGE = 30
 
 const QUANTITY_PATTERN = /^\d{1,6}$/

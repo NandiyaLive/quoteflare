@@ -40,7 +40,7 @@ export type CalculatorState = Record<string, ChosenService>
 
 const QUANTITY_PATTERN = /^\d{1,6}$/
 
-export const emptyChoice = (service: CalculatorService): ChosenService => ({
+const emptyChoice = (service: CalculatorService): ChosenService => ({
   quantity: String(service.minQuantity),
   optionIds: [],
 })

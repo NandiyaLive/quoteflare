@@ -33,7 +33,7 @@ const GLOBAL_FILTER_ID = '__global__'
 
 const filterResultsByRow = new WeakMap<object, Record<string, boolean>>()
 
-export function matchesFilter(
+function matchesFilter(
   cellValue: unknown,
   filter: Pick<ColumnFilterItem, 'operator' | 'variant' | 'value'>,
 ): boolean {

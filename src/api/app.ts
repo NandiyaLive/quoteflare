@@ -11,7 +11,7 @@ import { verifyWebhookSignature } from './webhook-signature'
 
 type Deps = { fetcher?: typeof fetch }
 
-export const parseAllowedOrigins = (value: string | undefined) =>
+const parseAllowedOrigins = (value: string | undefined) =>
   (value ?? '')
     .split(',')
     .map((origin) => origin.trim().replace(/\/$/, ''))
