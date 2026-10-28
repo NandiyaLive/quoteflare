@@ -5,6 +5,43 @@ import { ROBOTS_TXT } from '#/lib/robots'
 
 const api = createApi()
 
+const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
+
+// The framework emits inline hydration scripts, so script-src needs
+// 'unsafe-inline'. The other directives still block framing, plugins, base tag
+// injection and form posts to other sites.
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline' ${TURNSTILE_ORIGIN}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  `frame-src ${TURNSTILE_ORIGIN}`,
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ')
+
+const SECURITY_HEADERS: Record<string, string> = {
+  'Content-Security-Policy': CONTENT_SECURITY_POLICY,
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  // Invoice links carry a secret token in the path, so never send it onward.
+  'Referrer-Policy': 'no-referrer',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+}
+
+const withSecurityHeaders = (response: Response) => {
+  const secured = new Response(response.body, response)
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    if (!secured.headers.has(name)) secured.headers.set(name, value)
+  }
+  return secured
+}
+
 const serverError = () =>
   new Response('Something went wrong.', {
     status: 500,
@@ -23,10 +60,10 @@ export default {
       return api.fetch(request, env, ctx)
     }
     try {
-      return await handler.fetch(request)
+      return withSecurityHeaders(await handler.fetch(request))
     } catch (error) {
       console.error('request failed', error)
-      return serverError()
+      return withSecurityHeaders(serverError())
     }
   },
 
