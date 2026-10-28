@@ -13,7 +13,6 @@ function ReviewPage() {
   return (
     <>
       <QuoteForm turnstileSiteKey={turnstileSiteKey} />
-      <PoweredBy className="mt-4 text-center text-sm text-muted-foreground" />
     </>
   )
 }

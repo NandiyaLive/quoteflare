@@ -37,6 +37,7 @@ import {
   type RecurringFormValues,
 } from '#/lib/recurring'
 import { recurringIntervals } from '#/db/schema'
+import type { QuoteSchedulePrefill } from '#/server/quotes'
 import {
   getRecurringFormContext,
   saveScheduleAction,
@@ -49,27 +50,36 @@ type Context = Awaited<ReturnType<typeof getRecurringFormContext>>
 export function RecurringEditor({
   context,
   schedule,
+  prefill = null,
 }: {
   context: Context
   schedule: RecurringFormValues | null
+  prefill?: QuoteSchedulePrefill | null
 }) {
   const router = useRouter()
   const navigate = useNavigate()
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({})
 
   const form = useForm({
-    defaultValues: schedule ?? {
-      clientId: '',
-      interval: 'monthly' as RecurringFormValues['interval'],
-      nextRunDate: todayIso(),
-      autoSend: false,
-      items: [{ ...emptyInvoiceItem }],
-    },
+    defaultValues: schedule ??
+      prefill?.values ?? {
+        clientId: '',
+        interval: 'monthly' as RecurringFormValues['interval'],
+        nextRunDate: todayIso(),
+        autoSend: false,
+        items: [{ ...emptyInvoiceItem }],
+      },
     validators: { onSubmit: recurringSchema },
     onSubmit: async ({ value }) => {
       setServerErrors({})
       const result = await callAction(
-        () => saveScheduleAction({ data: value }),
+        () =>
+          saveScheduleAction({
+            data:
+              prefill && !value.clientId
+                ? { ...value, quoteId: prefill.quoteId }
+                : value,
+          }),
         'Could not save the schedule. Try again.',
       )
       if (!result) return
@@ -122,6 +132,16 @@ export function RecurringEditor({
         </form.Subscribe>
       </PageHeader>
 
+      {prefill && (
+        <p className="rounded-lg border p-3 text-sm" role="note">
+          Prefilled from the quote by {prefill.contactName} (
+          {prefill.contactEmail}).{' '}
+          {prefill.clientMissing
+            ? 'No client has that email, so one will be created from the quote contact unless you choose another.'
+            : 'Review the lines and the first run date before saving.'}
+        </p>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Details</CardTitle>
@@ -146,7 +166,9 @@ export function RecurringEditor({
                       placeholder={
                         field.state.value && !selected
                           ? 'Archived client'
-                          : 'Choose a client'
+                          : prefill?.clientMissing
+                            ? `New client: ${prefill.contactName}`
+                            : 'Choose a client'
                       }
                       emptyText="No clients found."
                       options={clients.map((c) => ({

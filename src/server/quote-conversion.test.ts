@@ -4,14 +4,17 @@ import { createDb, schema, type Db } from '#/db'
 import { createTestD1 } from '#/db/test-db'
 import { isCuid } from '#/lib/id'
 import { quoteRequestSchema } from '#/lib/quotes'
+import { recurringSchema } from '#/lib/recurring'
 import { serviceSchema } from '#/lib/services'
 import { getInvoice } from './invoices'
 import {
   convertQuoteToInvoice,
   getQuote,
+  getQuoteSchedulePrefill,
   setQuoteStatus,
   submitQuote,
 } from './quotes'
+import { saveSchedule } from './recurring'
 import { saveService } from './services'
 
 let db: Db
@@ -26,6 +29,7 @@ beforeAll(async () => {
 afterAll(() => dispose())
 
 beforeEach(async () => {
+  await db.delete(schema.recurringSchedules)
   await db.delete(schema.invoiceItems)
   await db.delete(schema.invoices)
   await db.delete(schema.clients)
@@ -71,8 +75,16 @@ const form = {
   ],
 }
 
-async function submit(email = 'jo@example.com', name = 'Jo', taxable = true) {
-  const saved = await saveService(db, serviceSchema.parse({ ...form, taxable }))
+async function submit(
+  email = 'jo@example.com',
+  name = 'Jo',
+  taxable = true,
+  billing = 'one_time',
+) {
+  const saved = await saveService(
+    db,
+    serviceSchema.parse({ ...form, taxable, billing }),
+  )
   if (!saved.ok) throw new Error(JSON.stringify(saved))
   const options = await db.select().from(schema.serviceOptions)
   const result = await submitQuote(
@@ -251,5 +263,132 @@ describe('converting a quote with an advance', () => {
     expect((await getInvoice(db, result.invoiceId))?.invoice.advanceBps).toBe(
       null,
     )
+  })
+})
+
+describe('prefilling a recurring schedule from a quote', () => {
+  const prefill = (id: string, interval: 'monthly' | 'yearly' = 'monthly') =>
+    getQuoteSchedulePrefill(db, id, interval, '2026-03-10')
+
+  it('maps the recurring lines and options for the matching client', async () => {
+    const client = 'client-1'
+    await db.insert(schema.clients).values({
+      id: client,
+      name: 'Jo Ltd',
+      email: 'JO@example.com',
+    })
+    const quoteId = await submit('jo@example.com', 'Jo', true, 'monthly')
+    const result = await prefill(quoteId)
+    expect(result?.clientMissing).toBe(false)
+    expect(result?.values).toEqual({
+      clientId: client,
+      interval: 'monthly',
+      nextRunDate: '2026-03-10',
+      autoSend: false,
+      items: [
+        {
+          description: 'Web',
+          quantity: '2',
+          unitPrice: '100.00',
+          taxable: true,
+        },
+        {
+          description: 'Web: Rush',
+          quantity: '1',
+          unitPrice: '20.00',
+          taxable: true,
+        },
+        {
+          description: 'Web: Premium',
+          quantity: '1',
+          unitPrice: '20.00',
+          taxable: true,
+        },
+      ],
+    })
+  })
+
+  it('flags a missing client and leaves the choice empty', async () => {
+    const quoteId = await submit('jo@example.com', 'Jo', true, 'monthly')
+    const result = await prefill(quoteId)
+    expect(result?.clientMissing).toBe(true)
+    expect(result?.values.clientId).toBe('')
+  })
+
+  it('ignores archived clients', async () => {
+    await db.insert(schema.clients).values({
+      id: 'old',
+      name: 'Jo Ltd',
+      email: 'jo@example.com',
+      archived: true,
+    })
+    const quoteId = await submit('jo@example.com', 'Jo', true, 'monthly')
+    expect((await prefill(quoteId))?.clientMissing).toBe(true)
+  })
+
+  it('returns null for an interval the quote does not bill', async () => {
+    const quoteId = await submit('jo@example.com', 'Jo', true, 'monthly')
+    expect(await prefill(quoteId, 'yearly')).toBeNull()
+    expect(await prefill('missing')).toBeNull()
+  })
+})
+
+describe('saving a schedule prefilled from a quote', () => {
+  const save = async (quoteId: string, clientId = '') => {
+    const prefill = await getQuoteSchedulePrefill(
+      db,
+      quoteId,
+      'monthly',
+      '2026-03-10',
+    )
+    return saveSchedule(
+      db,
+      recurringSchema.parse({ ...prefill?.values, clientId, quoteId }),
+    )
+  }
+
+  it('creates the client from the quote contact and links the schedule', async () => {
+    const quoteId = await submit('new@example.com', 'Nia', true, 'monthly')
+    const result = await save(quoteId)
+    if (!result.ok) throw new Error(result.error)
+    const [client] = await db.select().from(schema.clients)
+    expect(client).toMatchObject({ name: 'Nia', email: 'new@example.com' })
+    const [schedule] = await db.select().from(schema.recurringSchedules)
+    expect(schedule).toMatchObject({ id: result.id, clientId: client.id })
+  })
+
+  it('reuses an existing client with the same email', async () => {
+    await db
+      .insert(schema.clients)
+      .values({ id: 'c1', name: 'Jo Ltd', email: 'JO@example.com' })
+    const quoteId = await submit('jo@example.com', 'Jo', true, 'monthly')
+    const result = await save(quoteId)
+    expect(result.ok).toBe(true)
+    expect(await db.select().from(schema.clients)).toHaveLength(1)
+    const [schedule] = await db.select().from(schema.recurringSchedules)
+    expect(schedule.clientId).toBe('c1')
+  })
+
+  it('refuses an archived client and creates nothing', async () => {
+    await db.insert(schema.clients).values({
+      id: 'old',
+      name: 'Jo Ltd',
+      email: 'jo@example.com',
+      archived: true,
+    })
+    const quoteId = await submit('jo@example.com', 'Jo', true, 'monthly')
+    expect((await save(quoteId)).ok).toBe(false)
+    expect(await db.select().from(schema.recurringSchedules)).toHaveLength(0)
+  })
+
+  it('still requires a client without a quote', () => {
+    const parsed = recurringSchema.safeParse({
+      clientId: '',
+      interval: 'monthly',
+      nextRunDate: '2026-03-10',
+      autoSend: false,
+      items: [{ description: 'x', quantity: '1', unitPrice: '1' }],
+    })
+    expect(parsed.success).toBe(false)
   })
 })

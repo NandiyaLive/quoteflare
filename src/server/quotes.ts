@@ -1,6 +1,8 @@
 import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import type { Db } from '#/db'
 import { schema } from '#/db'
+import type { RecurringInterval } from '#/db/schema'
+import { minorToDecimal } from '#/lib/decimal'
 import { addDays, DEFAULT_PAYMENT_TERM_DAYS } from '#/lib/invoices'
 import { createId } from '#/lib/id'
 import {
@@ -8,8 +10,10 @@ import {
   type PricingBreakdown,
   type PricingSelection,
 } from '#/lib/pricing'
+import type { RecurringFormValues } from '#/lib/recurring'
 import {
   quoteInvoiceItems,
+  quoteRecurringItems,
   type QuoteRequest,
   type QuoteStatusFilter,
 } from '#/lib/quotes'
@@ -231,4 +235,59 @@ export async function convertQuoteToInvoice(
     throw error
   }
   return { ok: true, invoiceId, created: true }
+}
+
+export type QuoteSchedulePrefill = {
+  quoteId: string
+  contactName: string
+  contactEmail: string
+  /** True when no client matches the quote's email. */
+  clientMissing: boolean
+  values: RecurringFormValues
+}
+
+/** Prefilled schedule form values for one billing interval of a quote's recurring lines. */
+export async function getQuoteSchedulePrefill(
+  db: Db,
+  quoteId: string,
+  interval: RecurringInterval,
+  today: string,
+): Promise<QuoteSchedulePrefill | null> {
+  const quote = await getQuote(db, quoteId)
+  if (!quote?.breakdown) return null
+  const items = quoteRecurringItems(quote.breakdown, interval)
+  if (items.length === 0) return null
+
+  const client = (
+    await db
+      .select({ id: clients.id })
+      .from(clients)
+      .where(
+        and(
+          sql`lower(${clients.email}) = lower(${quote.contactEmail})`,
+          eq(clients.archived, false),
+        ),
+      )
+      .orderBy(asc(clients.id))
+      .limit(1)
+  )[0]
+
+  return {
+    quoteId,
+    contactName: quote.contactName,
+    contactEmail: quote.contactEmail,
+    clientMissing: !client,
+    values: {
+      clientId: client?.id ?? '',
+      interval,
+      nextRunDate: today,
+      autoSend: false,
+      items: items.map((item) => ({
+        description: item.description,
+        quantity: String(item.quantity),
+        unitPrice: minorToDecimal(item.unitPrice),
+        taxable: item.taxable,
+      })),
+    },
+  }
 }

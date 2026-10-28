@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm'
+import { asc, eq, sql } from 'drizzle-orm'
 import type { Db } from '#/db'
 import { schema } from '#/db'
 import type { RecurringItem } from '#/db/schema'
@@ -6,6 +6,9 @@ import { minorToDecimal } from '#/lib/decimal'
 import { createId } from '#/lib/id'
 import { computeInvoiceTotals } from '#/lib/invoices'
 import type { RecurringData, RecurringFormValues } from '#/lib/recurring'
+
+import { batch } from './invoices'
+import { getQuote } from './quotes'
 
 const { recurringSchedules, clients } = schema
 
@@ -83,13 +86,39 @@ export async function saveSchedule(
   db: Db,
   data: RecurringData,
 ): Promise<SaveRecurringResult> {
-  const client = (
-    await db
-      .select()
-      .from(clients)
-      .where(eq(clients.id, data.clientId))
-      .limit(1)
-  )[0]
+  let clientId = data.clientId
+  let newClient: typeof clients.$inferInsert | null = null
+  if (!clientId) {
+    const quote = data.quoteId ? await getQuote(db, data.quoteId) : null
+    if (!quote) return { ok: false, error: 'Choose an existing client.' }
+    const match = (
+      await db
+        .select()
+        .from(clients)
+        .where(sql`lower(${clients.email}) = lower(${quote.contactEmail})`)
+        .orderBy(asc(clients.archived), asc(clients.id))
+    )[0]
+    if (match?.archived) {
+      return {
+        ok: false,
+        error: `${match.name} is archived. Restore the client first.`,
+      }
+    }
+    clientId = match?.id ?? createId()
+    if (!match) {
+      newClient = {
+        id: clientId,
+        name: quote.contactName,
+        email: quote.contactEmail,
+      }
+    }
+  }
+
+  const client = newClient
+    ? { archived: false }
+    : (
+        await db.select().from(clients).where(eq(clients.id, clientId)).limit(1)
+      )[0]
   if (!client) return { ok: false, error: 'Choose an existing client.' }
 
   const existing = data.id
@@ -102,7 +131,7 @@ export async function saveSchedule(
       )[0]
     : null
   if (data.id && !existing) return { ok: false, error: 'Schedule not found.' }
-  if (client.archived && client.id !== existing?.clientId) {
+  if (client.archived && clientId !== existing?.clientId) {
     return {
       ok: false,
       error: 'Archived clients cannot be invoiced. Restore the client first.',
@@ -110,7 +139,7 @@ export async function saveSchedule(
   }
 
   const columns = {
-    clientId: data.clientId,
+    clientId,
     interval: data.interval,
     nextRunDate: data.nextRunDate,
     autoSend: data.autoSend,
@@ -130,7 +159,10 @@ export async function saveSchedule(
     return { ok: true, id: data.id }
   }
   const id = createId()
-  await db.insert(recurringSchedules).values({ id, ...columns })
+  await batch(db, [
+    ...(newClient ? [db.insert(clients).values(newClient)] : []),
+    db.insert(recurringSchedules).values({ id, ...columns }),
+  ])
   return { ok: true, id }
 }
 

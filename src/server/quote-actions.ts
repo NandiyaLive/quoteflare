@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeader } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
+import { recurringIntervals } from '#/db/schema'
 import {
   convertQuoteSchema,
   MAX_PUBLIC_BODY_BYTES,
@@ -9,11 +10,13 @@ import {
   quoteRequestSchema,
   quoteStatusUpdateSchema,
 } from '#/lib/quotes'
+import { z } from 'zod'
 import { requireAdmin } from './admin-middleware'
 import {
   convertQuoteToInvoice,
   getQuote,
   getQuoteInvoice,
+  getQuoteSchedulePrefill,
   listQuotes,
   setQuoteStatus,
   submitQuote,
@@ -76,5 +79,22 @@ export const convertQuoteAction = createServerFn({ method: 'POST' })
       data.id,
       new Date().toISOString().slice(0, 10),
       data.advancePercent,
+    ),
+  )
+
+const quoteSchedulePrefillSchema = z.strictObject({
+  quoteId: z.string().min(1).max(64),
+  interval: z.enum(recurringIntervals),
+})
+
+export const getQuoteSchedulePrefillAction = createServerFn()
+  .validator((input: unknown) => quoteSchedulePrefillSchema.parse(input))
+  .middleware([requireAdmin])
+  .handler(({ data }) =>
+    getQuoteSchedulePrefill(
+      createDb(env.DB),
+      data.quoteId,
+      data.interval,
+      new Date().toISOString().slice(0, 10),
     ),
   )

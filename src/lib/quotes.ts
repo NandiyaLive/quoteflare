@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { quoteStatuses } from '#/db/schema'
+import { quoteStatuses, type RecurringInterval } from '#/db/schema'
 import { MAX_ADVANCE_PERCENT, MIN_ADVANCE_PERCENT } from './invoices'
-import type { PricingBreakdown } from './pricing'
+import type { PricedLine, PricingBreakdown } from './pricing'
 
 export const QUOTE_STATUS_FILTERS = ['all', ...quoteStatuses] as const
 export type QuoteStatusFilter = (typeof QUOTE_STATUS_FILTERS)[number]
@@ -93,7 +93,34 @@ export type QuoteInvoiceItem = {
 export function quoteInvoiceItems(
   breakdown: PricingBreakdown,
 ): QuoteInvoiceItem[] {
-  return breakdown.lines.flatMap((line) => [
+  return pricedLineItems(breakdown.lines)
+}
+
+/** Same line shape as the invoice items, for the recurring lines of one billing interval. */
+export function quoteRecurringItems(
+  breakdown: PricingBreakdown,
+  billing: RecurringInterval,
+): QuoteInvoiceItem[] {
+  return pricedLineItems(
+    breakdown.recurring.lines.filter((line) => line.billing === billing),
+  )
+}
+
+/** The billing intervals present in a quote's recurring lines, in first-seen order. */
+export function quoteRecurringIntervals(
+  breakdown: PricingBreakdown,
+): RecurringInterval[] {
+  return [
+    ...new Set(
+      breakdown.recurring.lines.flatMap((line) =>
+        line.billing === 'one_time' ? [] : [line.billing],
+      ),
+    ),
+  ]
+}
+
+function pricedLineItems(lines: PricedLine[]): QuoteInvoiceItem[] {
+  return lines.flatMap((line) => [
     {
       description: line.name,
       quantity: line.quantity,

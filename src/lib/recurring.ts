@@ -44,17 +44,27 @@ export function nextRunAfter(
   return next
 }
 
-export const recurringSchema = z.strictObject({
-  id: z.string().min(1).max(64).optional(),
-  clientId: z.string().min(1, 'Choose a client').max(64),
-  interval: z.enum(recurringIntervals),
-  nextRunDate: dateSchema,
-  autoSend: z.boolean(),
-  items: z
-    .array(invoiceItemSchema)
-    .min(1, 'Add at least one line item')
-    .max(MAX_RECURRING_ITEMS, `Use ${MAX_RECURRING_ITEMS} line items or fewer`),
-})
+export const recurringSchema = z
+  .strictObject({
+    id: z.string().min(1).max(64).optional(),
+    /** When set and `clientId` is empty, the client is created from this quote's contact. */
+    quoteId: z.string().min(1).max(64).optional(),
+    clientId: z.string().max(64),
+    interval: z.enum(recurringIntervals),
+    nextRunDate: dateSchema,
+    autoSend: z.boolean(),
+    items: z
+      .array(invoiceItemSchema)
+      .min(1, 'Add at least one line item')
+      .max(
+        MAX_RECURRING_ITEMS,
+        `Use ${MAX_RECURRING_ITEMS} line items or fewer`,
+      ),
+  })
+  .refine((schedule) => schedule.clientId !== '' || schedule.quoteId, {
+    path: ['clientId'],
+    message: 'Choose a client',
+  })
 
 export type RecurringFormValues = z.input<typeof recurringSchema>
 export type RecurringData = z.output<typeof recurringSchema>

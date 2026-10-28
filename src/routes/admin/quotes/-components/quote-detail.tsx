@@ -20,6 +20,8 @@ import { formatDate } from '@/lib/format'
 import { formatMinor } from '#/lib/decimal'
 import { MAX_ADVANCE_PERCENT, MIN_ADVANCE_PERCENT } from '#/lib/invoices'
 import type { PricedLine } from '#/lib/pricing'
+import { quoteRecurringIntervals } from '#/lib/quotes'
+import { RECURRING_INTERVAL_LABELS } from '#/lib/recurring'
 import { BILLING_LABELS } from '#/lib/services'
 import {
   convertQuoteAction,
@@ -100,6 +102,7 @@ export function QuoteDetail({
     percent >= MIN_ADVANCE_PERCENT &&
     percent <= MAX_ADVANCE_PERCENT
   const { breakdown, currency } = quote
+  const recurringIntervals = breakdown ? quoteRecurringIntervals(breakdown) : []
 
   const { confirm, dialog } = useConfirm()
 
@@ -184,6 +187,24 @@ export function QuoteDetail({
             View invoice {invoice.number}
           </Button>
         )}
+        {quote.status !== 'dismissed' &&
+          recurringIntervals.map((interval) => (
+            <Button
+              key={interval}
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link
+                  to="/admin/recurring/new"
+                  search={{ quoteId: quote.id, interval }}
+                />
+              }
+            >
+              Create recurring schedule
+              {recurringIntervals.length > 1 &&
+                ` (${RECURRING_INTERVAL_LABELS[interval]})`}
+            </Button>
+          ))}
         {!invoice && quote.status === 'new' && (
           <>
             <Button
