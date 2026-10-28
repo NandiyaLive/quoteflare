@@ -12,7 +12,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import { evaluate, stateForPackage } from '#/lib/calculator'
+import {
+  evaluate,
+  stateForPackage,
+  type CalculatorCatalog,
+  type CalculatorPackage,
+} from '#/lib/calculator'
 import { formatMinor } from '#/lib/decimal'
 import { SCRATCH, useCalculator } from './calculator-context'
 
@@ -30,6 +35,35 @@ const describePrice = (
   return `${price.partial ? 'From ' : ''}${parts.join(' + ')}`
 }
 
+type Section = {
+  id: string
+  name: string | null
+  packages: CalculatorPackage[]
+}
+
+/**
+ * Groups packages under their categories. Packages without a category come
+ * last, under "Other" when categories exist and without a heading otherwise.
+ */
+function groupByCategory(catalog: CalculatorCatalog): Section[] {
+  const sections: Section[] = catalog.packageCategories.map((c) => ({
+    ...c,
+    packages: catalog.packages.filter((p) => p.categoryId === c.id),
+  }))
+  const loose = catalog.packages.filter(
+    (p) => !catalog.packageCategories.some((c) => c.id === p.categoryId),
+  )
+  const visible = sections.filter((s) => s.packages.length > 0)
+  if (loose.length > 0) {
+    visible.push({
+      id: 'other',
+      name: visible.length > 0 ? 'Other' : null,
+      packages: loose,
+    })
+  }
+  return visible
+}
+
 export function PackageStep() {
   const { catalog, state, chosen, choose } = useCalculator()
   const navigate = useNavigate()
@@ -39,6 +73,7 @@ export function PackageStep() {
     () => new Map(catalog.services.map((s) => [s.id, s.name])),
     [catalog],
   )
+  const sections = useMemo(() => groupByCategory(catalog), [catalog])
   const totals = useMemo(
     () =>
       new Map(
@@ -70,33 +105,44 @@ export function PackageStep() {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {catalog.packages.map((pkg) => {
-          const price = totals.get(pkg.id)
-          return (
-            <PackageCard
-              key={pkg.id}
-              selected={chosen === pkg.id}
-              title={pkg.name}
-              description={pkg.description}
-              services={pkg.items.map((i) => {
-                const name = names.get(i.serviceId) ?? ''
-                return i.quantity > 1 ? `${name} x${i.quantity}` : name
+      <div className="grid gap-8">
+        {sections.map((section) => (
+          <section key={section.id} className="grid gap-4">
+            {section.name && (
+              <h2 className="text-lg font-semibold">{section.name}</h2>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {section.packages.map((pkg) => {
+                const price = totals.get(pkg.id)
+                return (
+                  <PackageCard
+                    key={pkg.id}
+                    selected={chosen === pkg.id}
+                    title={pkg.name}
+                    description={pkg.description}
+                    services={pkg.items.map((i) => {
+                      const name = names.get(i.serviceId) ?? ''
+                      return i.quantity > 1 ? `${name} x${i.quantity}` : name
+                    })}
+                    price={price && describePrice(price, catalog.currency)}
+                    action="Choose package"
+                    onSelect={() => pick(pkg.id)}
+                  />
+                )
               })}
-              price={price && describePrice(price, catalog.currency)}
-              action="Choose package"
-              onSelect={() => pick(pkg.id)}
-            />
-          )
-        })}
-        <PackageCard
-          selected={chosen === SCRATCH}
-          title="Start from scratch"
-          description="Pick each service yourself."
-          action="Choose services"
-          icon={<PencilRulerIcon className="size-5" />}
-          onSelect={() => pick(SCRATCH)}
-        />
+            </div>
+          </section>
+        ))}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <PackageCard
+            selected={chosen === SCRATCH}
+            title="Start from scratch"
+            description="Pick each service yourself."
+            action="Choose services"
+            icon={<PencilRulerIcon className="size-5" />}
+            onSelect={() => pick(SCRATCH)}
+          />
+        </div>
       </div>
 
       <Dialog
@@ -148,7 +194,7 @@ function PackageCard({
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             {icon}
-            <h2 className="text-lg font-semibold">{title}</h2>
+            <h3 className="text-lg font-semibold">{title}</h3>
           </div>
           {description && (
             <p className="text-muted-foreground">{description}</p>

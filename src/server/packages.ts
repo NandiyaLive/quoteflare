@@ -5,10 +5,15 @@ import { schema } from '#/db'
 import { createId } from '#/lib/id'
 import type { PackageData } from '#/lib/packages'
 
-const { packages, packageItems, services, serviceOptions } = schema
+const { packages, packageCategories, packageItems, services, serviceOptions } =
+  schema
+
+export type PackageCategoryRow = { id: string; name: string }
 
 export type PackageRow = {
   id: string
+  categoryId: string | null
+  categoryName: string | null
   name: string
   description: string
   active: boolean
@@ -24,10 +29,22 @@ export type PackageRow = {
 export type SavePackageResult =
   { ok: true; id: string } | { ok: false; errors: Record<string, string> }
 
+export type SavePackageCategoriesResult =
+  { ok: true } | { ok: false; errors: Record<string, string> }
+
 const order = [asc(packages.sortOrder), asc(packages.id)]
 
 const batch = (db: Db, statements: BatchItem<'sqlite'>[]) =>
   db.batch(statements as [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]])
+
+export async function listPackageCategories(
+  db: Db,
+): Promise<PackageCategoryRow[]> {
+  return db
+    .select({ id: packageCategories.id, name: packageCategories.name })
+    .from(packageCategories)
+    .orderBy(asc(packageCategories.sortOrder), asc(packageCategories.id))
+}
 
 export async function listPackages(
   db: Db,
@@ -39,6 +56,9 @@ export async function listPackages(
     .where(status === 'all' ? undefined : eq(packages.active, true))
     .orderBy(...order)
   if (rows.length === 0) return []
+
+  const categories = await listPackageCategories(db)
+  const categoryName = new Map(categories.map((c) => [c.id, c.name]))
 
   const items = await db
     .select({
@@ -60,6 +80,9 @@ export async function listPackages(
 
   return rows.map((row) => ({
     ...row,
+    categoryName: row.categoryId
+      ? (categoryName.get(row.categoryId) ?? null)
+      : null,
     items: items
       .filter((i) => i.packageId === row.id)
       .map((i) => ({
@@ -90,6 +113,16 @@ export async function savePackage(
       return fail('form', 'This package no longer exists.')
   }
 
+  if (data.categoryId) {
+    const category = await db
+      .select({ id: packageCategories.id })
+      .from(packageCategories)
+      .where(eq(packageCategories.id, data.categoryId))
+    if (category.length === 0) {
+      return fail('categoryId', 'This category no longer exists.')
+    }
+  }
+
   const serviceIds = data.items.map((i) => i.serviceId)
   const found = await db
     .select({ id: services.id })
@@ -113,7 +146,11 @@ export async function savePackage(
     return fail(`items[${foreign}].optionIds`, 'An option was not found.')
   }
 
-  const fields = { name: data.name, description: data.description }
+  const fields = {
+    name: data.name,
+    description: data.description,
+    categoryId: data.categoryId,
+  }
   await batch(db, [
     data.id
       ? db.update(packages).set(fields).where(eq(packages.id, packageId))
@@ -173,5 +210,71 @@ export async function reorderPackages(
       db.update(packages).set({ sortOrder: index }).where(eq(packages.id, id)),
     ),
   )
+  return { ok: true }
+}
+
+export async function savePackageCategories(
+  db: Db,
+  categories: { id?: string; name: string }[],
+): Promise<SavePackageCategoriesResult> {
+  const current = await db.select().from(packageCategories)
+  const known = new Set(current.map((c) => c.id))
+  const unknown = categories.findIndex((c) => c.id && !known.has(c.id))
+  if (unknown !== -1) {
+    return {
+      ok: false,
+      errors: {
+        [`categories[${unknown}].name`]: 'This category was not found.',
+      },
+    }
+  }
+
+  const keptIds = new Set(categories.flatMap((c) => (c.id ? [c.id] : [])))
+  const removed = current.filter((c) => !keptIds.has(c.id))
+  if (removed.length > 0) {
+    const used = await db
+      .select({ categoryId: packages.categoryId })
+      .from(packages)
+      .where(
+        inArray(
+          packages.categoryId,
+          removed.map((c) => c.id),
+        ),
+      )
+    const usedIds = new Set(used.map((u) => u.categoryId))
+    const blocked = removed.find((c) => usedIds.has(c.id))
+    if (blocked) {
+      return {
+        ok: false,
+        errors: {
+          form: `"${blocked.name}" still has packages. Move them to another category first.`,
+        },
+      }
+    }
+  }
+
+  const statements: BatchItem<'sqlite'>[] = [
+    ...(removed.length > 0
+      ? [
+          db.delete(packageCategories).where(
+            inArray(
+              packageCategories.id,
+              removed.map((c) => c.id),
+            ),
+          ),
+        ]
+      : []),
+    ...categories.map((c, index) =>
+      c.id
+        ? db
+            .update(packageCategories)
+            .set({ name: c.name, sortOrder: index })
+            .where(eq(packageCategories.id, c.id))
+        : db
+            .insert(packageCategories)
+            .values({ name: c.name, sortOrder: index }),
+    ),
+  ]
+  if (statements.length > 0) await batch(db, statements)
   return { ok: true }
 }

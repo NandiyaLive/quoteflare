@@ -4,9 +4,11 @@ import { createTestD1 } from '#/db/test-db'
 import { createId } from '#/lib/id'
 import { packageSchema } from '#/lib/packages'
 import {
+  listPackageCategories,
   listPackages,
   reorderPackages,
   savePackage,
+  savePackageCategories,
   setPackageActive,
 } from './packages'
 
@@ -28,6 +30,7 @@ const optionId = createId()
 beforeEach(async () => {
   await db.delete(schema.packageItems)
   await db.delete(schema.packages)
+  await db.delete(schema.packageCategories)
   await db.delete(schema.serviceOptions)
   await db.delete(schema.services)
   await db.insert(schema.services).values([
@@ -45,9 +48,10 @@ beforeEach(async () => {
 
 const parse = (input: unknown) => packageSchema.parse(input)
 
-const form = (items: unknown[], name = 'Starter') => ({
+const form = (items: unknown[], name = 'Starter', categoryId = '') => ({
   name,
   description: 'desc',
+  categoryId,
   items,
 })
 
@@ -159,5 +163,86 @@ describe('setPackageActive and reorderPackages', () => {
     expect((await listPackages(db)).map((p) => p.name)).toEqual(['A', 'B'])
     await reorderPackages(db, [b.id, a.id])
     expect((await listPackages(db)).map((p) => p.name)).toEqual(['B', 'A'])
+  })
+})
+
+describe('package categories', () => {
+  const item = { serviceId, quantity: '1', optionIds: [] }
+
+  const makeCategories = async (...names: string[]) => {
+    await savePackageCategories(
+      db,
+      names.map((name) => ({ name })),
+    )
+    return listPackageCategories(db)
+  }
+
+  it('saves categories in order and renames them', async () => {
+    const [first, second] = await makeCategories('Starter', 'Retainers')
+    expect([first.name, second.name]).toEqual(['Starter', 'Retainers'])
+    await savePackageCategories(db, [
+      { id: second.id, name: 'Monthly' },
+      { id: first.id, name: 'Starter' },
+    ])
+    expect((await listPackageCategories(db)).map((c) => c.name)).toEqual([
+      'Monthly',
+      'Starter',
+    ])
+  })
+
+  it('assigns a category and lists its name', async () => {
+    const [category] = await makeCategories('Starter')
+    const result = await savePackage(
+      db,
+      parse(form([item], 'Basic', category.id)),
+    )
+    expect(result.ok).toBe(true)
+    const [pkg] = await listPackages(db)
+    expect(pkg.categoryId).toBe(category.id)
+    expect(pkg.categoryName).toBe('Starter')
+  })
+
+  it('stores no category for an empty id', async () => {
+    await savePackage(db, parse(form([item])))
+    const [pkg] = await listPackages(db)
+    expect(pkg.categoryId).toBeNull()
+    expect(pkg.categoryName).toBeNull()
+  })
+
+  it('rejects a category that does not exist', async () => {
+    const result = await savePackage(
+      db,
+      parse(form([item], 'Basic', createId())),
+    )
+    expect(result).toEqual({
+      ok: false,
+      errors: { categoryId: 'This category no longer exists.' },
+    })
+  })
+
+  it('blocks removing a category that still has packages', async () => {
+    const [category] = await makeCategories('Starter')
+    await savePackage(db, parse(form([item], 'Basic', category.id)))
+    const result = await savePackageCategories(db, [])
+    expect(result).toEqual({
+      ok: false,
+      errors: {
+        form: '"Starter" still has packages. Move them to another category first.',
+      },
+    })
+    expect(await listPackageCategories(db)).toHaveLength(1)
+  })
+
+  it('removes an unused category', async () => {
+    await makeCategories('Starter')
+    expect(await savePackageCategories(db, [])).toEqual({ ok: true })
+    expect(await listPackageCategories(db)).toEqual([])
+  })
+
+  it('rejects an unknown category id', async () => {
+    const result = await savePackageCategories(db, [
+      { id: createId(), name: 'Ghost' },
+    ])
+    expect(result.ok).toBe(false)
   })
 })

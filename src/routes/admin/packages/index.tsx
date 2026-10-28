@@ -8,6 +8,12 @@ export const Route = createFileRoute('/admin/packages/')({
 })
 
 function PackagesPage() {
-  const { packages, services } = Route.useLoaderData()
-  return <PackagesManager packages={packages} services={services} />
+  const { packages, categories, services } = Route.useLoaderData()
+  return (
+    <PackagesManager
+      packages={packages}
+      categories={categories}
+      services={services}
+    />
+  )
 }

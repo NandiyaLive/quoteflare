@@ -2,13 +2,21 @@ import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
 import { packageSchema } from '#/lib/packages'
-import { issuePath, reorderSchema, toggleSchema } from '#/lib/services'
+import {
+  categoriesSchema,
+  issuePath,
+  reorderSchema,
+  toggleSchema,
+} from '#/lib/services'
 import { requireAdmin } from './admin-middleware'
 import {
+  listPackageCategories,
   listPackages,
   reorderPackages,
   savePackage,
+  savePackageCategories,
   setPackageActive,
+  type SavePackageCategoriesResult,
   type SavePackageResult,
 } from './packages'
 import { listServices } from './services'
@@ -18,13 +26,15 @@ export const getPackages = createServerFn()
   .middleware([requireAdmin])
   .handler(async () => {
     const db = createDb(env.DB)
-    const [packages, services, settings] = await Promise.all([
+    const [packages, categories, services, settings] = await Promise.all([
       listPackages(db, 'all'),
+      listPackageCategories(db),
       listServices(db, 'active'),
       loadSettings(db),
     ])
     return {
       packages,
+      categories,
       services: services.map((s) => ({
         id: s.id,
         name: s.name,
@@ -65,3 +75,18 @@ export const reorderPackagesAction = createServerFn({ method: 'POST' })
   .validator((input: unknown) => reorderSchema.parse(input))
   .middleware([requireAdmin])
   .handler(({ data }) => reorderPackages(createDb(env.DB), data.ids))
+
+export const savePackageCategoriesAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => input)
+  .middleware([requireAdmin])
+  .handler(async ({ data }): Promise<SavePackageCategoriesResult> => {
+    const parsed = categoriesSchema.safeParse(data)
+    if (!parsed.success) {
+      const errors: Record<string, string> = {}
+      for (const issue of parsed.error.issues) {
+        errors[issuePath(issue.path) || 'form'] ??= issue.message
+      }
+      return { ok: false, errors }
+    }
+    return savePackageCategories(createDb(env.DB), parsed.data.categories)
+  })

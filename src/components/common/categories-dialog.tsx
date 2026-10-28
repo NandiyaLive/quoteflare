@@ -19,18 +19,24 @@ import {
   categoriesSchema,
   type CategoriesFormValues,
 } from '#/lib/services'
-import type { CategoryRow } from '#/server/services'
-import { saveCategoriesAction } from '#/server/services-actions'
 import { toast } from 'sonner'
 import { callAction, toastFormErrors } from '#/lib/action-errors'
+
+type CategoryResult =
+  { ok: true } | { ok: false; errors: Record<string, string> }
 
 export function CategoriesDialog({
   open,
   categories,
+  noun,
+  save,
   onClose,
 }: {
   open: boolean
-  categories: CategoryRow[]
+  categories: { id: string; name: string }[]
+  /** Plural name of what the categories group, such as "services". */
+  noun: string
+  save: (values: CategoriesFormValues) => Promise<CategoryResult>
   onClose: () => void
 }) {
   return (
@@ -41,6 +47,8 @@ export function CategoriesDialog({
             initial={{
               categories: categories.map((c) => ({ id: c.id, name: c.name })),
             }}
+            noun={noun}
+            save={save}
             onDone={onClose}
           />
         )}
@@ -51,9 +59,13 @@ export function CategoriesDialog({
 
 function CategoriesForm({
   initial,
+  noun,
+  save,
   onDone,
 }: {
   initial: CategoriesFormValues
+  noun: string
+  save: (values: CategoriesFormValues) => Promise<CategoryResult>
   onDone: () => void
 }) {
   const router = useRouter()
@@ -65,7 +77,7 @@ function CategoriesForm({
     onSubmit: async ({ value }) => {
       setServerErrors({})
       const result = await callAction(
-        () => saveCategoriesAction({ data: value }),
+        () => save(value),
         'Could not save the categories. Try again.',
       )
       if (!result) return
@@ -92,8 +104,8 @@ function CategoriesForm({
       <DialogHeader>
         <DialogTitle>Categories</DialogTitle>
         <DialogDescription>
-          Categories group services in the calculator. A category can be removed
-          once it has no services.
+          Categories group {noun} in the calculator. A category can be removed
+          once it has no {noun}.
         </DialogDescription>
       </DialogHeader>
 

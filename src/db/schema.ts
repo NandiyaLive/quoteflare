@@ -217,16 +217,26 @@ export const serviceDependencies = sqliteTable(
   ],
 )
 
+export const packageCategories = sqliteTable('package_categories', {
+  id: id(),
+  name: text('name').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+})
+
 export const packages = sqliteTable(
   'packages',
   {
     id: id(),
+    categoryId: text('category_id').references(() => packageCategories.id),
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
     active: integer('active', { mode: 'boolean' }).notNull().default(true),
     sortOrder: integer('sort_order').notNull().default(0),
   },
-  (t) => [index('packages_active_sort_idx').on(t.active, t.sortOrder)],
+  (t) => [
+    index('packages_active_sort_idx').on(t.active, t.sortOrder),
+    index('packages_category_idx').on(t.categoryId),
+  ],
 )
 
 // `optionIds` lists the service options the package preselects.

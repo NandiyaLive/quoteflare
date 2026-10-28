@@ -28,7 +28,7 @@ import {
   packageSchema,
   type PackageFormValues,
 } from '#/lib/packages'
-import type { PackageRow } from '#/server/packages'
+import type { PackageCategoryRow, PackageRow } from '#/server/packages'
 import { savePackageAction } from '#/server/packages-actions'
 import { toast } from 'sonner'
 import { callAction, toastFormErrors } from '#/lib/action-errors'
@@ -41,9 +41,12 @@ export type ServiceChoice = {
   options: { id: string; name: string }[]
 }
 
+const NONE = 'none'
+
 const emptyValues: PackageFormValues = {
   name: '',
   description: '',
+  categoryId: '',
   items: [],
 }
 
@@ -51,6 +54,7 @@ const toFormValues = (pkg: PackageRow): PackageFormValues => ({
   id: pkg.id,
   name: pkg.name,
   description: pkg.description,
+  categoryId: pkg.categoryId ?? '',
   items: pkg.items.map((i) => ({
     serviceId: i.serviceId,
     quantity: String(i.quantity),
@@ -60,10 +64,12 @@ const toFormValues = (pkg: PackageRow): PackageFormValues => ({
 
 export function PackageDialog({
   editing,
+  categories,
   services,
   onClose,
 }: {
   editing: PackageRow | 'new' | null
+  categories: PackageCategoryRow[]
   services: ServiceChoice[]
   onClose: () => void
 }) {
@@ -74,6 +80,7 @@ export function PackageDialog({
           <PackageForm
             key={editing === 'new' ? 'new' : editing.id}
             initial={editing === 'new' ? emptyValues : toFormValues(editing)}
+            categories={categories}
             services={services}
             onDone={onClose}
           />
@@ -85,10 +92,12 @@ export function PackageDialog({
 
 function PackageForm({
   initial,
+  categories,
   services,
   onDone,
 }: {
   initial: PackageFormValues
+  categories: PackageCategoryRow[]
   services: ServiceChoice[]
   onDone: () => void
 }) {
@@ -141,24 +150,47 @@ function PackageForm({
       </DialogHeader>
 
       <FieldGroup>
-        <form.Field name="name">
-          {(field) => {
-            const errors = withServerErrors(field.name, field.state.meta.errors)
-            return (
-              <Field data-invalid={errors.length > 0}>
-                <FieldLabel htmlFor="package-name">Name</FieldLabel>
-                <Input
-                  id="package-name"
-                  value={field.state.value}
-                  aria-invalid={errors.length > 0}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <form.Field name="name">
+            {(field) => {
+              const errors = withServerErrors(
+                field.name,
+                field.state.meta.errors,
+              )
+              return (
+                <Field data-invalid={errors.length > 0}>
+                  <FieldLabel htmlFor="package-name">Name</FieldLabel>
+                  <Input
+                    id="package-name"
+                    value={field.state.value}
+                    aria-invalid={errors.length > 0}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                  {errors.length > 0 && <FieldError errors={errors} />}
+                </Field>
+              )
+            }}
+          </form.Field>
+          <form.Field name="categoryId">
+            {(field) => (
+              <Field>
+                <FieldLabel htmlFor="package-categoryId">Category</FieldLabel>
+                <SearchSelect
+                  id="package-categoryId"
+                  value={field.state.value || NONE}
+                  placeholder="Choose a category"
+                  emptyText="No categories found."
+                  options={[
+                    { value: NONE, label: 'No category' },
+                    ...categories.map((c) => ({ value: c.id, label: c.name })),
+                  ]}
+                  onValueChange={(v) => field.handleChange(v === NONE ? '' : v)}
                 />
-                {errors.length > 0 && <FieldError errors={errors} />}
               </Field>
-            )
-          }}
-        </form.Field>
+            )}
+          </form.Field>
+        </div>
         <form.Field name="description">
           {(field) => {
             const errors = withServerErrors(field.name, field.state.meta.errors)

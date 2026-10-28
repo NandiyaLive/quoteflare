@@ -26,6 +26,7 @@ export const packageSchema = z
       .string()
       .trim()
       .max(500, 'Description must be 500 characters or fewer'),
+    categoryId: z.string().trim(),
     items: z
       .array(itemSchema)
       .min(1, 'Add at least one service')
@@ -49,6 +50,7 @@ export const packageSchema = z
   })
   .transform((value) => ({
     ...value,
+    categoryId: value.categoryId === '' ? null : value.categoryId,
     items: value.items.map((item) => ({
       ...item,
       quantity: Number(item.quantity),
