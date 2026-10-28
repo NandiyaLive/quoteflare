@@ -1,15 +1,9 @@
-import {
-  Body,
-  Button,
-  Container,
-  Html,
-  Link,
-  Preview,
-  Section,
-  Text,
-} from '@react-email/components'
+import { Button, Section, Text } from '@react-email/components'
+import { EmailLayout } from './email-layout'
 
 export type InvoiceEmailProps = {
+  businessName: string
+  heading: string
   /** Message text with placeholders already filled. Blank lines split paragraphs. */
   body: string
   buttonLabel: string
@@ -17,9 +11,9 @@ export type InvoiceEmailProps = {
   preview: string
 }
 
-const font = 'Arial, Helvetica, sans-serif'
-
 export function InvoiceEmail({
+  businessName,
+  heading,
   body,
   buttonLabel,
   url,
@@ -27,72 +21,34 @@ export function InvoiceEmail({
 }: InvoiceEmailProps) {
   const paragraphs = body.split(/\n{2,}/).filter((p) => p.trim())
   return (
-    <Html lang="en">
-      <Preview>{preview}</Preview>
-      <Body style={{ backgroundColor: '#f4f4f5', fontFamily: font, margin: 0 }}>
-        <Container
-          style={{
-            backgroundColor: '#ffffff',
-            maxWidth: 520,
-            margin: '24px auto',
-            padding: 32,
-            borderRadius: 8,
-          }}
+    <EmailLayout
+      businessName={businessName}
+      heading={heading}
+      preview={preview}
+    >
+      {paragraphs.map((paragraph, i) => (
+        <Text
+          key={i}
+          className="text-ink-2 m-0 mb-4 text-[15px] leading-6 whitespace-pre-line"
         >
-          {paragraphs.map((paragraph, i) => (
-            <Text
-              key={i}
-              style={{
-                fontSize: 15,
-                lineHeight: '24px',
-                color: '#111111',
-                margin: '0 0 16px',
-                whiteSpace: 'pre-line',
-              }}
-            >
-              {paragraph}
-            </Text>
-          ))}
-          <Section style={{ marginTop: 24 }}>
-            <Button
-              href={url}
-              style={{
-                backgroundColor: '#111111',
-                color: '#ffffff',
-                fontSize: 15,
-                padding: '12px 20px',
-                borderRadius: 6,
-                textDecoration: 'none',
-              }}
-            >
-              {buttonLabel}
-            </Button>
-          </Section>
-        </Container>
-        <Container style={{ maxWidth: 520, margin: '0 auto' }}>
-          <Text
-            style={{
-              fontSize: 12,
-              color: '#71717a',
-              margin: '0 0 24px',
-              textAlign: 'center',
-            }}
-          >
-            Powered by{' '}
-            <Link
-              href="https://neranjana.me/projects/quoteflare"
-              style={{ color: '#71717a' }}
-            >
-              Quoteflare
-            </Link>
-          </Text>
-        </Container>
-      </Body>
-    </Html>
+          {paragraph}
+        </Text>
+      ))}
+      <Section className="mt-6">
+        <Button
+          href={url}
+          className="bg-ink inline-block rounded-md px-5 py-3 text-[15px] text-white no-underline"
+        >
+          {buttonLabel}
+        </Button>
+      </Section>
+    </EmailLayout>
   )
 }
 
 InvoiceEmail.PreviewProps = {
+  businessName: 'Your business',
+  heading: 'Invoice INV-0001',
   body: 'Invoice INV-0001 from Your business is ready.\n\nAmount due: USD 1,100.00\nDue date: 2026-12-01',
   buttonLabel: 'View the invoice',
   url: 'https://example.com/i/abc',

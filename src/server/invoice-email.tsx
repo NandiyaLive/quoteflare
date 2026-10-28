@@ -38,6 +38,8 @@ export async function buildInvoiceEmail(
   const buttonLabel = fillTemplate(template.button, vars)
   const element = (
     <InvoiceEmail
+      businessName={vars.businessName}
+      heading={`Invoice ${vars.number}`}
       body={body}
       buttonLabel={buttonLabel}
       url={url}
