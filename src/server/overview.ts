@@ -1,4 +1,5 @@
 import type { Db } from '#/db'
+import { invoiceStatuses, type InvoiceStatus } from '#/db/schema'
 import { listInvoices, type InvoiceListRow } from './invoices'
 import { listQuotes, type QuoteRow } from './quotes'
 import { listSchedules, type RecurringRow } from './recurring'
@@ -31,6 +32,12 @@ export type OverviewSchedule = {
   autoSend: boolean
 }
 
+export type OverviewStatus = {
+  status: InvoiceStatus
+  count: number
+  amount: number
+}
+
 export type Overview = {
   currency: string
   outstanding: { amount: number; count: number }
@@ -38,6 +45,7 @@ export type Overview = {
   drafts: { amount: number; count: number }
   newQuotes: { amount: number; count: number }
   months: { month: string; invoiced: number; paid: number }[]
+  statuses: OverviewStatus[]
   unpaid: OverviewInvoice[]
   quotes: OverviewQuote[]
   schedules: OverviewSchedule[]
@@ -94,6 +102,13 @@ export function buildOverview(input: {
     }
   })
 
+  const statuses = invoiceStatuses
+    .map((status) => ({
+      status,
+      ...tally(invoices.filter((i) => i.status === status)),
+    }))
+    .filter((s) => s.count > 0)
+
   return {
     currency,
     outstanding: tally(unpaid),
@@ -101,6 +116,7 @@ export function buildOverview(input: {
     drafts: tally(invoices.filter((i) => i.status === 'draft')),
     newQuotes: tally(newQuotes),
     months,
+    statuses,
     unpaid: [...unpaid]
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
       .slice(0, LIST_SIZE)

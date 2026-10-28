@@ -1,5 +1,15 @@
 import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Label,
+  Pie,
+  PieChart,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -9,9 +19,19 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart'
 import PageHeader from '@/components/common/page-header'
 import { formatDate } from '@/lib/format'
 import { formatMinor } from '#/lib/decimal'
+import { invoiceStatuses, type InvoiceStatus } from '#/db/schema'
+import { INVOICE_STATUS_LABELS } from '#/lib/invoices'
 import { RECURRING_INTERVAL_LABELS } from '#/lib/recurring'
 import type { Overview } from '#/server/overview'
 
@@ -88,50 +108,197 @@ const Row = ({ children, amount }: { children: ReactNode; amount: string }) => (
 
 const count = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`
 
+const monthLabel = (month: string) =>
+  formatDate(`${month}-01T00:00:00`, {
+    day: undefined,
+    year: undefined,
+    month: 'short',
+  })
+
+const compact = (minor: number) =>
+  new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(minor / 100)
+
 function MonthlyChart({ overview }: { overview: Overview }) {
-  const max = Math.max(1, ...overview.months.map((m) => m.invoiced))
+  const config = {
+    paid: { label: 'Paid', color: 'var(--chart-3)' },
+    unpaid: { label: 'Unpaid', color: 'var(--chart-1)' },
+  } satisfies ChartConfig
+  const data = overview.months.map((m) => ({
+    month: m.month,
+    paid: m.paid,
+    unpaid: m.invoiced - m.paid,
+  }))
   return (
-    <Card>
+    <Card className="lg:col-span-2">
       <CardHeader>
         <CardTitle>Invoiced by month</CardTitle>
         <CardDescription>
-          Sent and paid invoices by issue date. The darker bar is the paid part.
+          Sent and paid invoices by issue date, split into paid and unpaid.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ul className="grid grid-cols-6 gap-3">
-          {overview.months.map((m) => (
-            <li key={m.month} className="flex flex-col items-center gap-2">
-              <div
-                className="flex h-36 w-full items-end"
-                role="img"
-                aria-label={`${formatDate(`${m.month}-01T00:00:00`, { day: undefined, month: 'long' })}: ${formatMinor(m.invoiced, overview.currency)} invoiced, ${formatMinor(m.paid, overview.currency)} paid`}
-              >
-                <div
-                  className="relative w-full overflow-hidden rounded-t-md bg-primary/25"
-                  style={{ height: `${(m.invoiced / max) * 100}%` }}
+        <ChartContainer config={config} className="h-52 w-full">
+          <BarChart data={data}>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={monthLabel}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              width={44}
+              tickFormatter={compact}
+            />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(_, items) =>
+                    monthLabel(String(items[0]?.payload.month))
+                  }
+                  formatter={(value, name) => (
+                    <div className="flex flex-1 justify-between gap-4">
+                      <span className="text-muted-foreground">
+                        {config[name as keyof typeof config]?.label}
+                      </span>
+                      <span className="font-mono tabular-nums">
+                        {formatMinor(Number(value), overview.currency)}
+                      </span>
+                    </div>
+                  )}
+                />
+              }
+            />
+            <ChartLegend content={<ChartLegendContent />} />
+            <Bar dataKey="paid" stackId="a" fill="var(--color-paid)" />
+            <Bar
+              dataKey="unpaid"
+              stackId="a"
+              fill="var(--color-unpaid)"
+              radius={[4, 4, 0, 0]}
+            />
+          </BarChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  )
+}
+
+const STATUS_COLORS: Record<InvoiceStatus, string> = {
+  paid: 'var(--chart-3)',
+  sent: 'var(--chart-2)',
+  overdue: 'var(--destructive)',
+  draft: 'var(--chart-1)',
+  void: 'var(--chart-4)',
+}
+
+function StatusChart({ overview }: { overview: Overview }) {
+  const config = Object.fromEntries(
+    invoiceStatuses.map((status) => [
+      status,
+      { label: INVOICE_STATUS_LABELS[status], color: STATUS_COLORS[status] },
+    ]),
+  ) satisfies ChartConfig
+  const data = overview.statuses.map((s) => ({
+    ...s,
+    fill: `var(--color-${s.status})`,
+  }))
+  const total = data.reduce((acc, s) => acc + s.count, 0)
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Invoices by status</CardTitle>
+        <CardDescription>Number of invoices in each status.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {total === 0 ? (
+          <p className="py-6 text-center text-muted-foreground">
+            No invoices yet.
+          </p>
+        ) : (
+          <>
+            <ChartContainer
+              config={config}
+              className="mx-auto aspect-square h-48"
+            >
+              <PieChart>
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      hideLabel
+                      formatter={(value, name, item) => (
+                        <div className="flex flex-1 justify-between gap-4">
+                          <span className="text-muted-foreground">
+                            {config[name as keyof typeof config]?.label}
+                          </span>
+                          <span className="font-mono tabular-nums">
+                            {value} ·{' '}
+                            {formatMinor(
+                              item.payload.amount,
+                              overview.currency,
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    />
+                  }
+                />
+                <Pie
+                  data={data}
+                  dataKey="count"
+                  nameKey="status"
+                  innerRadius="58%"
+                  outerRadius="100%"
+                  strokeWidth={2}
                 >
-                  <div
-                    className="absolute inset-x-0 bottom-0 bg-primary"
-                    style={{
-                      height: `${m.invoiced ? (m.paid / m.invoiced) * 100 : 0}%`,
-                    }}
+                  <Label
+                    content={({ viewBox }) =>
+                      viewBox && 'cx' in viewBox ? (
+                        <text
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy ?? 0) - 6}
+                            className="fill-foreground text-2xl font-semibold"
+                          >
+                            {total}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy ?? 0) + 14}
+                            className="fill-muted-foreground text-xs"
+                          >
+                            invoices
+                          </tspan>
+                        </text>
+                      ) : null
+                    }
                   />
-                </div>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {formatDate(`${m.month}-01T00:00:00`, {
-                  day: undefined,
-                  year: undefined,
-                  month: 'short',
-                })}
-              </span>
-              <span className="text-xs tabular-nums">
-                {formatMinor(m.invoiced, overview.currency)}
-              </span>
-            </li>
-          ))}
-        </ul>
+                </Pie>
+              </PieChart>
+            </ChartContainer>
+            <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs">
+              {data.map((d) => (
+                <li key={d.status} className="flex items-center gap-1.5">
+                  <span
+                    className="size-2 rounded-xs"
+                    style={{ background: STATUS_COLORS[d.status] }}
+                  />
+                  {INVOICE_STATUS_LABELS[d.status]}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </CardContent>
     </Card>
   )
@@ -184,7 +351,10 @@ export function OverviewPage({
         />
       </div>
 
-      <MonthlyChart overview={overview} />
+      <div className="grid gap-4 lg:grid-cols-3">
+        <MonthlyChart overview={overview} />
+        <StatusChart overview={overview} />
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel
