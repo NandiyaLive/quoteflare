@@ -20,6 +20,7 @@ import {
 } from '#/lib/calculator'
 import { formatMinor } from '#/lib/decimal'
 import { SCRATCH, useCalculator } from './calculator-context'
+import { ALL_CATEGORIES, CategoryFilter } from './category-filter'
 
 const describePrice = (
   price: { total: number; recurring: number; partial: boolean },
@@ -73,7 +74,12 @@ export function PackageStep() {
     () => new Map(catalog.services.map((s) => [s.id, s.name])),
     [catalog],
   )
+  const [category, setCategory] = useState(ALL_CATEGORIES)
   const sections = useMemo(() => groupByCategory(catalog), [catalog])
+  const shown =
+    category === ALL_CATEGORIES
+      ? sections
+      : sections.filter((s) => s.id === category)
   const totals = useMemo(
     () =>
       new Map(
@@ -106,7 +112,16 @@ export function PackageStep() {
   return (
     <>
       <div className="grid gap-8">
-        {sections.map((section) => (
+        <div className="flex w-full justify-end">
+          <CategoryFilter
+            sections={sections}
+            value={category}
+            onChange={setCategory}
+            label="Filter packages by category"
+          />
+        </div>
+
+        {shown.map((section) => (
           <section key={section.id} className="grid gap-4">
             {section.name && (
               <h2 className="text-lg font-semibold">{section.name}</h2>

@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { CalculatorCatalog, CalculatorService } from '#/lib/calculator'
 import { useCalculator } from './calculator-context'
+import { ALL_CATEGORIES, CategoryFilter } from './category-filter'
 import { ServiceCard } from './service-card'
 
 type Section = { id: string; name: string; services: CalculatorService[] }
@@ -25,6 +26,7 @@ function groupByCategory(catalog: CalculatorCatalog): Section[] {
 
 export function ScopeStep() {
   const { catalog, state, evaluation, toggle, change } = useCalculator()
+  const [category, setCategory] = useState(ALL_CATEGORIES)
   const sections = useMemo(() => groupByCategory(catalog), [catalog])
   const names = useMemo(
     () => new Map(catalog.services.map((s) => [s.id, s.name])),
@@ -39,9 +41,23 @@ export function ScopeStep() {
     )
   }
 
+  const shown =
+    category === ALL_CATEGORIES
+      ? sections
+      : sections.filter((s) => s.id === category)
+
   return (
     <div className="flex flex-col gap-10">
-      {sections.map((section) => (
+      <div className="flex w-full justify-end">
+        <CategoryFilter
+          sections={sections}
+          value={category}
+          onChange={setCategory}
+          label="Filter services by category"
+        />
+      </div>
+
+      {shown.map((section) => (
         <section key={section.id} className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold">{section.name}</h2>
           {section.services.map((service) => (
