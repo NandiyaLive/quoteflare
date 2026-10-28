@@ -10,7 +10,7 @@
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "bun run build && vite preview",
-    "deploy": "bun run build && wrangler deploy",
+    "deploy": "bun run build && wrangler deploy --keep-vars",
     "deploy:production": "WRANGLER_CONFIG=wrangler.production.toml bun run build && wrangler deploy",
     "cf-typegen": "wrangler types --strict-vars=false",
     "test": "vitest run",

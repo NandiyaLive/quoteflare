@@ -38,13 +38,19 @@ enabled = false
 [observability.issues]
 enabled = true
 
-# Set the vars below for your deployment.
-[vars]
-ACCESS_TEAM_DOMAIN = ""
-TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
-EMAIL_FROM = ""
-APP_ORIGIN = ""
-ALLOWED_ORIGINS = ""
+# Vars (ACCESS_TEAM_DOMAIN, TURNSTILE_SITE_KEY, EMAIL_FROM, APP_ORIGIN and
+# ALLOWED_ORIGINS) are not listed here. Set them in the dashboard under the
+# Worker's Settings > Variables and Secrets, and deploy with
+# `wrangler deploy --keep-vars` so git deploys do not erase them. A var listed
+# in this file overrides the dashboard value even with --keep-vars.
+#
+# Example values for local development:
+# [vars]
+# ACCESS_TEAM_DOMAIN = ""
+# TURNSTILE_SITE_KEY = "1x00000000000000000000AA"  # Cloudflare always-pass test key
+# EMAIL_FROM = ""  # a domain verified in Resend
+# APP_ORIGIN = "http://localhost:3000"  # base URL for invoice links in cron emails
+# ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:5173"  # comma separated, for /api/public/*
 
 # The Deploy to Cloudflare button creates the D1 database and R2 bucket for
 # these bindings in the deployer's account. When you create them yourself, add

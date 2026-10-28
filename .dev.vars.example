@@ -3,21 +3,12 @@ ACCESS_DEV_EMAIL=dev@example.test
 # Real value comes from `wrangler secret put ACCESS_AUD` in production.
 ACCESS_AUD=
 
-# Cloudflare's published always-pass Turnstile test keys. Production uses a
-# real site key as a var and `wrangler secret put TURNSTILE_SECRET`.
-TURNSTILE_SITE_KEY=1x00000000000000000000AA
+# Cloudflare's published always-pass Turnstile test secret. Production uses
+# `wrangler secret put TURNSTILE_SECRET`.
 TURNSTILE_SECRET=1x0000000000000000000000000000000AA
 
-# Production uses `wrangler secret put RESEND_API_KEY`. EMAIL_FROM is a var in
-# wrangler.toml and must use a domain verified in Resend.
+# Production uses `wrangler secret put RESEND_API_KEY`.
 RESEND_API_KEY=
-
-# Origin used for invoice links in emails sent by scheduled jobs, which have no
-# request to read it from. Production sets it as a var in wrangler.toml.
-APP_ORIGIN=http://localhost:3000
-
-# Comma separated origins allowed to call /api/public/* from a browser.
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 
 # Signing secret of the Resend webhook for /api/webhooks/resend. Production
 # uses `wrangler secret put RESEND_WEBHOOK_SECRET`. Any whsec_ value works locally.

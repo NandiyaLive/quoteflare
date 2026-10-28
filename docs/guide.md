@@ -89,7 +89,7 @@ One-time setup, in order:
 
    `secret list` must show all four names exactly. A misspelled name is silently ignored by the Worker.
 
-4. Set the vars in `wrangler.production.toml`: `ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`.
+4. Add a `[vars]` block to `wrangler.production.toml` with `ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`.
 5. Create the Access application for `/admin/*` with one Allow policy for your email, register the Resend webhook, and verify the sending domain in Resend (see the sections above).
 6. Deploy with `bun run deploy:production`, or push to the branch connected to Workers Builds.
 7. Watch the Worker with `bunx wrangler tail`.
@@ -152,7 +152,7 @@ The daily job (03:30 UTC) first marks every `sent` invoice whose due date is bef
 
 Each invoice gets each type once. A log row of that type that is not `failed` blocks a repeat, so a failed send is retried the next day but a `pending` row left by an interrupted run is not. A run sends at most 40 emails, oldest due date first, and the next run picks up the rest. Sending a reminder sets `invoices.last_reminder_at`.
 
-Links in these emails use `APP_ORIGIN` (a var in `wrangler.toml`, and in `.dev.vars` locally), because a cron run has no request to read the origin from.
+Links in these emails use `APP_ORIGIN` (a var set in the dashboard, and in the `[vars]` example in `wrangler.toml` locally), because a cron run has no request to read the origin from.
 
 ### Recurring invoices
 

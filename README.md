@@ -55,7 +55,7 @@ bun run dev
 
 The app runs at http://localhost:3000, and `/admin` accepts the identity in `ACCESS_DEV_EMAIL` when the host is `localhost`. Use `bun run dev`, not `bun --bun run dev`, which breaks the Cloudflare plugin.
 
-The `.dev.vars.example` file uses Cloudflare's always-pass Turnstile test keys. Add a `RESEND_API_KEY` to send real email.
+The `.dev.vars.example` file uses Cloudflare's always-pass Turnstile test secret. Non-secret vars for local development are in a comment in `wrangler.toml`. Add a `RESEND_API_KEY` to send real email.
 
 ## Scripts
 
@@ -78,7 +78,7 @@ The `.dev.vars.example` file uses Cloudflare's always-pass Turnstile test keys. 
 The button above copies the repository to your GitHub account, creates the D1 database and R2 bucket, and deploys the Worker. The Worker has no public URL until you add your domain in step 2, because `wrangler.toml` turns off `workers.dev`. The button asks for the secrets listed in `.dev.vars.example`. Afterwards:
 
 1. Run `bunx wrangler d1 migrations apply DB --remote` from a clone of your copy.
-2. Set the vars in `wrangler.toml` (`ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`), add your domain to `routes`, and push.
+2. In the Worker's Settings > Variables and Secrets, add the vars `ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`. In Settings > Builds, change the deploy command to `bunx wrangler deploy --keep-vars`, or every git deploy erases them. Then add your domain to `routes` in `wrangler.toml` and push.
 3. Create a Cloudflare Access application for `/admin/*` with one allow policy for your email, then set `ACCESS_AUD` to its audience tag.
 
 Until step 3 is done, `/admin` rejects every request.
@@ -87,7 +87,7 @@ Until step 3 is done, `/admin` rejects every request.
 
 1. Sign in with `bunx wrangler login`.
 2. Create the D1 database and the R2 bucket, then copy `wrangler.toml` to `wrangler.production.toml` and put the database ID in it. Git ignores that file, so your domain and IDs stay out of the repository.
-3. Edit the `[vars]` block and the route in `wrangler.production.toml` for your own domain.
+3. Add a `[vars]` block with `ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`, and set the route, in `wrangler.production.toml`.
 4. Apply migrations with `bun run db:migrate:remote`.
 5. Set the secrets `ACCESS_AUD`, `TURNSTILE_SECRET`, `RESEND_API_KEY` and `RESEND_WEBHOOK_SECRET` with `bunx wrangler secret put <name>`.
 6. Create a Cloudflare Access application for `/admin/*` with one allow policy for your email.
