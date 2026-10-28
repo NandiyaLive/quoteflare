@@ -1,12 +1,12 @@
-"use client";
+'use client'
 
-import { mergeProps } from "@base-ui/react/merge-props";
-import { useRender } from "@base-ui/react/use-render";
-import { useIsoLayoutEffect } from "@base-ui/utils/useIsoLayoutEffect";
-import { useMergedRefs } from "@base-ui/utils/useMergedRefs";
-import { Command as CommandPrimitive } from "cmdk";
-import { cn } from "@/lib/utils";
-import * as React from "react";
+import { mergeProps } from '@base-ui/react/merge-props'
+import { useRender } from '@base-ui/react/use-render'
+import { useIsoLayoutEffect } from '@base-ui/utils/useIsoLayoutEffect'
+import { useMergedRefs } from '@base-ui/utils/useMergedRefs'
+import { Command as CommandPrimitive } from 'cmdk'
+import { cn } from '@/lib/utils'
+import * as React from 'react'
 
 import {
   Command,
@@ -15,46 +15,46 @@ import {
   CommandInput,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
+} from '@/components/ui/command'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { ChevronDown, SearchIcon, Check } from "lucide-react";
+} from '@/components/ui/popover'
+import { ChevronDown, SearchIcon, Check } from 'lucide-react'
 
 type FacetedSelectedValue<Multiple extends boolean> = Multiple extends true
   ? string[]
-  : string;
+  : string
 
 interface FacetedOption {
-  label: string;
-  value: string;
+  label: string
+  value: string
 }
 
-const NO_ITEMS: FacetedOption[] = [];
+const NO_ITEMS: FacetedOption[] = []
 
 interface FacetedStoreState {
-  value: string | string[] | undefined;
-  items: FacetedOption[];
-  multiple: boolean;
+  value: string | string[] | undefined
+  items: FacetedOption[]
+  multiple: boolean
 }
 
 interface FacetedController {
-  isValueControlled: boolean;
-  onValueChange?: (value: string | string[] | undefined) => void;
-  setOpen: (open: boolean) => void;
+  isValueControlled: boolean
+  onValueChange?: (value: string | string[] | undefined) => void
+  setOpen: (open: boolean) => void
 }
 
 interface FacetedStore {
-  controller: FacetedController;
-  subscribe: (callback: () => void) => () => void;
-  getState: () => FacetedStoreState;
-  notify: () => void;
-  sync: (changes: Partial<FacetedStoreState>) => void;
-  setOpen: (open: boolean) => void;
-  selectItem: (value: string) => void;
-  clear: () => void;
+  controller: FacetedController
+  subscribe: (callback: () => void) => () => void
+  getState: () => FacetedStoreState
+  notify: () => void
+  sync: (changes: Partial<FacetedStoreState>) => void
+  setOpen: (open: boolean) => void
+  selectItem: (value: string) => void
+  clear: () => void
 }
 
 function getIsValueSelected(
@@ -62,57 +62,57 @@ function getIsValueSelected(
   multiple: boolean,
   itemValue: string,
 ) {
-  if (multiple) return Array.isArray(value) && value.includes(itemValue);
-  return value === itemValue;
+  if (multiple) return Array.isArray(value) && value.includes(itemValue)
+  return value === itemValue
 }
 
-const labelsCache = new WeakMap<FacetedOption[], Map<string, string>>();
+const labelsCache = new WeakMap<FacetedOption[], Map<string, string>>()
 
 function getLabels(items: FacetedOption[]) {
-  let labels = labelsCache.get(items);
+  let labels = labelsCache.get(items)
   if (!labels) {
-    labels = new Map(items.map((item) => [item.value, item.label]));
-    labelsCache.set(items, labels);
+    labels = new Map(items.map((item) => [item.value, item.label]))
+    labelsCache.set(items, labels)
   }
-  return labels;
+  return labels
 }
 
 function getSelectedValues(value: string | string[] | undefined) {
-  if (Array.isArray(value)) return value;
-  return value ? [value] : [];
+  if (Array.isArray(value)) return value
+  return value ? [value] : []
 }
 
 function getSelectedItems(
   values: string[],
   items: FacetedOption[],
 ): FacetedOption[] {
-  const labels = getLabels(items);
+  const labels = getLabels(items)
 
   return values.map((value) => ({
     label: labels.get(value) ?? value,
     value,
-  }));
+  }))
 }
 
 function getIsFacetedSelectedValue<Multiple extends boolean>(
   value: string | string[] | undefined,
   multiple: Multiple,
 ): value is FacetedSelectedValue<Multiple> | undefined {
-  if (value === undefined) return true;
-  return multiple ? Array.isArray(value) : typeof value === "string";
+  if (value === undefined) return true
+  return multiple ? Array.isArray(value) : typeof value === 'string'
 }
 
 function createFacetedStore(state: FacetedStoreState): FacetedStore {
-  const listeners = new Set<() => void>();
+  const listeners = new Set<() => void>()
 
   function commitValue(nextValue: string | string[] | undefined) {
-    store.controller.onValueChange?.(nextValue);
+    store.controller.onValueChange?.(nextValue)
     if (
       !store.controller.isValueControlled &&
       !Object.is(state.value, nextValue)
     ) {
-      state.value = nextValue;
-      store.notify();
+      state.value = nextValue
+      store.notify()
     }
   }
 
@@ -122,75 +122,75 @@ function createFacetedStore(state: FacetedStoreState): FacetedStore {
       setOpen: () => {},
     },
     subscribe: (callback) => {
-      listeners.add(callback);
-      return () => listeners.delete(callback);
+      listeners.add(callback)
+      return () => listeners.delete(callback)
     },
     getState: () => state,
     notify: () => {
       for (const callback of listeners) {
-        callback();
+        callback()
       }
     },
     sync: (changes) => {
-      let hasChanged = false;
+      let hasChanged = false
       for (const key of Object.keys(changes) as (keyof FacetedStoreState)[]) {
-        if (Object.is(state[key], changes[key])) continue;
-        Object.assign(state, { [key]: changes[key] });
-        hasChanged = true;
+        if (Object.is(state[key], changes[key])) continue
+        Object.assign(state, { [key]: changes[key] })
+        hasChanged = true
       }
-      if (hasChanged) store.notify();
+      if (hasChanged) store.notify()
     },
     setOpen: (open) => store.controller.setOpen(open),
     selectItem: (selectedValue) => {
       if (state.multiple) {
-        const selected = Array.isArray(state.value) ? state.value : [];
+        const selected = Array.isArray(state.value) ? state.value : []
         commitValue(
           selected.includes(selectedValue)
             ? selected.filter((item) => item !== selectedValue)
             : [...selected, selectedValue],
-        );
-        return;
+        )
+        return
       }
 
-      commitValue(state.value === selectedValue ? undefined : selectedValue);
-      store.setOpen(false);
+      commitValue(state.value === selectedValue ? undefined : selectedValue)
+      store.setOpen(false)
     },
     clear: () => {
-      commitValue(state.multiple ? [] : undefined);
+      commitValue(state.multiple ? [] : undefined)
     },
-  };
+  }
 
-  return store;
+  return store
 }
 
 function useFacetedStoreSelector<T>(
   store: FacetedStore,
   selector: (state: FacetedStoreState) => T,
 ): T {
-  const getSnapshot = () => selector(store.getState());
-  return React.useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
+  const getSnapshot = () => selector(store.getState())
+  return React.useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot)
 }
 
-const FacetedStoreContext = React.createContext<FacetedStore | null>(null);
+const FacetedStoreContext = React.createContext<FacetedStore | null>(null)
 
 function useFacetedStore(name: string) {
-  const store = React.useContext(FacetedStoreContext);
+  const store = React.useContext(FacetedStoreContext)
   if (!store) {
-    throw new Error(`\`${name}\` must be used within \`Faceted\`.`);
+    throw new Error(`\`${name}\` must be used within \`Faceted\`.`)
   }
-  return store;
+  return store
 }
 
 interface FacetedProps<Multiple extends boolean = false> extends Omit<
   React.ComponentProps<typeof Popover>,
-  "onOpenChange"
+  'onOpenChange'
 > {
-  value?: FacetedSelectedValue<Multiple>;
-  defaultValue?: FacetedSelectedValue<Multiple>;
-  onValueChange?: (value: FacetedSelectedValue<Multiple> | undefined) => void;
-  onOpenChange?: (open: boolean) => void;
-  items?: FacetedOption[];
-  multiple?: Multiple;
+  value?: FacetedSelectedValue<Multiple>
+  defaultValue?: FacetedSelectedValue<Multiple>
+  onValueChange?: (value: FacetedSelectedValue<Multiple> | undefined) => void
+  onOpenChange?: (open: boolean) => void
+  items?: FacetedOption[]
+  multiple?: Multiple
 }
 
 function Faceted<Multiple extends boolean = false>({
@@ -204,12 +204,12 @@ function Faceted<Multiple extends boolean = false>({
   multiple = false as Multiple,
   ...props
 }: FacetedProps<Multiple>) {
-  const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
-  const open = openProp ?? internalOpen;
+  const [internalOpen, setInternalOpen] = React.useState(defaultOpen)
+  const open = openProp ?? internalOpen
 
   const [store] = React.useState(() =>
     createFacetedStore({ value: value ?? defaultValue, items, multiple }),
-  );
+  )
 
   useIsoLayoutEffect(() => {
     // The store is an external mutable object that holds the latest callbacks.
@@ -217,27 +217,27 @@ function Faceted<Multiple extends boolean = false>({
     store.controller = {
       isValueControlled: value !== undefined,
       onValueChange(nextValue) {
-        if (!getIsFacetedSelectedValue(nextValue, multiple)) return;
-        onValueChange?.(nextValue);
+        if (!getIsFacetedSelectedValue(nextValue, multiple)) return
+        onValueChange?.(nextValue)
       },
       setOpen(nextOpen) {
-        onOpenChange?.(nextOpen);
-        if (openProp === undefined) setInternalOpen(nextOpen);
+        onOpenChange?.(nextOpen)
+        if (openProp === undefined) setInternalOpen(nextOpen)
       },
-    };
-  });
+    }
+  })
 
-  const wasValueControlledRef = React.useRef(value !== undefined);
+  const wasValueControlledRef = React.useRef(value !== undefined)
 
   useIsoLayoutEffect(() => {
-    const isValueControlled = value !== undefined;
+    const isValueControlled = value !== undefined
     store.sync(
       isValueControlled || wasValueControlledRef.current
         ? { value, items, multiple }
         : { items, multiple },
-    );
-    wasValueControlledRef.current = isValueControlled;
-  }, [store, value, items, multiple]);
+    )
+    wasValueControlledRef.current = isValueControlled
+  }, [store, value, items, multiple])
 
   return (
     <FacetedStoreContext.Provider value={store}>
@@ -248,7 +248,7 @@ function Faceted<Multiple extends boolean = false>({
         {...props}
       />
     </FacetedStoreContext.Provider>
-  );
+  )
 }
 
 function FacetedTrigger({
@@ -259,44 +259,44 @@ function FacetedTrigger({
     <PopoverTrigger
       data-slot="faceted-trigger"
       className={cn(
-        "justify-between text-left has-[>[data-slot=faceted-value]]:transition-[color,background-color,border-color,box-shadow] has-[>[data-slot=faceted-value]>[data-slot=faceted-badge-list]]:pl-1",
+        'justify-between text-left has-[>[data-slot=faceted-value]]:transition-[color,background-color,border-color,box-shadow] has-[>[data-slot=faceted-value]>[data-slot=faceted-badge-list]]:pl-1',
         className,
       )}
       {...props}
     />
-  );
+  )
 }
 
 interface FacetedValueProps {
-  placeholder?: React.ReactNode;
-  children?: React.ReactNode | ((selected: FacetedOption[]) => React.ReactNode);
+  placeholder?: React.ReactNode
+  children?: React.ReactNode | ((selected: FacetedOption[]) => React.ReactNode)
 }
 
 function FacetedValue({
-  placeholder = "Select options...",
+  placeholder = 'Select options...',
   children,
 }: FacetedValueProps) {
-  const store = useFacetedStore("FacetedValue");
-  const value = useFacetedStoreSelector(store, (state) => state.value);
-  const items = useFacetedStoreSelector(store, (state) => state.items);
-  const multiple = useFacetedStoreSelector(store, (state) => state.multiple);
-  const values = getSelectedValues(value);
+  const store = useFacetedStore('FacetedValue')
+  const value = useFacetedStoreSelector(store, (state) => state.value)
+  const items = useFacetedStoreSelector(store, (state) => state.items)
+  const multiple = useFacetedStoreSelector(store, (state) => state.multiple)
+  const values = getSelectedValues(value)
 
-  if (typeof children === "function") {
-    return children(getSelectedItems(values, items));
+  if (typeof children === 'function') {
+    return children(getSelectedItems(values, items))
   }
-  if (children != null) return children;
+  if (children != null) return children
 
   const selected =
-    multiple && values.length > 2 ? [] : getSelectedItems(values, items);
-  const [item] = selected;
+    multiple && values.length > 2 ? [] : getSelectedItems(values, items)
+  const [item] = selected
 
   return (
     <span
       data-slot="faceted-value"
       className={cn(
-        "flex w-full min-w-0 items-center gap-1",
-        values.length === 0 && "text-muted-foreground",
+        'flex w-full min-w-0 items-center gap-1',
+        values.length === 0 && 'text-muted-foreground',
       )}
     >
       {multiple && values.length > 0 ? (
@@ -316,46 +316,46 @@ function FacetedValue({
       )}
       <ChevronDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
     </span>
-  );
+  )
 }
 
 function FacetedBadgeList({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="faceted-badge-list"
       className={cn(
-        "flex w-max max-w-full flex-wrap items-center gap-1",
+        'flex w-max max-w-full flex-wrap items-center gap-1',
         className,
       )}
       {...props}
     />
-  );
+  )
 }
 
 function FacetedBadge({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"span">) {
+}: useRender.ComponentProps<'span'>) {
   return useRender({
-    defaultTagName: "span",
+    defaultTagName: 'span',
     render,
     state: {
-      slot: "faceted-badge",
+      slot: 'faceted-badge',
     },
-    props: mergeProps<"span">(
+    props: mergeProps<'span'>(
       {
         className: cn(
-          "flex h-[calc(--spacing(5.25))] w-fit max-w-full min-w-0 items-center justify-center gap-1 rounded-sm bg-input/60 px-1.5 text-xs font-medium whitespace-nowrap text-foreground [&_svg]:pointer-events-none [&_svg]:size-3 [&_svg]:shrink-0",
+          'flex h-[calc(--spacing(5.25))] w-fit max-w-full min-w-0 items-center justify-center gap-1 rounded-sm bg-input/60 px-1.5 text-xs font-medium whitespace-nowrap text-foreground [&_svg]:pointer-events-none [&_svg]:size-3 [&_svg]:shrink-0',
           className,
         ),
       },
       props,
     ),
-  });
+  })
 }
 
 interface FacetedContentProps
@@ -363,7 +363,7 @@ interface FacetedContentProps
     React.ComponentProps<typeof PopoverContent>,
     Pick<
       React.ComponentProps<typeof Command>,
-      "shouldFilter" | "filter" | "loop"
+      'shouldFilter' | 'filter' | 'loop'
     > {}
 
 function FacetedContent({
@@ -378,7 +378,7 @@ function FacetedContent({
     <PopoverContent
       data-slot="faceted-content"
       align="start"
-      className={cn("w-50 origin-(--transform-origin) p-0", className, )}
+      className={cn('w-50 origin-(--transform-origin) p-0', className)}
 
       {...props}
     >
@@ -391,52 +391,52 @@ function FacetedContent({
         {children}
       </Command>
     </PopoverContent>
-  );
+  )
 }
 
 interface FacetedInputProps extends React.ComponentProps<
   typeof CommandPrimitive.Input
 > {
-  variant?: "default" | "line";
+  variant?: 'default' | 'line'
 }
 
 function FacetedInput({
-  variant = "default",
+  variant = 'default',
   className,
   ref,
   ...props
 }: FacetedInputProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const composedRef = useMergedRefs(ref, inputRef);
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const composedRef = useMergedRefs(ref, inputRef)
 
   React.useEffect(() => {
-    const input = inputRef.current;
-    const root = input?.closest("[cmdk-root]");
-    if (!input || !root) return;
+    const input = inputRef.current
+    const root = input?.closest('[cmdk-root]')
+    if (!input || !root) return
 
     // cmdk's own aria-activedescendant lags behind the highlighted item.
     const onSync = () => {
-      const id = root.querySelector("[cmdk-item][aria-selected='true']")?.id;
+      const id = root.querySelector("[cmdk-item][aria-selected='true']")?.id
       if (!id) {
-        input.removeAttribute("aria-activedescendant");
-        return;
+        input.removeAttribute('aria-activedescendant')
+        return
       }
-      if (input.getAttribute("aria-activedescendant") !== id) {
-        input.setAttribute("aria-activedescendant", id);
+      if (input.getAttribute('aria-activedescendant') !== id) {
+        input.setAttribute('aria-activedescendant', id)
       }
-    };
+    }
 
-    onSync();
-    const observer = new MutationObserver(onSync);
+    onSync()
+    const observer = new MutationObserver(onSync)
     observer.observe(root, {
       subtree: true,
       childList: true,
-      attributeFilter: ["aria-selected", "aria-activedescendant"],
-    });
-    return () => observer.disconnect();
-  }, []);
+      attributeFilter: ['aria-selected', 'aria-activedescendant'],
+    })
+    return () => observer.disconnect()
+  }, [])
 
-  if (variant === "line") {
+  if (variant === 'line') {
     return (
       <div
         data-slot="faceted-input-wrapper"
@@ -448,13 +448,13 @@ function FacetedInput({
           ref={composedRef}
           data-slot="faceted-input"
           className={cn(
-            "h-full w-full bg-transparent text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+            'h-full w-full bg-transparent text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
             className,
           )}
           {...props}
         />
       </div>
-    );
+    )
   }
 
   return (
@@ -464,15 +464,15 @@ function FacetedInput({
       className={className}
       {...props}
     />
-  );
+  )
 }
 
 function FacetedList({ ...props }: React.ComponentProps<typeof CommandList>) {
-  return <CommandList data-slot="faceted-list" {...props} />;
+  return <CommandList data-slot="faceted-list" {...props} />
 }
 
 function FacetedEmpty({ ...props }: React.ComponentProps<typeof CommandEmpty>) {
-  return <CommandEmpty data-slot="faceted-empty" {...props} />;
+  return <CommandEmpty data-slot="faceted-empty" {...props} />
 }
 
 function FacetedLoading({
@@ -483,16 +483,16 @@ function FacetedLoading({
     <CommandPrimitive.Loading
       data-slot="faceted-loading"
       className={cn(
-        "py-6 text-center text-sm text-muted-foreground",
+        'py-6 text-center text-sm text-muted-foreground',
         className,
       )}
       {...props}
     />
-  );
+  )
 }
 
 function FacetedGroup({ ...props }: React.ComponentProps<typeof CommandGroup>) {
-  return <CommandGroup data-slot="faceted-group" {...props} />;
+  return <CommandGroup data-slot="faceted-group" {...props} />
 }
 
 function FacetedCommandItem({
@@ -505,23 +505,23 @@ function FacetedCommandItem({
   return (
     <CommandPrimitive.Item
       className={cn(
-        "group/command-item relative flex cursor-default items-center gap-1.5 rounded-md data-checked:font-medium px-1.5 py-1 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-[selected=true]:bg-muted data-[selected=true]:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[selected=true]:*:[svg]:text-foreground",
+        "group/command-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none data-checked:font-medium data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-[selected=true]:bg-muted data-[selected=true]:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[selected=true]:*:[svg]:text-foreground",
         className,
       )}
-      {...mergeProps<"div">(
+      {...mergeProps<'div'>(
         {
           onPointerDownCapture(event) {
             // A focusable item steals the input on pointerdown.
-            event.preventDefault();
-            if (event.pointerType === "touch") return;
+            event.preventDefault()
+            if (event.pointerType === 'touch') return
             event.currentTarget
-              .closest("[cmdk-root]")
-              ?.querySelector<HTMLInputElement>("[cmdk-input]")
-              ?.focus();
+              .closest('[cmdk-root]')
+              ?.querySelector<HTMLInputElement>('[cmdk-input]')
+              ?.focus()
           },
           onMouseDown(event) {
             // iOS Safari can emit a synthetic mousedown without a pointerdown.
-            event.preventDefault();
+            event.preventDefault()
           },
         },
         { onPointerDownCapture, onMouseDown },
@@ -529,20 +529,20 @@ function FacetedCommandItem({
       onSelect={onSelect}
       {...props}
     />
-  );
+  )
 }
 
 interface FacetedItemProps extends React.ComponentProps<
   typeof CommandPrimitive.Item
 > {
-  value: string;
+  value: string
 }
 
 function FacetedItem({ value, onSelect, ...props }: FacetedItemProps) {
-  const store = useFacetedStore("FacetedItem");
+  const store = useFacetedStore('FacetedItem')
   const isSelected = useFacetedStoreSelector(store, (state) =>
     getIsValueSelected(state.value, state.multiple, value),
-  );
+  )
 
   return (
     <FacetedCommandItem
@@ -551,26 +551,26 @@ function FacetedItem({ value, onSelect, ...props }: FacetedItemProps) {
       aria-checked={isSelected}
       onSelect={() => {
         if (onSelect) {
-          onSelect(value);
-          return;
+          onSelect(value)
+          return
         }
-        store.selectItem(value);
+        store.selectItem(value)
       }}
       {...props}
     />
-  );
+  )
 }
 
 function FacetedItemIndicator({
   className,
   children,
   ...props
-}: React.ComponentProps<"span">) {
+}: React.ComponentProps<'span'>) {
   return (
     <span
       data-slot="faceted-item-indicator"
       className={cn(
-        "ml-auto grid place-items-center *:col-start-1 *:row-start-1",
+        'ml-auto grid place-items-center *:col-start-1 *:row-start-1',
         className,
       )}
       {...props}
@@ -582,22 +582,22 @@ function FacetedItemIndicator({
       )}
       <Check className="invisible group-data-checked/command-item:visible" />
     </span>
-  );
+  )
 }
 
 function FacetedClear({
   className,
-  children = "Clear",
+  children = 'Clear',
   onSelect,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Item>) {
-  const store = useFacetedStore("FacetedClear");
+  const store = useFacetedStore('FacetedClear')
   const hasSelection = useFacetedStoreSelector(
     store,
     (state) => getSelectedValues(state.value).length > 0,
-  );
+  )
 
-  if (!hasSelection) return null;
+  if (!hasSelection) return null
 
   return (
     <>
@@ -605,10 +605,10 @@ function FacetedClear({
       <FacetedGroup>
         <FacetedCommandItem
           data-slot="faceted-clear"
-          className={cn("justify-center text-center", className)}
+          className={cn('justify-center text-center', className)}
           onSelect={(value) => {
-            onSelect?.(value);
-            store.clear();
+            onSelect?.(value)
+            store.clear()
           }}
           {...props}
         >
@@ -616,7 +616,7 @@ function FacetedClear({
         </FacetedCommandItem>
       </FacetedGroup>
     </>
-  );
+  )
 }
 
 function FacetedSeparator({
@@ -629,7 +629,7 @@ function FacetedSeparator({
       className="mx-0 my-0.5 w-full"
       {...props}
     />
-  );
+  )
 }
 
 export {
@@ -648,4 +648,4 @@ export {
   FacetedSeparator,
   FacetedTrigger,
   FacetedValue,
-};
+}

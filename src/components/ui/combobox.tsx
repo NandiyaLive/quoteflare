@@ -1,14 +1,14 @@
-"use client"
+'use client'
 
-import { Combobox as ComboboxPrimitive } from "@base-ui/react/combobox"
-import { CheckIcon, ChevronDownIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
+import { CheckIcon, ChevronDownIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/components/ui/input-group"
+} from '@/components/ui/input-group'
 
 const Combobox = ComboboxPrimitive.Root
 
@@ -35,7 +35,7 @@ function ComboboxInput({
   ...props
 }: ComboboxPrimitive.Input.Props) {
   return (
-    <InputGroup className={cn("w-auto", className)}>
+    <InputGroup className={cn('w-auto', className)}>
       <ComboboxPrimitive.Input
         render={<InputGroupInput disabled={disabled} />}
         {...props}
@@ -56,15 +56,15 @@ function ComboboxInput({
 
 function ComboboxContent({
   className,
-  side = "bottom",
+  side = 'bottom',
   sideOffset = 6,
-  align = "start",
+  align = 'start',
   alignOffset = 0,
   ...props
 }: ComboboxPrimitive.Popup.Props &
   Pick<
     ComboboxPrimitive.Positioner.Props,
-    "side" | "align" | "sideOffset" | "alignOffset"
+    'side' | 'align' | 'sideOffset' | 'alignOffset'
   >) {
   return (
     <ComboboxPrimitive.Portal>
@@ -78,8 +78,8 @@ function ComboboxContent({
         <ComboboxPrimitive.Popup
           data-slot="combobox-content"
           className={cn(
-            "group/combobox-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-[calc(var(--anchor-width)+(--spacing(7)))] origin-(--transform-origin) overflow-hidden rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-            className
+            'group/combobox-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-[calc(var(--anchor-width)+(--spacing(7)))] origin-(--transform-origin) overflow-hidden rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2',
+            className,
           )}
           {...props}
         />
@@ -93,8 +93,8 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
     <ComboboxPrimitive.List
       data-slot="combobox-list"
       className={cn(
-        "max-h-72 scroll-py-1 overflow-y-auto overscroll-contain p-1 data-empty:p-0",
-        className
+        'max-h-72 scroll-py-1 overflow-y-auto overscroll-contain p-1 data-empty:p-0',
+        className,
       )}
       {...props}
     />
@@ -110,8 +110,8 @@ function ComboboxItem({
     <ComboboxPrimitive.Item
       data-slot="combobox-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-2 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        className
+        "relative flex w-full cursor-default items-center gap-2 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-accent data-highlighted:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className,
       )}
       {...props}
     >
@@ -132,8 +132,8 @@ function ComboboxEmpty({ className, ...props }: ComboboxPrimitive.Empty.Props) {
     <ComboboxPrimitive.Empty
       data-slot="combobox-empty"
       className={cn(
-        "hidden w-full justify-center py-2 text-center text-sm text-muted-foreground group-data-empty/combobox-content:flex",
-        className
+        'hidden w-full justify-center py-2 text-center text-sm text-muted-foreground group-data-empty/combobox-content:flex',
+        className,
       )}
       {...props}
     />
