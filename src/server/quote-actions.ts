@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getRequestHeader } from '@tanstack/react-start/server'
+import { getRequest, getRequestHeader } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
 import { recurringIntervals } from '#/db/schema'
@@ -12,6 +12,7 @@ import {
 } from '#/lib/quotes'
 import { z } from 'zod'
 import { requireAdmin } from './admin-middleware'
+import { isRateLimited } from './rate-limit'
 import {
   convertQuoteToInvoice,
   getQuote,
@@ -28,11 +29,28 @@ export const getQuoteConfig = createServerFn().handler(() => ({
   turnstileSiteKey: env.TURNSTILE_SITE_KEY ?? '',
 }))
 
+// The framework parses the body before the handler runs, so measure what it
+// produced. A Content-Length check misses chunked requests.
+const jsonByteLength = (value: unknown) => {
+  try {
+    return new TextEncoder().encode(JSON.stringify(value) ?? '').byteLength
+  } catch {
+    return Infinity
+  }
+}
+
 export const submitQuoteAction = createServerFn({ method: 'POST' })
   .validator((input: unknown) => input)
   .handler(async ({ data }): Promise<SubmitQuoteResult> => {
-    const length = Number(getRequestHeader('content-length') ?? 0)
-    if (length > MAX_PUBLIC_BODY_BYTES) {
+    // server.ts limits /api/public/quote. The site's own form calls this
+    // server function instead, so it shares the same limit here.
+    if (await isRateLimited(env.QUOTE_LIMITER, getRequest())) {
+      return {
+        ok: false,
+        error: 'Too many quote requests. Try again in a minute.',
+      }
+    }
+    if (jsonByteLength(data) > MAX_PUBLIC_BODY_BYTES) {
       return { ok: false, error: 'The request is too large.' }
     }
     const parsed = quoteRequestSchema.safeParse(data)

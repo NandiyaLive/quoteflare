@@ -110,7 +110,7 @@ describe('authenticateAdmin', () => {
   })
 
   it('uses the dev email only on localhost', async () => {
-    const dev = { ...config, devEmail: 'dev@example.test' }
+    const dev = { devEmail: 'dev@example.test' }
     expect(
       await authenticateAdmin(
         requestWith(undefined, 'http://localhost:3000/admin'),
@@ -119,5 +119,16 @@ describe('authenticateAdmin', () => {
       ),
     ).toEqual({ email: 'dev@example.test' })
     expect(await authenticateAdmin(requestWith(), dev, getKey)).toBeNull()
+  })
+
+  it('ignores the dev identity when a team domain is configured', async () => {
+    const request = new Request('http://localhost:3000/admin')
+    expect(
+      await authenticateAdmin(
+        request,
+        { ...config, devEmail: 'dev@example.test' },
+        getKey,
+      ),
+    ).toBeNull()
   })
 })

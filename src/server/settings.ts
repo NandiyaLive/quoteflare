@@ -105,6 +105,15 @@ function matchesType(type: string, bytes: Uint8Array) {
   return /<svg[\s>]/i.test(head)
 }
 
+// Active content that has no place in a logo. The serving route also sandboxes
+// the file, so this is a second layer.
+const UNSAFE_SVG =
+  /<script|<foreignObject|<iframe|<embed|<object|\son\w+\s*=|javascript:/i
+
+function isSafeSvg(bytes: Uint8Array) {
+  return !UNSAFE_SVG.test(new TextDecoder().decode(bytes))
+}
+
 const formatSize = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
 
 export async function storeLogo(
@@ -128,6 +137,12 @@ export async function storeLogo(
   }
   if (!matchesType(file.type, bytes)) {
     return { ok: false, error: 'The file contents do not match its type.' }
+  }
+  if (file.type === 'image/svg+xml' && !isSafeSvg(bytes)) {
+    return {
+      ok: false,
+      error: 'The SVG contains scripts or embedded content. Remove them.',
+    }
   }
 
   const current = await db.query.settings.findFirst()

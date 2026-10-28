@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
-import { getRequestUrl } from '@tanstack/react-start/server'
+import { getRequest, getRequestUrl } from '@tanstack/react-start/server'
 import { createDb } from '#/db'
 import {
   advancePaidSchema,
@@ -11,6 +11,7 @@ import {
 import { requireAdmin } from './admin-middleware'
 import { listActiveClients } from './clients'
 import { sendInvoiceEmail } from './invoice-email'
+import { isRateLimited, tooManyRequests } from './rate-limit'
 import {
   changeInvoiceStatus,
   createInvoice,
@@ -111,4 +112,16 @@ export const sendInvoiceEmailAction = createServerFn({ method: 'POST' })
 
 export const getPublicInvoiceAction = createServerFn()
   .validator((input: unknown) => String(input).slice(0, 64))
-  .handler(({ data }) => getPublicInvoice(createDb(env.DB), data))
+  .handler(async ({ data }) => {
+    // server.ts limits page loads of /i/<token>, and rendering that page calls
+    // this function inside the same request. Client-side navigation calls it
+    // through the server function endpoint, so only those calls count here.
+    const request = getRequest()
+    if (
+      !new URL(request.url).pathname.startsWith('/i/') &&
+      (await isRateLimited(env.INVOICE_LIMITER, request))
+    ) {
+      throw tooManyRequests()
+    }
+    return getPublicInvoice(createDb(env.DB), data)
+  })

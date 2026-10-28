@@ -149,6 +149,16 @@ describe('logo storage', () => {
     expect((await bucket.list()).objects).toHaveLength(0)
   })
 
+  it('rejects an SVG with scripts or event handlers', async () => {
+    for (const body of [
+      '<svg xmlns="http://www.w3.org/2000/svg"><script>1</script></svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg" onload="x()"/>',
+    ]) {
+      const file = new File([body], 'a.svg', { type: 'image/svg+xml' })
+      expect((await storeLogo(db, bucket, file)).ok).toBe(false)
+    }
+  })
+
   it('accepts an SVG and removes the previous logo object', async () => {
     await storeLogo(db, bucket, png())
     const first = (await loadSettings(db)).logoKey!

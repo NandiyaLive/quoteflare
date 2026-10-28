@@ -9,8 +9,12 @@ export type WebhookHeaders = {
 const decodeBase64 = (value: string) =>
   Uint8Array.from(atob(value), (c) => c.charCodeAt(0))
 
-const equalBytes = (a: Uint8Array, b: Uint8Array) =>
-  a.length === b.length && a.every((byte, i) => byte === b[i])
+const equalBytes = (a: Uint8Array, b: Uint8Array) => {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
+  return diff === 0
+}
 
 /**
  * Verifies a Resend (Svix) webhook. The signed content is

@@ -45,7 +45,12 @@ export async function authenticateAdmin(
   config: AccessConfig,
   getKey?: JWTVerifyGetKey,
 ): Promise<AdminIdentity | null> {
-  if (config.devEmail && LOCAL_HOSTS.has(new URL(request.url).hostname)) {
+  // Never trust the dev identity once Access is configured.
+  if (
+    config.devEmail &&
+    !config.teamDomain &&
+    LOCAL_HOSTS.has(new URL(request.url).hostname)
+  ) {
     return { email: config.devEmail }
   }
 

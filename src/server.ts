@@ -2,6 +2,7 @@ import handler from '@tanstack/react-start/server-entry'
 import { createApi } from '#/api/app'
 import { runDailyJobs } from '#/jobs/daily'
 import { ROBOTS_TXT } from '#/lib/robots'
+import { isRateLimited, tooManyRequests } from '#/server/rate-limit'
 
 const api = createApi()
 
@@ -55,6 +56,19 @@ export default {
       return new Response(ROBOTS_TXT, {
         headers: { 'Content-Type': 'text/plain; charset=utf-8' },
       })
+    }
+    if (
+      request.method === 'POST' &&
+      pathname === '/api/public/quote' &&
+      (await isRateLimited(env.QUOTE_LIMITER, request))
+    ) {
+      return tooManyRequests()
+    }
+    if (
+      pathname.startsWith('/i/') &&
+      (await isRateLimited(env.INVOICE_LIMITER, request))
+    ) {
+      return withSecurityHeaders(tooManyRequests())
     }
     if (pathname === '/api' || pathname.startsWith('/api/')) {
       return api.fetch(request, env, ctx)

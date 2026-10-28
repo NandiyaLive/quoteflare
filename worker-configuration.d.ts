@@ -14,6 +14,8 @@ interface __BaseEnv_Env {
 	APP_ORIGIN: string;
 	ALLOWED_ORIGINS: string;
 	RESEND_WEBHOOK_SECRET: string;
+	QUOTE_LIMITER?: RateLimit;
+	INVOICE_LIMITER?: RateLimit;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {
