@@ -4,7 +4,7 @@ A single-user invoicing platform on Cloudflare's free tier. It has a public pric
 
 ## Requirements
 
-- Node.js 20 or newer
+- Node.js 22.12 or newer (Vitest, Wrangler and TanStack Start require it)
 - [Bun](https://bun.sh)
 - A Cloudflare account with the domain added to Cloudflare DNS
 - A Resend account
@@ -36,7 +36,7 @@ Checks: `bun run test` (Vitest), `bun run lint` (ESLint), `bun run typecheck` (t
 
 ## Project layout
 
-Routes are directory based. Each route folder under `src/routes` owns its components, for example `src/routes/calculator/components/footer.tsx`. Any folder named `components` is skipped by the route generator (`routeFileIgnorePattern` in `vite.config.ts`). Components shared across routes go in `src/components/common`.
+Routes are directory based. Each route folder under `src/routes` owns its components in a `-components` folder, for example `src/routes/_site/_calculator/-components/summary.tsx`. TanStack Router ignores files and folders whose names start with `-`, so they never become routes. Components shared across routes go in `src/components/common`.
 
 Other folders: `src/db` (Drizzle schema), `src/lib` (shared helpers), `src/server` (server-only code), `src/jobs` (scheduled jobs).
 
@@ -55,11 +55,11 @@ bun run db:seed            # insert sample data locally (safe to run twice)
 
 ## UI components
 
-The UI uses shadcn/ui on Base UI (`components.json`, preset `nova`). Add components with `bunx --bun shadcn@latest add <name>`; they land in `src/components/ui`. Custom components are written only when shadcn has no equivalent.
+The UI uses shadcn/ui on Base UI (`components.json`, style `base-nova`). Add components with `bunx --bun shadcn@latest add <name>`; they land in `src/components/ui`. Custom components are written only when shadcn has no equivalent.
 
 ## Admin access
 
-Everything under `/admin` sits behind Cloudflare Access (one-time PIN, one allowed email). The Worker also verifies the `Cf-Access-Jwt-Assertion` header on its own, so a request that skips Access still gets a 401. A request-level middleware (`src/start.ts`) guards every `/admin` path, and `requireAdmin` in `src/server/admin-middleware.ts` guards admin server functions. Declare admin server functions with `createServerFn().middleware([requireAdmin])` directly in the file that uses them, because the compiler only extracts handlers from literal `createServerFn` calls.
+Everything under `/admin` sits behind Cloudflare Access (one-time PIN, one allowed email). The Worker also verifies the Access JWT on its own, so a request that skips Access still gets a 401. It reads the JWT from the `Cf-Access-Jwt-Assertion` header, or from the `CF_Authorization` cookie when the header is missing. Server function calls go to `/_serverFn/*`, which Access does not cover, so they carry the JWT only in the cookie. A request-level middleware (`src/start.ts`) guards every `/admin` path, and `requireAdmin` in `src/server/admin-middleware.ts` guards admin server functions. Declare admin server functions with `createServerFn().middleware([requireAdmin])` directly in the file that uses them, because the compiler only extracts handlers from literal `createServerFn` calls.
 
 Configuration:
 
@@ -104,7 +104,7 @@ bunx wrangler r2 bucket create quoteflare-files
 
 ## Services
 
-Services are managed at `/admin/services`. Prices are entered as decimals (`49.99`) and stored in cents. Percentage option values are stored in basis points. Services and options are never deleted. Archiving a service sets `active` to false, and removing an option in the editor archives it, so older quotes and invoices keep their references. The list shows active services by default, and the filter also offers archived and all. The order set with the arrow buttons is stored in `sort_order`.
+Services are managed at `/admin/services`. Prices are entered as decimals (`49.99`) and stored in cents. Percentage option values are stored in basis points. Services and options are never deleted. Archiving a service sets `active` to false, and removing an option in the editor archives it, so older quotes and invoices keep their references. Removing an option group deletes the group, and its options stay on the service as independent add-ons. The list shows active services by default, and the filter also offers archived and all. The order set with the arrow buttons is stored in `sort_order`.
 
 A service has these settings:
 
@@ -124,7 +124,7 @@ bun run services:import scripts/services.example.json --dry-run   # validate onl
 bun run services:import scripts/services.example.json
 ```
 
-The file format is shown in `scripts/services.example.json`. Categories, option groups and required services are referenced by name. An optional `packages` list names the services, quantities and options each package preselects. A service or package whose name already exists is skipped, so the command is safe to run twice. The script uses the same validation and save code as the admin page. It only writes to the local database. Create services in production through `/admin/services`.
+The file format is shown in `scripts/services.example.json`. Categories, option groups and required services are referenced by name. An optional `packages` list names the services, quantities and options each package preselects. A service or package whose name already exists is skipped, so the command is safe to run twice. The script uses the same validation and save code as the admin page. By default it writes to the local database. To import into the deployed database, run `bun run services:import:remote <file>`, which passes `--remote` and uses `scripts/wrangler.remote.toml`. Run it with `--dry-run` first, and take a backup before a real import. You can also create services in production through `/admin/services`.
 
 ## Email
 
@@ -140,9 +140,9 @@ Each send writes an `email_log` row with status `pending` before the request, th
 
 ### Automatic reminders
 
-The daily job (03:30 UTC) emails clients about unpaid invoices when "Send automatic reminders" is on in settings. It is off by default. The rules:
+The daily job (03:30 UTC) first marks every `sent` invoice whose due date is before today as `overdue`. This always runs. It then emails clients about unpaid invoices when "Send automatic reminders" is on in settings, which is off by default. The rules:
 
-- `due_soon`: a `sent` invoice due within the next 3 days.
+- `due_soon`: a `sent` invoice due today or within the next 3 days.
 - `overdue_3`: an `overdue` invoice 3 to 9 days past due.
 - `overdue_10`: an `overdue` invoice 10 or more days past due.
 
@@ -162,7 +162,7 @@ With auto send on, the invoice is emailed through the same function as the "Send
 
 `src/server.ts` sends every path under `/api/` to a Hono app (`src/api/app.ts`). All other paths go to the TanStack Start app. Unknown `/api/` paths return a JSON 404 and unexpected errors return a generic JSON 500.
 
-- `POST /api/webhooks/resend` updates `email_log.status` to `delivered`, `bounced` or `complained` for the row whose `provider_id` matches the event's `email_id`. The request must carry valid `svix-id`, `svix-timestamp` and `svix-signature` headers, signed with `RESEND_WEBHOOK_SECRET` and at most 5 minutes old, or it gets a 401 and nothing changes. A `delivered` event only replaces `sent`, so it cannot hide a bounce or complaint. Other event types and unknown email IDs get a 200 and change nothing.
+- `POST /api/webhooks/resend` updates `email_log.status` to `delivered`, `bounced` or `complained` for the row whose `provider_id` matches the event's `email_id`. The request must carry valid `svix-id`, `svix-timestamp` and `svix-signature` headers, signed with `RESEND_WEBHOOK_SECRET` and at most 5 minutes old, or it gets a 401 and nothing changes. A signed body that is not valid JSON gets a 400. A `delivered` event only replaces `sent`, so it cannot hide a bounce or complaint. Other event types and unknown email IDs get a 200 and change nothing.
 - `GET /api/public/services` returns the same active catalog the calculator uses.
 - `POST /api/public/quote` takes the calculator's request (`name`, `email`, optional `message`, `turnstileToken`, `selections`), verifies Turnstile, recomputes the total from current prices and stores the quote. It returns 201 with `{ ok: true, id }`, or 400 with `{ ok: false, error }`.
 

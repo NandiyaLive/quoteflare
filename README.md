@@ -17,29 +17,29 @@ It does not take payments. Invoices carry a status that you set yourself.
 
 - **Pricing calculator.** A public page where a visitor picks services, options and quantities. The server recomputes the total from current prices, so the client cannot change it. Turnstile guards the submit.
 - **Service catalogue.** Categories, fixed or custom pricing, weekly to yearly billing, option groups, required services and packages. Import a catalogue from JSON.
-- **Quotes to invoices.** Convert a submitted quote into an invoice. Invoice numbers follow `INV-YYYY-NNNN`. Advance payments are supported.
+- **Quotes to invoices.** Convert a submitted quote into an invoice. Invoice numbers follow `<prefix>-YYYY-NNNN`, and the prefix defaults to `INV`. Advance payments are supported.
 - **Email through Resend.** Send an invoice with a link to a public page at `/i/<token>`. A webhook records delivery, bounces and complaints.
-- **Reminders.** A daily cron job emails clients before and after an invoice is due. Off by default.
+- **Reminders.** A daily cron job marks unpaid invoices overdue. It also emails clients before and after an invoice is due, which is off by default.
 - **Recurring invoices.** Schedules create, and optionally send, invoices weekly, monthly, quarterly or yearly.
 - **Admin dashboard.** Clients, services, packages, quotes, invoices, schedules and business settings, behind Cloudflare Access.
 
 ## Tech stack
 
-| Area         | Choice                                                    |
-| ------------ | --------------------------------------------------------- |
-| Framework    | TanStack Start, TanStack Router, React 19                 |
-| Runtime      | Cloudflare Workers                                        |
-| Database     | Cloudflare D1 with Drizzle ORM                            |
-| File storage | Cloudflare R2                                             |
-| API          | Hono, mounted at `/api`                                   |
-| Email        | Resend, rendered with React Email                         |
+| Area         | Choice                                                         |
+| ------------ | -------------------------------------------------------------- |
+| Framework    | TanStack Start, TanStack Router, React 19                      |
+| Runtime      | Cloudflare Workers                                             |
+| Database     | Cloudflare D1 with Drizzle ORM                                 |
+| File storage | Cloudflare R2                                                  |
+| API          | Hono, mounted at `/api`                                        |
+| Email        | Resend, rendered with React Email                              |
 | Auth         | Cloudflare Access (one-time PIN), verified again in the Worker |
-| UI           | Tailwind CSS 4, shadcn/ui on Base UI                      |
-| Tests        | Vitest                                                    |
+| UI           | Tailwind CSS 4, shadcn/ui on Base UI                           |
+| Tests        | Vitest                                                         |
 
 ## Getting started
 
-You need Node.js 20 or newer and [Bun](https://bun.sh).
+You need Node.js 22.12 or newer and [Bun](https://bun.sh).
 
 ```bash
 git clone https://github.com/NandiyaLive/quoteflare.git
@@ -57,17 +57,17 @@ The `.dev.vars.example` file uses Cloudflare's always-pass Turnstile test keys. 
 
 ## Scripts
 
-| Command                                      | What it does                                   |
-| -------------------------------------------- | ---------------------------------------------- |
-| `bun run dev`                                | Start the dev server                           |
-| `bun run build`                              | Build for production                           |
-| `bun run deploy`                             | Build and deploy with Wrangler                 |
-| `bun run test`                               | Run the Vitest suite                           |
-| `bun run lint` / `typecheck` / `format`      | ESLint, `tsc --noEmit` and Prettier            |
-| `bun run db:generate`                        | Write a migration after a schema change        |
-| `bun run db:migrate:local` / `:remote`       | Apply migrations                               |
-| `bun run db:seed`                            | Load sample data locally                       |
-| `bun run db:export`                          | Export the remote database to `backups/`       |
+| Command                                 | What it does                             |
+| --------------------------------------- | ---------------------------------------- |
+| `bun run dev`                           | Start the dev server                     |
+| `bun run build`                         | Build for production                     |
+| `bun run deploy`                        | Build and deploy with Wrangler           |
+| `bun run test`                          | Run the Vitest suite                     |
+| `bun run lint` / `typecheck` / `format` | ESLint, `tsc --noEmit` and Prettier      |
+| `bun run db:generate`                   | Write a migration after a schema change  |
+| `bun run db:migrate:local` / `:remote`  | Apply migrations                         |
+| `bun run db:seed`                       | Load sample data locally                 |
+| `bun run db:export`                     | Export the remote database to `backups/` |
 
 ## Deploying
 
@@ -89,7 +89,7 @@ src/
   components/ Shared UI
   db/         Drizzle schema, seed data and tests
   emails/     React Email templates
-  jobs/       Daily cron: reminders and recurring invoices
+  jobs/       Daily cron: overdue marking, reminders and recurring invoices
   lib/        Shared helpers
   routes/     File-based routes: calculator, /admin, /i/<token>
   server/     Server-only code and server functions
