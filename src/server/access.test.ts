@@ -1,6 +1,10 @@
 import { SignJWT, createLocalJWKSet, exportJWK, generateKeyPair } from 'jose'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { ACCESS_JWT_COOKIE, ACCESS_JWT_HEADER, authenticateAdmin } from './access'
+import {
+  ACCESS_JWT_COOKIE,
+  ACCESS_JWT_HEADER,
+  authenticateAdmin,
+} from './access'
 
 const teamDomain = 'team.cloudflareaccess.com'
 const audience = 'aud-123'

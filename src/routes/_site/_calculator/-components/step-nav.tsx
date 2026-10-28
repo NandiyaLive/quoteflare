@@ -7,7 +7,7 @@ export function StepNav() {
       <div className="container">
         <nav
           aria-label="Calculator steps"
-          className="flex gap-6 overflow-x-auto sm:gap-8 scrollbar-none [&::-webkit-scrollbar]:hidden"
+          className="flex scrollbar-none gap-6 overflow-x-auto sm:gap-8 [&::-webkit-scrollbar]:hidden"
         >
           {STEPS.map((step) => (
             <Link

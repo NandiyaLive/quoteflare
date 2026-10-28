@@ -163,7 +163,7 @@ function PackageCard({
         )}
         <div className="mt-auto flex items-center justify-between gap-3 pt-2">
           {price ? (
-            <div className="text-sm flex flex-col">
+            <div className="flex flex-col text-sm">
               <span className="text-muted-foreground">Estimated </span>
               <span className="font-semibold">{price}</span>
             </div>

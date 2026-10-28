@@ -1,7 +1,6 @@
 import { Link, useMatchRoute } from '@tanstack/react-router'
 import {
-  ChevronsUpDownIcon,
-  FileTextIcon,
+  GlobeIcon,
   RepeatIcon,
   InboxIcon,
   ReceiptTextIcon,
@@ -14,15 +13,6 @@ import {
 } from 'lucide-react'
 import Logo from '@/components/common/logo'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import {
   Sidebar,
   SidebarContent,
@@ -100,6 +90,28 @@ export function AdminSidebar({ email }: { email: string }) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="View public site"
+                  render={
+                    <Link
+                      to="/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => isMobile && setOpenMobile(false)}
+                    />
+                  }
+                >
+                  <GlobeIcon />
+                  <span>View public site</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
         {navGroups.map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
@@ -132,42 +144,21 @@ export function AdminSidebar({ email }: { email: string }) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={<SidebarMenuButton size="lg" tooltip={email} />}
-              >
-                <Avatar className="size-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg">
-                    {email.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Administrator</span>
-                  <span className="truncate text-xs">{email}</span>
-                </div>
-                <ChevronsUpDownIcon className="ml-auto size-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="min-w-56"
-                side={isMobile ? 'bottom' : 'top'}
-                align="center"
-              >
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>{email}</DropdownMenuLabel>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem render={<Link to="/admin/settings" />}>
-                    <SettingsIcon />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem render={<Link to="/" />}>
-                    <FileTextIcon />
-                    View public site
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SidebarMenuButton
+              size="lg"
+              tooltip={email}
+              className="cursor-default"
+            >
+              <Avatar className="size-8 rounded-lg">
+                <AvatarFallback className="rounded-lg">
+                  {email.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">Administrator</span>
+                <span className="truncate text-xs">{email}</span>
+              </div>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
