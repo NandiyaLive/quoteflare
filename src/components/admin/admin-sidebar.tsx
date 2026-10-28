@@ -149,7 +149,7 @@ export function AdminSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
-          {import.meta.env.DEV && (
+          {!import.meta.env.DEV && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 variant="destructive"
