@@ -1,17 +1,14 @@
 # Generic config for local development and the Deploy to Cloudflare button.
-# Fill in the empty values below for your own deployment. To keep them out of
-# git, copy this file to wrangler.production.toml, which git ignores, and use
-# that file with the `*:production` and `db:*:remote` scripts. Also add
-# remote = true to its D1 binding so `services:import:remote` can reach the
-# deployed database.
+# For your own deployment, copy it to wrangler.production.toml (gitignored) and
+# add remote = true to its D1 binding.
 name = "quoteflare"
 main = "src/server.ts"
 compatibility_date = "2025-09-02"
 compatibility_flags = ["nodejs_compat"]
 upload_source_maps = true
+keep_vars = true
 
-# The Worker answers only on your own domain. Add it as a custom domain, for
-# example routes = [{ pattern = "invoices.example.com", custom_domain = true }].
+# Add your domain, e.g. routes = [{ pattern = "invoices.example.com", custom_domain = true }].
 workers_dev = false
 preview_urls = false
 routes = []
@@ -19,8 +16,7 @@ routes = []
 [triggers]
 crons = ["30 3 * * *"]
 
-# /i/<token> is a bearer credential, so keep query strings and invocation logs
-# out of the logs.
+# /i/<token> is a bearer credential, so keep it out of the logs.
 [observability]
 enabled = true
 head_sampling_rate = 1
@@ -38,23 +34,16 @@ enabled = false
 [observability.issues]
 enabled = true
 
-# Vars (ACCESS_TEAM_DOMAIN, TURNSTILE_SITE_KEY, EMAIL_FROM, APP_ORIGIN and
-# ALLOWED_ORIGINS) are not listed here. Set them in the dashboard under the
-# Worker's Settings > Variables and Secrets, and deploy with
-# `wrangler deploy --keep-vars` so git deploys do not erase them. A var listed
-# in this file overrides the dashboard value even with --keep-vars.
-#
-# Example values for local development:
-# [vars]
-# ACCESS_TEAM_DOMAIN = ""
-# TURNSTILE_SITE_KEY = "1x00000000000000000000AA"  # Cloudflare always-pass test key
-# EMAIL_FROM = ""  # a domain verified in Resend
-# APP_ORIGIN = "http://localhost:3000"  # base URL for invoice links in cron emails
-# ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:5173"  # comma separated, for /api/public/*
+# A var listed here overwrites the dashboard value on every deploy, even with
+# keep_vars. Put real values in wrangler.production.toml instead.
+[vars]
+ACCESS_TEAM_DOMAIN = ""
+TURNSTILE_SITE_KEY = "1x00000000000000000000AA"  # Cloudflare always-pass test key
+EMAIL_FROM = ""  # a domain verified in Resend
+APP_ORIGIN = "http://localhost:3000"  # base URL for invoice links in cron emails
+ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:5173"  # comma separated, for /api/public/*
 
-# The Deploy to Cloudflare button creates the D1 database and R2 bucket for
-# these bindings in the deployer's account. When you create them yourself, add
-# database_id to the D1 binding.
+# When you create the D1 database yourself, add database_id.
 [[d1_databases]]
 binding = "DB"
 database_name = "quoteflare"
@@ -64,8 +53,7 @@ migrations_dir = "drizzle"
 binding = "FILES"
 bucket_name = "quoteflare"
 
-# Per-IP limits on the public endpoints. namespace_id only has to be unique
-# within your Cloudflare account.
+# Per-IP limits on the public endpoints.
 [[ratelimits]]
 name = "QUOTE_LIMITER"
 namespace_id = "1001"
