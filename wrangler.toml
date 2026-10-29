@@ -54,9 +54,9 @@ migrations_dir = "drizzle"
 # before you can use it. Leave this block commented out to deploy without one.
 # The logo upload then disappears from /admin/settings. To turn it on, create the
 # bucket with `bunx wrangler r2 bucket create quoteflare` and uncomment these lines.
-# [[r2_buckets]]
-# binding = "FILES"
-# bucket_name = "quoteflare"
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "quoteflare"
 
 # Per-IP limits on the public endpoints.
 [[ratelimits]]
