@@ -287,7 +287,9 @@ function DataTableActionBar<TData extends RowData>({
 }
 
 function getCellClassName(pinned: ColumnPinningPosition) {
-  return pinned
-    ? 'overflow-hidden bg-background transition-colors group-hover/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))] group-has-aria-expanded/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))] group-data-[state=selected]/row:bg-muted'
-    : 'overflow-hidden'
+  return cn(
+    'overflow-hidden',
+    pinned &&
+      'bg-background transition-colors group-hover/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))] group-has-aria-expanded/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))] group-data-[state=selected]/row:bg-muted',
+  )
 }

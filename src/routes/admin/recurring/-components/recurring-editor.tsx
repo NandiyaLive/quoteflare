@@ -44,6 +44,7 @@ import {
 } from '#/server/recurring-actions'
 import { toast } from 'sonner'
 import { callAction, toastFormErrors } from '#/lib/action-errors'
+import { cn } from '@/lib/utils'
 
 type Context = Awaited<ReturnType<typeof getRecurringFormContext>>
 
@@ -305,11 +306,9 @@ export function RecurringEditor({
                             return (
                               <Field
                                 data-invalid={invalid}
-                                className={
-                                  key === 'description'
-                                    ? 'col-span-full'
-                                    : undefined
-                                }
+                                className={cn(
+                                  key === 'description' && 'col-span-full',
+                                )}
                               >
                                 <FieldLabel
                                   htmlFor={`recurring-item-${index}-${key}`}

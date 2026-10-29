@@ -42,6 +42,7 @@ import { InvoiceStatusActions } from './invoice-status-actions'
 import { InvoiceTotalsList } from '@/components/common/invoice-totals-list'
 import { toast } from 'sonner'
 import { callAction, toastFormErrors } from '#/lib/action-errors'
+import { cn } from '@/lib/utils'
 
 type Context = Awaited<ReturnType<typeof getInvoiceFormContext>>
 
@@ -308,11 +309,9 @@ export function InvoiceEditor({
                                 return (
                                   <Field
                                     data-invalid={invalid}
-                                    className={
-                                      key === 'description'
-                                        ? 'col-span-full'
-                                        : undefined
-                                    }
+                                    className={cn(
+                                      key === 'description' && 'col-span-full',
+                                    )}
                                   >
                                     <FieldLabel
                                       htmlFor={`invoice-item-${index}-${key}`}

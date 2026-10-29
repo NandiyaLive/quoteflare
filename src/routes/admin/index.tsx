@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/chart'
 import PageHeader from '@/components/common/page-header'
 import { formatDate } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import { formatMinor } from '#/lib/decimal'
 import { invoiceStatuses, type InvoiceStatus } from '#/db/schema'
 import { INVOICE_STATUS_LABELS } from '#/lib/invoices'
@@ -59,11 +60,14 @@ function Stat({
 }) {
   return (
     <Link to={to} className="block rounded-xl focus-visible:outline-2">
-      <Card size="sm" className="h-full transition-colors hover:bg-muted/50">
+      <Card className="h-full transition-colors hover:bg-muted/50">
         <CardHeader>
           <CardDescription>{label}</CardDescription>
           <CardTitle
-            className={`text-2xl tabular-nums ${tone === 'danger' ? 'text-destructive' : ''}`}
+            className={cn(
+              'text-2xl font-semibold tabular-nums',
+              tone === 'danger' && 'text-destructive',
+            )}
           >
             {value}
           </CardTitle>

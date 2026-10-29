@@ -3,6 +3,7 @@ import { ArrowRightIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
 import { bpsToPercent, formatMinor } from '#/lib/decimal'
 import type { PricingBreakdown } from '#/lib/pricing'
 import { BILLING_LABELS } from '#/lib/services'
@@ -18,7 +19,10 @@ function Row({
 }) {
   return (
     <div
-      className={`flex justify-between gap-4 ${strong ? 'text-lg font-semibold' : 'text-sm'}`}
+      className={cn(
+        'flex justify-between gap-4',
+        strong ? 'text-lg font-semibold' : 'text-sm',
+      )}
     >
       <dt>{label}</dt>
       <dd>{value}</dd>
