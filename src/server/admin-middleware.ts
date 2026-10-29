@@ -13,6 +13,7 @@ const authenticate = (request: Request) =>
     teamDomain: env.ACCESS_TEAM_DOMAIN,
     audience: env.ACCESS_AUD,
     devEmail: env.ACCESS_DEV_EMAIL,
+    dev: env.DEV,
   })
 
 export const requireAdmin = createMiddleware({ type: 'request' }).server(

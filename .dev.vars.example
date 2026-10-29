@@ -1,5 +1,8 @@
 # Local only. Identity used for /admin when running on localhost.
 ACCESS_DEV_EMAIL=dev@example.test
+# Set to true to skip the localhost check, for example behind a tunnel. Ignored
+# when ACCESS_TEAM_DOMAIN is set, so it has no effect in production.
+DEV=false
 # Real value comes from `wrangler secret put ACCESS_AUD` in production.
 ACCESS_AUD=
 

@@ -8,6 +8,7 @@ export type AccessConfig = {
   teamDomain?: string
   audience?: string
   devEmail?: string
+  dev?: string
 }
 
 export type AdminIdentity = { email: string }
@@ -45,13 +46,19 @@ export async function authenticateAdmin(
   config: AccessConfig,
   getKey?: JWTVerifyGetKey,
 ): Promise<AdminIdentity | null> {
-  // Never trust the dev identity once Access is configured.
-  if (
-    config.devEmail &&
-    !config.teamDomain &&
-    LOCAL_HOSTS.has(new URL(request.url).hostname)
-  ) {
-    return { email: config.devEmail }
+  // Never trust the dev identity once Access is configured. DEV=true in
+  // .dev.vars skips the localhost check, for tunnels and other dev hosts.
+  // Built bundles never honor it.
+  if (!config.teamDomain) {
+    if (config.dev === 'true' && !import.meta.env.PROD) {
+      return { email: config.devEmail || 'dev@localhost' }
+    }
+    if (
+      config.devEmail &&
+      LOCAL_HOSTS.has(new URL(request.url).hostname)
+    ) {
+      return { email: config.devEmail }
+    }
   }
 
   const token = accessToken(request)
