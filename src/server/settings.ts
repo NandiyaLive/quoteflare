@@ -111,9 +111,15 @@ const formatSize = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
 
 export async function storeLogo(
   db: Db,
-  bucket: R2Bucket,
+  bucket: R2Bucket | undefined,
   file: File,
 ): Promise<LogoResult> {
+  if (!bucket) {
+    return {
+      ok: false,
+      error: 'Logo storage is not set up on this deployment.',
+    }
+  }
   if (file.size > LOGO_MAX_BYTES) {
     return {
       ok: false,
@@ -156,7 +162,12 @@ export async function storeLogo(
   return { ok: true, key }
 }
 
-export async function readLogo(db: Db, bucket: R2Bucket, request: Request) {
+export async function readLogo(
+  db: Db,
+  bucket: R2Bucket | undefined,
+  request: Request,
+) {
+  if (!bucket) return new Response('Not found', { status: 404 })
   const row = await db.query.settings.findFirst()
   const object = row?.logoKey ? await bucket.get(row.logoKey) : null
   if (!object) return new Response('Not found', { status: 404 })

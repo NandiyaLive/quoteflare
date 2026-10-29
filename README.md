@@ -32,7 +32,7 @@ It does not take payments. Invoices carry a status that you set yourself.
 | Framework    | TanStack Start, TanStack Router, React 19                      |
 | Runtime      | Cloudflare Workers                                             |
 | Database     | Cloudflare D1 with Drizzle ORM                                 |
-| File storage | Cloudflare R2                                                  |
+| File storage | Cloudflare R2 (optional, for the logo)                         |
 | API          | Hono, mounted at `/api`                                        |
 | Email        | Resend, rendered with React Email                              |
 | Auth         | Cloudflare Access (one-time PIN), verified again in the Worker |
@@ -75,7 +75,7 @@ The `.dev.vars.example` file uses Cloudflare's always-pass Turnstile test secret
 
 ### One click
 
-The button above copies the repository to your GitHub account, creates the D1 database and R2 bucket, and deploys the Worker. The Worker has no public URL until you add your domain in step 2, because `wrangler.toml` turns off `workers.dev`. The button asks for the secrets listed in `.dev.vars.example`. Afterwards:
+The button above copies the repository to your GitHub account, creates the D1 database, and deploys the Worker. The Worker has no public URL until you add your domain in step 2, because `wrangler.toml` turns off `workers.dev`. The button asks for the secrets listed in `.dev.vars.example`. Afterwards:
 
 1. Run `bunx wrangler d1 migrations apply DB --remote` from a clone of your copy.
 2. In the Worker's Settings > Variables and Secrets, add the vars `ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`. In Settings > Builds, change the deploy command to `bunx wrangler deploy --keep-vars`, or every git deploy erases them. Then add your domain to `routes` in `wrangler.toml` and push.
@@ -86,7 +86,7 @@ Until step 3 is done, `/admin` rejects every request.
 ### By hand
 
 1. Sign in with `bunx wrangler login`.
-2. Create the D1 database and the R2 bucket, then copy `wrangler.toml` to `wrangler.production.toml` and put the database ID in it. Git ignores that file, so your domain and IDs stay out of the repository.
+2. Create the D1 database, then copy `wrangler.toml` to `wrangler.production.toml` and put the database ID in it. Git ignores that file, so your domain and IDs stay out of the repository.
 3. Add a `[vars]` block with `ACCESS_TEAM_DOMAIN`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`, `APP_ORIGIN` and `ALLOWED_ORIGINS`, and set the route, in `wrangler.production.toml`.
 4. Apply migrations with `bun run db:migrate:remote`.
 5. Set the secrets `ACCESS_AUD`, `TURNSTILE_SECRET`, `RESEND_API_KEY` and `RESEND_WEBHOOK_SECRET` with `bunx wrangler secret put <name>`.

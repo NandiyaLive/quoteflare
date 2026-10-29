@@ -20,13 +20,17 @@ function SettingsPage() {
     <>
       <PageHeader
         title="Settings"
-        description="Your business details, invoice numbering and logo."
+        description={
+          settings.logoStorage
+            ? 'Your business details, invoice numbering and logo.'
+            : 'Your business details and invoice numbering.'
+        }
       />
       <div className="grid items-start gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
           <SettingsForm initial={settings.values} />
         </div>
-        <LogoUpload logoKey={settings.logoKey} />
+        {settings.logoStorage && <LogoUpload logoKey={settings.logoKey} />}
         <div className="xl:col-span-2">
           <InvoiceEmailEditor initial={emailTemplate} />
         </div>

@@ -75,7 +75,7 @@ The scripts `deploy:production`, `db:migrate:remote` and `db:export` read `wrang
 
 One-time setup, in order:
 
-1. Create the D1 database and R2 bucket, then copy `wrangler.toml` to `wrangler.production.toml` and put the database ID in it.
+1. Create the D1 database, then copy `wrangler.toml` to `wrangler.production.toml` and put the database ID in it. R2 is optional (see Files and business settings).
 2. Apply migrations: `bun run db:migrate:remote`.
 3. Set the secrets. Each command prompts for the value:
 
@@ -98,11 +98,15 @@ Production starts with no sample data. Never run `db:seed` against the remote da
 
 ## Files and business settings
 
-Business details are edited at `/admin/settings`. The logo is stored in the R2 bucket `quoteflare-files` (binding `FILES`) under `logo/<random>.<ext>`, limited to PNG, JPG or SVG and 1 MB. `/files/logo` streams the current logo and is public so invoices can show it. Create the bucket once with:
+Business details are edited at `/admin/settings`. The logo is the only thing stored in R2, and R2 is optional. Cloudflare asks for a payment method before you can create a bucket, so the `[[r2_buckets]]` block in `wrangler.toml` is commented out. Without it the app runs normally, the logo card is hidden on the settings page, and invoices show no logo.
+
+To turn logos on, create the bucket, then uncomment the block in your wrangler config and redeploy:
 
 ```bash
-bunx wrangler r2 bucket create quoteflare-files
+bunx wrangler r2 bucket create quoteflare
 ```
+
+The logo is stored under `logo/<random>.<ext>` in the bucket bound as `FILES`, limited to PNG, JPG or SVG and 1 MB. `/files/logo` streams the current logo and is public so invoices can show it.
 
 ## Services
 

@@ -24,7 +24,10 @@ export type SaveSettingsResult =
 
 export const getSettings = createServerFn()
   .middleware([requireAdmin])
-  .handler(() => loadSettings(createDb(env.DB)))
+  .handler(async () => ({
+    ...(await loadSettings(createDb(env.DB))),
+    logoStorage: Boolean(env.FILES),
+  }))
 
 export const getBranding = createServerFn().handler(() =>
   loadBranding(createDb(env.DB)),
