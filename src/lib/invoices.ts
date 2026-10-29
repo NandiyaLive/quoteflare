@@ -46,7 +46,6 @@ export const invoiceIdSchema = z.strictObject({
 export const MAX_INVOICE_ITEMS = 50
 export const MIN_ADVANCE_PERCENT = 1
 export const MAX_ADVANCE_PERCENT = 99
-export const DEFAULT_PAYMENT_TERM_DAYS = 14
 
 const isRealDate = (value: string) => {
   const date = new Date(`${value}T00:00:00Z`)

@@ -3,7 +3,7 @@ import type { Db } from '#/db'
 import { schema } from '#/db'
 import type { RecurringInterval } from '#/db/schema'
 import { minorToDecimal } from '#/lib/decimal'
-import { addDays, DEFAULT_PAYMENT_TERM_DAYS } from '#/lib/invoices'
+import { addDays } from '#/lib/invoices'
 import { createId } from '#/lib/id'
 import {
   calculatePrice,
@@ -193,7 +193,7 @@ export async function convertQuoteToInvoice(
         sourceQuoteId: quoteId,
         advanceBps: advancePercent ? advancePercent * 100 : null,
         issueDate: today,
-        dueDate: addDays(today, DEFAULT_PAYMENT_TERM_DAYS),
+        dueDate: addDays(today, business.paymentTermDays),
         currency: quote.currency,
         taxRateBps: business.taxRateBps,
       }),

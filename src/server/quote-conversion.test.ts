@@ -142,6 +142,14 @@ describe('converting a quote to an invoice', () => {
     expect(settings.nextInvoiceNumber).toBe(2)
   })
 
+  it('sets the due date from the payment term in settings', async () => {
+    await db.update(schema.settings).set({ paymentTermDays: 30 })
+    const result = await convert(await submit())
+    if (!result.ok) throw new Error(result.error)
+    const detail = await getInvoice(db, result.invoiceId)
+    expect(detail?.invoice.dueDate).toBe('2026-04-09')
+  })
+
   it('keeps non-taxable services out of the invoice tax base', async () => {
     const quoteId = await submit('jo@example.com', 'Jo', false)
     const quote = await getQuote(db, quoteId)

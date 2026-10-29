@@ -60,6 +60,7 @@ export const getInvoiceFormContext = createServerFn()
       })),
       currency: settings?.currency ?? 'LKR',
       taxRateBps: settings?.taxRateBps ?? 0,
+      paymentTermDays: settings?.paymentTermDays ?? 14,
     }
   })
 

@@ -23,7 +23,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { bpsToPercent, formatMinor, minorToDecimal } from '#/lib/decimal'
 import {
-  DEFAULT_PAYMENT_TERM_DAYS,
   advanceFor,
   MAX_INVOICE_ITEMS,
   addDays,
@@ -55,7 +54,7 @@ const initialValues = (
     return {
       clientId: '',
       issueDate,
-      dueDate: addDays(issueDate, DEFAULT_PAYMENT_TERM_DAYS),
+      dueDate: addDays(issueDate, context.paymentTermDays),
       taxRate: bpsToPercent(context.taxRateBps),
       discount: '0',
       advance: '',
