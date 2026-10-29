@@ -3,7 +3,6 @@ import ThemeToggle from '@/components/common/theme-toggle'
 
 type Branding = { name: string; hasLogo: boolean }
 
-/** Business logo first, then the business name, then the app logo. */
 function Brand({ name, hasLogo }: Branding) {
   if (hasLogo) {
     return <img src="/files/logo" alt={name} className="max-h-8 w-auto" />

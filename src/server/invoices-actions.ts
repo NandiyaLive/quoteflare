@@ -1,3 +1,5 @@
+import { fieldErrors, dottedPath } from '#/lib/field-errors'
+import { DEFAULT_CURRENCY } from '#/lib/settings'
 import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
 import { getRequest, getRequestUrl } from '@tanstack/react-start/server'
@@ -58,7 +60,7 @@ export const getInvoiceFormContext = createServerFn()
         minQuantity: s.minQuantity,
         taxable: s.taxable,
       })),
-      currency: settings?.currency ?? 'LKR',
+      currency: settings?.currency ?? DEFAULT_CURRENCY,
       taxRateBps: settings?.taxRateBps ?? 0,
       paymentTermDays: settings?.paymentTermDays ?? 14,
     }
@@ -70,11 +72,7 @@ export const saveInvoiceAction = createServerFn({ method: 'POST' })
   .handler(async ({ data }): Promise<SaveInvoiceActionResult> => {
     const parsed = invoiceSchema.safeParse(data)
     if (!parsed.success) {
-      const errors: Record<string, string> = {}
-      for (const issue of parsed.error.issues) {
-        errors[issue.path.join('.') || 'form'] ??= issue.message
-      }
-      return { ok: false, errors }
+      return { ok: false, errors: fieldErrors(parsed.error, dottedPath) }
     }
     const db = createDb(env.DB)
     const { id } = parsed.data

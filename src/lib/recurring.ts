@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { recurringIntervals, type RecurringInterval } from '#/db/schema'
-import { addDays, dateSchema, invoiceItemSchema } from './invoices'
+import { addDays, dateSchema, invoiceItemSchema, toIsoDate } from './invoices'
 
 export const RECURRING_INTERVAL_LABELS: Record<RecurringInterval, string> = {
   weekly: 'Weekly',
@@ -24,7 +24,7 @@ function addMonths(date: string, months: number) {
   const value = new Date(
     Date.UTC(targetYear, targetMonth, Math.min(day, lastDay)),
   )
-  return value.toISOString().slice(0, 10)
+  return toIsoDate(value)
 }
 
 export function addInterval(date: string, interval: RecurringInterval) {

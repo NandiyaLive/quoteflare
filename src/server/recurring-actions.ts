@@ -1,3 +1,5 @@
+import { fieldErrors, dottedPath } from '#/lib/field-errors'
+import { DEFAULT_CURRENCY } from '#/lib/settings'
 import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
@@ -37,7 +39,7 @@ export const getRecurringFormContext = createServerFn()
         name: c.name,
         company: c.company,
       })),
-      currency: settings?.currency ?? 'LKR',
+      currency: settings?.currency ?? DEFAULT_CURRENCY,
     }
   })
 
@@ -47,11 +49,7 @@ export const saveScheduleAction = createServerFn({ method: 'POST' })
   .handler(async ({ data }): Promise<SaveRecurringActionResult> => {
     const parsed = recurringSchema.safeParse(data)
     if (!parsed.success) {
-      const errors: Record<string, string> = {}
-      for (const issue of parsed.error.issues) {
-        errors[issue.path.join('.') || 'form'] ??= issue.message
-      }
-      return { ok: false, errors }
+      return { ok: false, errors: fieldErrors(parsed.error, dottedPath) }
     }
     const result = await saveSchedule(createDb(env.DB), parsed.data)
     return result.ok ? result : { ok: false, errors: { form: result.error } }

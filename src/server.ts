@@ -62,7 +62,7 @@ export default {
       pathname === '/api/public/quote' &&
       (await isRateLimited(env.QUOTE_LIMITER, request))
     ) {
-      return tooManyRequests()
+      return withSecurityHeaders(tooManyRequests())
     }
     if (
       pathname.startsWith('/i/') &&
@@ -71,7 +71,7 @@ export default {
       return withSecurityHeaders(tooManyRequests())
     }
     if (pathname === '/api' || pathname.startsWith('/api/')) {
-      return api.fetch(request, env, ctx)
+      return withSecurityHeaders(await api.fetch(request, env, ctx))
     }
     try {
       return withSecurityHeaders(await handler.fetch(request))

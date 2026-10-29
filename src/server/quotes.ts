@@ -18,9 +18,14 @@ import {
   type QuoteStatusFilter,
 } from '#/lib/quotes'
 import { loadCalculatorCatalog } from './calculator'
-import { batch, isDuplicateNumber } from './invoices'
+import {
+  batch,
+  incrementInvoiceNumber,
+  invoiceNumberSql,
+  isDuplicateNumber,
+} from './invoices'
 
-const { quotes, invoices, invoiceItems, clients, settings } = schema
+const { quotes, invoices, invoiceItems, clients } = schema
 
 export type SubmitQuoteResult =
   { ok: true; id: string } | { ok: false; error: string }
@@ -173,7 +178,7 @@ export async function convertQuoteToInvoice(
   const clientId = client?.id ?? createId()
   const invoiceId = createId()
   const items = quoteInvoiceItems(quote.breakdown)
-  const number = sql<string>`(select ${settings.invoicePrefix} || '-' || ${today.slice(0, 4)} || '-' || printf('%04d', ${settings.nextInvoiceNumber}) from ${settings} where ${settings.id} = 'main')`
+  const number = invoiceNumberSql(today)
 
   try {
     await batch(db, [
@@ -207,10 +212,7 @@ export async function convertQuoteToInvoice(
           taxable: item.taxable,
         }),
       ),
-      db
-        .update(settings)
-        .set({ nextInvoiceNumber: sql`${settings.nextInvoiceNumber} + 1` })
-        .where(eq(settings.id, 'main')),
+      incrementInvoiceNumber(db),
       db
         .update(quotes)
         .set({ status: 'converted' })
@@ -241,12 +243,10 @@ export type QuoteSchedulePrefill = {
   quoteId: string
   contactName: string
   contactEmail: string
-  /** True when no client matches the quote's email. */
   clientMissing: boolean
   values: RecurringFormValues
 }
 
-/** Prefilled schedule form values for one billing interval of a quote's recurring lines. */
 export async function getQuoteSchedulePrefill(
   db: Db,
   quoteId: string,

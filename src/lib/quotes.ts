@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { quoteStatuses, type RecurringInterval } from '#/db/schema'
-import { MAX_ADVANCE_PERCENT, MIN_ADVANCE_PERCENT } from './invoices'
+import {
+  dateSchema,
+  MAX_ADVANCE_PERCENT,
+  MIN_ADVANCE_PERCENT,
+} from './invoices'
 import type { PricedLine, PricingBreakdown } from './pricing'
 
 const QUOTE_STATUS_FILTERS = ['all', ...quoteStatuses] as const
@@ -63,6 +67,7 @@ export const quoteStatusUpdateSchema = z.object({
 
 export const convertQuoteSchema = z.strictObject({
   id: z.string().min(1).max(64),
+  today: dateSchema,
   advancePercent: z
     .number()
     .int()
@@ -94,7 +99,6 @@ export function quoteInvoiceItems(
   return pricedLineItems(breakdown.lines)
 }
 
-/** Same line shape as the invoice items, for the recurring lines of one billing interval. */
 export function quoteRecurringItems(
   breakdown: PricingBreakdown,
   billing: RecurringInterval,
@@ -104,7 +108,6 @@ export function quoteRecurringItems(
   )
 }
 
-/** The billing intervals present in a quote's recurring lines, in first-seen order. */
 export function quoteRecurringIntervals(
   breakdown: PricingBreakdown,
 ): RecurringInterval[] {

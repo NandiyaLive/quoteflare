@@ -6,7 +6,6 @@ const MARK_ORANGE = 'fill-[#fd7003]'
 const MARK_AMBER = 'fill-[#fd9513]'
 
 type LogoProps = ComponentProps<'svg'> & {
-  /** `text` is the wordmark, `mark` is the icon alone. */
   variant?: 'text' | 'mark'
 }
 

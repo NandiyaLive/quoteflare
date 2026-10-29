@@ -1,3 +1,4 @@
+import { fieldErrors } from '#/lib/field-errors'
 import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
@@ -52,11 +53,7 @@ export const savePackageAction = createServerFn({ method: 'POST' })
   .handler(async ({ data }): Promise<SavePackageResult> => {
     const parsed = packageSchema.safeParse(data)
     if (!parsed.success) {
-      const errors: Record<string, string> = {}
-      for (const issue of parsed.error.issues) {
-        errors[issuePath(issue.path) || 'form'] ??= issue.message
-      }
-      return { ok: false, errors }
+      return { ok: false, errors: fieldErrors(parsed.error, issuePath) }
     }
     return savePackage(createDb(env.DB), parsed.data)
   })
@@ -82,11 +79,7 @@ export const savePackageCategoriesAction = createServerFn({ method: 'POST' })
   .handler(async ({ data }): Promise<SavePackageCategoriesResult> => {
     const parsed = categoriesSchema.safeParse(data)
     if (!parsed.success) {
-      const errors: Record<string, string> = {}
-      for (const issue of parsed.error.issues) {
-        errors[issuePath(issue.path) || 'form'] ??= issue.message
-      }
-      return { ok: false, errors }
+      return { ok: false, errors: fieldErrors(parsed.error, issuePath) }
     }
     return savePackageCategories(createDb(env.DB), parsed.data.categories)
   })

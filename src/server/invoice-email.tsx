@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { render } from '@react-email/render'
 import { z } from 'zod'
 import type { Db } from '#/db'
@@ -18,6 +18,8 @@ import { sendEmail } from './email'
 import { changeInvoiceStatus, getInvoice } from './invoices'
 
 const { emailLog } = schema
+
+const IN_FLIGHT_MS = 60_000
 
 export type InvoiceEmailInput = TemplateVariables & { url: string }
 
@@ -113,14 +115,22 @@ export async function sendInvoiceEmail(
     )),
   }
 
+  // A second click while the first send is in flight would otherwise send a
+  // second email, because every send uses its own idempotency key.
   const logId = createId()
-  await db.insert(emailLog).values({
-    id: logId,
-    invoiceId: invoice.id,
-    type: 'invoice',
-    toAddress: to,
-    status: 'pending',
-  })
+  const inFlightSince = new Date(Date.now() - IN_FLIGHT_MS).toISOString()
+  const claimed = await db
+    .insert(emailLog)
+    .select(
+      sql`select ${logId}, ${invoice.id}, 'invoice', ${to}, 'pending', null, null, strftime('%Y-%m-%dT%H:%M:%fZ', 'now') where not exists (select 1 from ${emailLog} where ${emailLog.invoiceId} = ${invoice.id} and ${emailLog.type} = 'invoice' and ${emailLog.status} = 'pending' and ${emailLog.createdAt} > ${inFlightSince})`,
+    )
+    .returning({ id: emailLog.id })
+  if (claimed.length === 0) {
+    return {
+      ok: false,
+      error: 'An email for this invoice is already being sent.',
+    }
+  }
 
   const sent = await sendEmail(deps.apiKey, message, logId, deps.fetcher)
   if (!sent.ok) {

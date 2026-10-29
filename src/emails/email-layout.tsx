@@ -14,9 +14,7 @@ import { emailTailwindConfig } from './theme'
 
 type EmailLayoutProps = {
   businessName: string
-  /** Inbox preview text. */
   preview: string
-  /** Large title above the message. */
   heading: string
   children: ReactNode
 }

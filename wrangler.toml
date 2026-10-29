@@ -34,14 +34,15 @@ enabled = false
 [observability.issues]
 enabled = true
 
-# A var listed here overwrites the dashboard value on every deploy, even with
-# keep_vars. Put real values in wrangler.production.toml instead.
-[vars]
-ACCESS_TEAM_DOMAIN = ""
-TURNSTILE_SITE_KEY = "1x00000000000000000000AA"  # Cloudflare always-pass test key
-EMAIL_FROM = ""  # a domain verified in Resend
-APP_ORIGIN = "http://localhost:3000"  # base URL for invoice links in cron emails
-ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:5173"  # comma separated, for /api/public/*
+# Do not uncomment these for a real deployment: a var listed here overwrites the
+# dashboard value on every deploy, even with keep_vars. Set them in the
+# dashboard, or in wrangler.production.toml. Example values for local development:
+# [vars]
+# ACCESS_TEAM_DOMAIN = ""
+# TURNSTILE_SITE_KEY = "1x00000000000000000000AA"  # Cloudflare always-pass test key
+# EMAIL_FROM = ""  # a domain verified in Resend
+# APP_ORIGIN = "http://localhost:3000"  # base URL for invoice links in cron emails
+# ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:5173"  # comma separated, for /api/public/*
 
 # When you create the D1 database yourself, add database_id.
 [[d1_databases]]

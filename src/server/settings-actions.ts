@@ -1,3 +1,4 @@
+import { fieldErrors, firstSegment } from '#/lib/field-errors'
 import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
@@ -35,12 +36,7 @@ export const updateSettings = createServerFn({ method: 'POST' })
   .handler(async ({ data }): Promise<SaveSettingsResult> => {
     const parsed = settingsSchema.safeParse(data)
     if (!parsed.success) {
-      const errors: Record<string, string> = {}
-      for (const issue of parsed.error.issues) {
-        const field = String(issue.path[0] ?? 'form')
-        errors[field] ??= issue.message
-      }
-      return { ok: false, errors }
+      return { ok: false, errors: fieldErrors(parsed.error, firstSegment) }
     }
     await saveSettings(createDb(env.DB), parsed.data)
     return { ok: true }
@@ -66,11 +62,7 @@ export const updateInvoiceEmailTemplate = createServerFn({ method: 'POST' })
   .handler(async ({ data }): Promise<SaveSettingsResult> => {
     const parsed = invoiceEmailTemplateSchema.safeParse(data)
     if (!parsed.success) {
-      const errors: Record<string, string> = {}
-      for (const issue of parsed.error.issues) {
-        errors[String(issue.path[0] ?? 'form')] ??= issue.message
-      }
-      return { ok: false, errors }
+      return { ok: false, errors: fieldErrors(parsed.error, firstSegment) }
     }
     const saved = await saveInvoiceEmailTemplate(createDb(env.DB), parsed.data)
     if (!saved) {
@@ -82,7 +74,6 @@ export const updateInvoiceEmailTemplate = createServerFn({ method: 'POST' })
     return { ok: true }
   })
 
-/** Renders the template with sample values so the editor can show a preview. */
 export const previewInvoiceEmail = createServerFn({ method: 'POST' })
   .validator((input: unknown) => invoiceEmailTemplateSchema.parse(input))
   .middleware([requireAdmin])

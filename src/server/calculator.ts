@@ -1,3 +1,4 @@
+import { DEFAULT_CURRENCY } from '#/lib/settings'
 import type { Db } from '#/db'
 import type { CalculatorCatalog } from '#/lib/calculator'
 import { listPackageCategories, listPackages } from './packages'
@@ -18,7 +19,7 @@ export async function loadCalculatorCatalog(
 
   return {
     businessName: settings?.businessName ?? '',
-    currency: settings?.currency ?? 'LKR',
+    currency: settings?.currency ?? DEFAULT_CURRENCY,
     taxRateBps: settings?.taxRateBps ?? 0,
     categories,
     packageCategories,

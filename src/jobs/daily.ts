@@ -1,5 +1,6 @@
 import { and, eq, lt } from 'drizzle-orm'
 import { createDb, schema, type Db } from '#/db'
+import { toIsoDate } from '#/lib/invoices'
 import { sendDueReminders } from './reminders'
 import { runRecurringSchedules } from './recurring'
 
@@ -36,7 +37,7 @@ async function executeDailyJobs(
   fetcher?: typeof fetch,
 ): Promise<DailyJobResult> {
   const db = createDb(env.DB)
-  const today = now.toISOString().slice(0, 10)
+  const today = toIsoDate(now)
 
   const markedOverdue = await markOverdueInvoices(db, today)
   console.log(`daily: marked ${markedOverdue} invoices overdue`)

@@ -1,15 +1,20 @@
 import { and, asc, eq, lte, sql } from 'drizzle-orm'
 import { schema, type Db } from '#/db'
 import { createId } from '#/lib/id'
-import { addDays } from '#/lib/invoices'
+import { addDays, toIsoDate } from '#/lib/invoices'
 import { nextRunAfter } from '#/lib/recurring'
-import { batch } from '#/server/invoices'
+import {
+  batch,
+  incrementInvoiceNumber,
+  invoiceNumberSql,
+  rowCount,
+} from '#/server/invoices'
 import {
   sendInvoiceEmail,
   type SendInvoiceResult,
 } from '#/server/invoice-email'
 
-const { recurringSchedules, invoices, invoiceItems, clients, settings } = schema
+const { recurringSchedules, invoices, invoiceItems, clients } = schema
 
 /** Keeps a run inside the free plan's subrequest limit; the rest run the next day. */
 export const MAX_SCHEDULES_PER_RUN = 5
@@ -40,7 +45,7 @@ export async function runRecurringSchedules(
   now: Date,
 ): Promise<RecurringResult> {
   const result: RecurringResult = { created: 0, sent: 0, failed: 0 }
-  const today = now.toISOString().slice(0, 10)
+  const today = toIsoDate(now)
 
   const config = await db.query.settings.findFirst()
   if (!config) return result
@@ -70,7 +75,7 @@ export async function runRecurringSchedules(
       const invoiceId = createId()
       const claimed = sql`exists (select 1 from ${recurringSchedules} where ${recurringSchedules.id} = ${schedule.id} and ${recurringSchedules.active} = 1 and ${recurringSchedules.nextRunDate} = ${schedule.nextRunDate})`
       const created = sql`exists (select 1 from ${invoices} where ${invoices.id} = ${invoiceId})`
-      const number = sql`(select ${settings.invoicePrefix} || '-' || ${today.slice(0, 4)} || '-' || printf('%04d', ${settings.nextInvoiceNumber}) from ${settings} where ${settings.id} = 'main')`
+      const number = invoiceNumberSql(today)
 
       const [inserted] = await batch(db, [
         db
@@ -86,10 +91,7 @@ export async function runRecurringSchedules(
               sql`select ${createId()}, ${invoiceId}, ${item.description}, ${item.quantity}, ${item.unitPrice}, ${index}, ${item.taxable === false ? 0 : 1} where ${created}`,
             ),
         ),
-        db
-          .update(settings)
-          .set({ nextInvoiceNumber: sql`${settings.nextInvoiceNumber} + 1` })
-          .where(and(eq(settings.id, 'main'), created)),
+        incrementInvoiceNumber(db, created),
         db
           .update(recurringSchedules)
           .set({
@@ -106,7 +108,7 @@ export async function runRecurringSchedules(
             ),
           ),
       ])
-      if ((inserted as unknown[]).length === 0) continue
+      if (rowCount(inserted) === 0) continue
 
       result.created++
       if (!schedule.autoSend) continue

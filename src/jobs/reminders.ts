@@ -3,7 +3,13 @@ import { z } from 'zod'
 import { schema, type Db } from '#/db'
 import { formatMinor } from '#/lib/decimal'
 import { createId } from '#/lib/id'
-import { addDays, amountDue, computeInvoiceTotals } from '#/lib/invoices'
+import {
+  addDays,
+  amountDue,
+  computeInvoiceTotals,
+  toIsoDate,
+} from '#/lib/invoices'
+import { groupBy } from '#/lib/utils'
 import {
   MAX_REMINDERS_PER_RUN,
   REMINDER_TEMPLATES,
@@ -47,8 +53,12 @@ export async function sendDueReminders(
   const settings = await db.query.settings.findFirst()
   if (!settings?.sendReminders) return NONE
 
-  const today = now.toISOString().slice(0, 10)
+  const today = toIsoDate(now)
   const horizon = addDays(today, 3)
+  const candidateFilter = and(
+    inArray(invoices.status, ['sent', 'overdue']),
+    lte(invoices.dueDate, horizon),
+  )
 
   const [candidates, items, logged] = await Promise.all([
     db
@@ -67,12 +77,7 @@ export async function sendDueReminders(
       })
       .from(invoices)
       .innerJoin(clients, eq(clients.id, invoices.clientId))
-      .where(
-        and(
-          inArray(invoices.status, ['sent', 'overdue']),
-          lte(invoices.dueDate, horizon),
-        ),
-      )
+      .where(candidateFilter)
       .orderBy(asc(invoices.dueDate), asc(invoices.number)),
     db
       .select({
@@ -83,17 +88,14 @@ export async function sendDueReminders(
       })
       .from(invoiceItems)
       .innerJoin(invoices, eq(invoices.id, invoiceItems.invoiceId))
-      .where(
-        and(
-          inArray(invoices.status, ['sent', 'overdue']),
-          lte(invoices.dueDate, horizon),
-        ),
-      ),
+      .where(candidateFilter),
     db
       .select({ invoiceId: emailLog.invoiceId, type: emailLog.type })
       .from(emailLog)
+      .innerJoin(invoices, eq(invoices.id, emailLog.invoiceId))
       .where(
         and(
+          candidateFilter,
           inArray(emailLog.type, [...REMINDER_TYPES]),
           ne(emailLog.status, 'failed'),
         ),
@@ -101,12 +103,7 @@ export async function sendDueReminders(
   ])
 
   const alreadySent = new Set(logged.map((l) => `${l.invoiceId}:${l.type}`))
-  const itemsByInvoice = new Map<string, typeof items>()
-  for (const item of items) {
-    const list = itemsByInvoice.get(item.invoiceId) ?? []
-    list.push(item)
-    itemsByInvoice.set(item.invoiceId, list)
-  }
+  const itemsByInvoice = groupBy(items, (item) => item.invoiceId)
 
   const due: {
     invoice: (typeof candidates)[number]

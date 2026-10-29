@@ -1,3 +1,4 @@
+import { fieldErrors } from '#/lib/field-errors'
 import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
@@ -51,11 +52,7 @@ export const saveServiceAction = createServerFn({ method: 'POST' })
   .handler(async ({ data }): Promise<SaveServiceResult> => {
     const parsed = serviceSchema.safeParse(data)
     if (!parsed.success) {
-      const errors: Record<string, string> = {}
-      for (const issue of parsed.error.issues) {
-        errors[issuePath(issue.path) || 'form'] ??= issue.message
-      }
-      return { ok: false, errors }
+      return { ok: false, errors: fieldErrors(parsed.error, issuePath) }
     }
     return saveService(createDb(env.DB), parsed.data)
   })
@@ -66,11 +63,7 @@ export const saveCategoriesAction = createServerFn({ method: 'POST' })
   .handler(async ({ data }): Promise<SaveCategoriesResult> => {
     const parsed = categoriesSchema.safeParse(data)
     if (!parsed.success) {
-      const errors: Record<string, string> = {}
-      for (const issue of parsed.error.issues) {
-        errors[issuePath(issue.path) || 'form'] ??= issue.message
-      }
-      return { ok: false, errors }
+      return { ok: false, errors: fieldErrors(parsed.error, issuePath) }
     }
     return saveCategories(createDb(env.DB), parsed.data.categories)
   })

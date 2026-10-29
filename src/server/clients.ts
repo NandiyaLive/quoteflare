@@ -29,7 +29,6 @@ export async function listClients(db: Db, filter: ClientFilter) {
 
 export type ClientRow = Awaited<ReturnType<typeof listClients>>[number]
 
-/** Active clients only, for the picker on invoices. */
 export function listActiveClients(db: Db) {
   return listClients(db, { q: '', status: 'active' })
 }

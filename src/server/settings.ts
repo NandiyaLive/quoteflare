@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import type { Db } from '#/db'
 import { schema } from '#/db'
 import {
+  DEFAULT_CURRENCY,
   LOGO_MAX_BYTES,
   LOGO_TYPES,
   type SettingsData,
@@ -9,6 +10,7 @@ import {
 } from '#/lib/settings'
 import { bpsToPercent } from '#/lib/decimal'
 import { createId } from '#/lib/id'
+import { isSafeSvg } from '#/lib/svg'
 import { withDefaults, type InvoiceEmailTemplate } from '#/lib/email-template'
 
 const { settings } = schema
@@ -21,7 +23,7 @@ const emptySettings: SettingsFormValues = {
   address: '',
   email: '',
   replyToEmail: '',
-  currency: 'LKR',
+  currency: DEFAULT_CURRENCY,
   taxRate: '0',
   invoicePrefix: 'INV',
   nextInvoiceNumber: '1',
@@ -105,15 +107,6 @@ function matchesType(type: string, bytes: Uint8Array) {
   return /<svg[\s>]/i.test(head)
 }
 
-// Active content that has no place in a logo. The serving route also sandboxes
-// the file, so this is a second layer.
-const UNSAFE_SVG =
-  /<script|<foreignObject|<iframe|<embed|<object|\son\w+\s*=|javascript:/i
-
-function isSafeSvg(bytes: Uint8Array) {
-  return !UNSAFE_SVG.test(new TextDecoder().decode(bytes))
-}
-
 const formatSize = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
 
 export async function storeLogo(
@@ -138,7 +131,10 @@ export async function storeLogo(
   if (!matchesType(file.type, bytes)) {
     return { ok: false, error: 'The file contents do not match its type.' }
   }
-  if (file.type === 'image/svg+xml' && !isSafeSvg(bytes)) {
+  if (
+    file.type === 'image/svg+xml' &&
+    !isSafeSvg(new TextDecoder().decode(bytes))
+  ) {
     return {
       ok: false,
       error: 'The SVG contains scripts or embedded content. Remove them.',

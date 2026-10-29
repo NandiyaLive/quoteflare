@@ -1,3 +1,4 @@
+import { fieldErrors, firstSegment } from '#/lib/field-errors'
 import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
@@ -39,11 +40,7 @@ export const saveClientAction = createServerFn({ method: 'POST' })
   .handler(async ({ data }): Promise<SaveClientResult> => {
     const parsed = clientSchema.safeParse(data)
     if (!parsed.success) {
-      const errors: Record<string, string> = {}
-      for (const issue of parsed.error.issues) {
-        errors[String(issue.path[0] ?? 'form')] ??= issue.message
-      }
-      return { ok: false, errors }
+      return { ok: false, errors: fieldErrors(parsed.error, firstSegment) }
     }
     const result = await saveClient(createDb(env.DB), parsed.data)
     return result.ok ? result : { ok: false, errors: { form: result.error } }

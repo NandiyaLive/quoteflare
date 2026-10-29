@@ -9,7 +9,6 @@ const statusOf = (error: unknown): number | null => {
   return null
 }
 
-/** Turns a thrown error from a server call into a message the user can act on. */
 export function describeFailure(error: unknown, fallback: string): string {
   const status = statusOf(error)
   // The admin middleware answers 401 with the body "Unauthorized", which the

@@ -35,7 +35,7 @@ export async function applyEmailEvent(
   if (!status) return 'ignored'
 
   const { emailLog } = schema
-  await db
+  const updated = await db
     .update(emailLog)
     .set({ status })
     .where(
@@ -44,5 +44,6 @@ export async function applyEmailEvent(
         inArray(emailLog.status, [...replaceableFrom[status]]),
       ),
     )
-  return 'updated'
+    .returning({ id: emailLog.id })
+  return updated.length > 0 ? 'updated' : 'ignored'
 }

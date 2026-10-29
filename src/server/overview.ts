@@ -1,3 +1,4 @@
+import { DEFAULT_CURRENCY } from '#/lib/settings'
 import type { Db } from '#/db'
 import { invoiceStatuses, type InvoiceStatus } from '#/db/schema'
 import { listInvoices, type InvoiceListRow } from './invoices'
@@ -159,7 +160,7 @@ export async function loadOverview(db: Db, today: string): Promise<Overview> {
     invoices,
     quotes,
     schedules,
-    currency: settings?.currency ?? 'LKR',
+    currency: settings?.currency ?? DEFAULT_CURRENCY,
     today,
   })
 }

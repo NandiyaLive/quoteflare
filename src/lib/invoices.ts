@@ -47,11 +47,11 @@ export const MAX_INVOICE_ITEMS = 50
 export const MIN_ADVANCE_PERCENT = 1
 export const MAX_ADVANCE_PERCENT = 99
 
+export const toIsoDate = (date: Date) => date.toISOString().slice(0, 10)
+
 const isRealDate = (value: string) => {
   const date = new Date(`${value}T00:00:00Z`)
-  return (
-    !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
-  )
+  return !Number.isNaN(date.getTime()) && toIsoDate(date) === value
 }
 
 export const dateSchema = z
@@ -215,7 +215,6 @@ export type InvoiceAdvance = {
   balanceAmount: number
 }
 
-/** Splits the invoice total into the advance and the balance. Null when the invoice has no advance. */
 export function advanceFor(
   total: number,
   advanceBps: number | null,
@@ -245,7 +244,7 @@ export function amountDue(
 export const addDays = (date: string, days: number) => {
   const next = new Date(`${date}T00:00:00Z`)
   next.setUTCDate(next.getUTCDate() + days)
-  return next.toISOString().slice(0, 10)
+  return toIsoDate(next)
 }
 
 export const todayIso = () => {

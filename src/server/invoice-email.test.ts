@@ -221,6 +221,36 @@ describe('sendInvoiceEmail', () => {
     expect(await logs()).toHaveLength(2)
   })
 
+  it('refuses a second send while the first is still pending', async () => {
+    await db.insert(schema.emailLog).values({
+      invoiceId,
+      type: 'invoice',
+      toAddress: 'client@example.com',
+      status: 'pending',
+    })
+    const { calls, fetcher } = stubFetch(Response.json({ id: 'x' }))
+    const result = await sendInvoiceEmail(db, deps(fetcher), invoiceId)
+    expect(result).toEqual({
+      ok: false,
+      error: 'An email for this invoice is already being sent.',
+    })
+    expect(calls).toHaveLength(0)
+    expect(await logs()).toHaveLength(1)
+  })
+
+  it('sends again when the pending row is older than a minute', async () => {
+    await db.insert(schema.emailLog).values({
+      invoiceId,
+      type: 'invoice',
+      toAddress: 'client@example.com',
+      status: 'pending',
+      createdAt: new Date(Date.now() - 120_000).toISOString(),
+    })
+    const { fetcher } = stubFetch(Response.json({ id: 'x' }))
+    const result = await sendInvoiceEmail(db, deps(fetcher), invoiceId)
+    expect(result.ok).toBe(true)
+  })
+
   it.each(['paid', 'void'])(
     'refuses a %s invoice and logs nothing',
     async (status) => {

@@ -1,3 +1,4 @@
+import { DEFAULT_CURRENCY } from '#/lib/settings'
 import { asc, eq, sql } from 'drizzle-orm'
 import type { Db } from '#/db'
 import { schema } from '#/db'
@@ -51,7 +52,7 @@ export async function listSchedules(db: Db): Promise<RecurringRow[]> {
   return rows.map((row) => ({
     ...row,
     total: computeInvoiceTotals(row.items, settings?.taxRateBps ?? 0, 0).total,
-    currency: settings?.currency ?? 'LKR',
+    currency: settings?.currency ?? DEFAULT_CURRENCY,
   }))
 }
 

@@ -10,6 +10,7 @@ import {
   quoteRequestSchema,
   quoteStatusUpdateSchema,
 } from '#/lib/quotes'
+import { toIsoDate } from '#/lib/invoices'
 import { z } from 'zod'
 import { requireAdmin } from './admin-middleware'
 import { isRateLimited } from './rate-limit'
@@ -95,7 +96,7 @@ export const convertQuoteAction = createServerFn({ method: 'POST' })
     convertQuoteToInvoice(
       createDb(env.DB),
       data.id,
-      new Date().toISOString().slice(0, 10),
+      data.today,
       data.advancePercent,
     ),
   )
@@ -113,6 +114,6 @@ export const getQuoteSchedulePrefillAction = createServerFn()
       createDb(env.DB),
       data.quoteId,
       data.interval,
-      new Date().toISOString().slice(0, 10),
+      toIsoDate(new Date()),
     ),
   )

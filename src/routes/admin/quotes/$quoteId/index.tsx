@@ -25,7 +25,11 @@ import {
 } from '@/components/ui/table'
 import { formatDate } from '@/lib/format'
 import { formatMinor } from '#/lib/decimal'
-import { MAX_ADVANCE_PERCENT, MIN_ADVANCE_PERCENT } from '#/lib/invoices'
+import {
+  MAX_ADVANCE_PERCENT,
+  MIN_ADVANCE_PERCENT,
+  todayIso,
+} from '#/lib/invoices'
 import type { PricedLine } from '#/lib/pricing'
 import { quoteRecurringIntervals } from '#/lib/quotes'
 import { RECURRING_INTERVAL_LABELS } from '#/lib/recurring'
@@ -151,7 +155,11 @@ function QuotePage() {
       const result = await callAction(
         () =>
           convertQuoteAction({
-            data: { id: quote.id, advancePercent: advance ? percent : null },
+            data: {
+              id: quote.id,
+              today: todayIso(),
+              advancePercent: advance ? percent : null,
+            },
           }),
         'Could not create the invoice. Try again.',
       )

@@ -14,6 +14,8 @@ export const CURRENCIES = [
   'AED',
 ] as const
 
+export const DEFAULT_CURRENCY = 'USD'
+
 export const LOGO_MAX_BYTES = 1024 * 1024
 
 export const LOGO_TYPES = {

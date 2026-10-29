@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, ne, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, ne, sql, type SQL } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { Db } from '#/db'
 import { schema } from '#/db'
@@ -12,6 +12,7 @@ import {
   type InvoiceTotals,
 } from '#/lib/invoices'
 import { createId, createPublicToken, isPublicToken } from '#/lib/id'
+import { groupBy } from '#/lib/utils'
 
 const { invoices, invoiceItems, clients, settings } = schema
 
@@ -81,6 +82,29 @@ export type SaveInvoiceResult =
 export const batch = (db: Db, statements: BatchItem<'sqlite'>[]) =>
   db.batch(statements as [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]])
 
+// A batch result is typed per statement, which a built-up list loses.
+export const rowCount = (result: unknown) => (result as unknown[]).length
+
+// Reads and increments the same row inside one batch, so two writers cannot
+// receive the same number.
+export const invoiceNumberSql = (issueDate: string) =>
+  sql<string>`(select ${settings.invoicePrefix} || '-' || ${issueDate.slice(0, 4)} || '-' || printf('%04d', ${settings.nextInvoiceNumber}) from ${settings} where ${settings.id} = 'main')`
+
+export const incrementInvoiceNumber = (db: Db, only?: SQL) =>
+  db
+    .update(settings)
+    .set({ nextInvoiceNumber: sql`${settings.nextInvoiceNumber} + 1` })
+    .where(and(eq(settings.id, 'main'), only))
+
+export async function findInvoice(db: Db, id: string) {
+  const [invoice] = await db
+    .select()
+    .from(invoices)
+    .where(eq(invoices.id, id))
+    .limit(1)
+  return invoice
+}
+
 export async function listInvoices(db: Db): Promise<InvoiceListRow[]> {
   const [rows, items] = await Promise.all([
     db
@@ -110,15 +134,7 @@ export async function listInvoices(db: Db): Promise<InvoiceListRow[]> {
       .from(invoiceItems),
   ])
 
-  const byInvoice = new Map<
-    string,
-    { quantity: number; unitPrice: number; taxable: boolean }[]
-  >()
-  for (const item of items) {
-    const list = byInvoice.get(item.invoiceId) ?? []
-    list.push(item)
-    byInvoice.set(item.invoiceId, list)
-  }
+  const byInvoice = groupBy(items, (item) => item.invoiceId)
 
   return rows.map(({ taxRateBps, discount, ...row }) => ({
     ...row,
@@ -130,9 +146,7 @@ export async function getInvoice(
   db: Db,
   id: string,
 ): Promise<InvoiceDetail | null> {
-  const invoice = (
-    await db.select().from(invoices).where(eq(invoices.id, id)).limit(1)
-  )[0]
+  const invoice = await findInvoice(db, id)
   if (!invoice) return null
 
   const [client, items] = await Promise.all([
@@ -168,9 +182,11 @@ export async function getInvoice(
 }
 
 async function checkClient(db: Db, clientId: string, currentClientId?: string) {
-  const client = (
-    await db.select().from(clients).where(eq(clients.id, clientId)).limit(1)
-  )[0]
+  const [client] = await db
+    .select()
+    .from(clients)
+    .where(eq(clients.id, clientId))
+    .limit(1)
   if (!client) return 'Choose an existing client.'
   if (client.archived && clientId !== currentClientId) {
     return 'Archived clients cannot be invoiced. Restore the client first.'
@@ -197,9 +213,7 @@ export async function createInvoice(
   }
 
   const id = createId()
-  // The number is read from the same row the last statement increments, in
-  // one batch, so two saves can never receive the same number.
-  const number = sql<string>`(select ${settings.invoicePrefix} || '-' || ${data.issueDate.slice(0, 4)} || '-' || printf('%04d', ${settings.nextInvoiceNumber}) from ${settings} where ${settings.id} = 'main')`
+  const number = invoiceNumberSql(data.issueDate)
   const currency = sql<string>`(select ${settings.currency} from ${settings} where ${settings.id} = 'main')`
 
   try {
@@ -225,10 +239,7 @@ export async function createInvoice(
           taxable: item.taxable,
         }),
       ),
-      db
-        .update(settings)
-        .set({ nextInvoiceNumber: sql`${settings.nextInvoiceNumber} + 1` })
-        .where(eq(settings.id, 'main')),
+      incrementInvoiceNumber(db),
     ])
   } catch (error) {
     if (isDuplicateNumber(error)) {
@@ -253,9 +264,7 @@ export async function updateInvoice(
   id: string,
   data: InvoiceData,
 ): Promise<SaveInvoiceResult> {
-  const existing = (
-    await db.select().from(invoices).where(eq(invoices.id, id)).limit(1)
-  )[0]
+  const existing = await findInvoice(db, id)
   if (!existing) return { ok: false, error: 'Invoice not found.' }
   if (existing.status !== 'draft') {
     return { ok: false, error: 'Only draft invoices can be edited.' }
@@ -292,7 +301,7 @@ export async function updateInvoice(
     ),
   ])
 
-  if ((updated as unknown[]).length === 0) {
+  if (rowCount(updated) === 0) {
     return { ok: false, error: 'Only draft invoices can be edited.' }
   }
   return { ok: true, id, number: existing.number }
@@ -304,9 +313,7 @@ export async function changeInvoiceStatus(
   to: InvoiceStatus,
   token = createPublicToken(),
 ): Promise<ChangeStatusResult> {
-  const existing = (
-    await db.select().from(invoices).where(eq(invoices.id, id)).limit(1)
-  )[0]
+  const existing = await findInvoice(db, id)
   if (!existing) return { ok: false, error: 'Invoice not found.' }
   if (!canTransition(existing.status, to)) {
     return {
@@ -346,13 +353,11 @@ export async function getPublicInvoice(
 ): Promise<PublicInvoice | null> {
   if (!isPublicToken(token)) return null
 
-  const invoice = (
-    await db
-      .select()
-      .from(invoices)
-      .where(and(eq(invoices.publicToken, token), ne(invoices.status, 'draft')))
-      .limit(1)
-  )[0]
+  const [invoice] = await db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.publicToken, token), ne(invoices.status, 'draft')))
+    .limit(1)
   if (!invoice) return null
 
   const [client, business, items] = await Promise.all([
@@ -425,9 +430,7 @@ export async function setAdvancePaid(
   paid: boolean,
   now = new Date(),
 ): Promise<SetAdvancePaidResult> {
-  const existing = (
-    await db.select().from(invoices).where(eq(invoices.id, id)).limit(1)
-  )[0]
+  const existing = await findInvoice(db, id)
   if (!existing) return { ok: false, error: 'Invoice not found.' }
   if (!existing.advanceBps) {
     return { ok: false, error: 'This invoice has no advance.' }
