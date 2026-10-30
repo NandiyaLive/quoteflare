@@ -151,6 +151,9 @@ export const services = sqliteTable(
     estimatedDaysMin: real('estimated_days_min'),
     estimatedDaysMax: real('estimated_days_max'),
     active: integer('active', { mode: 'boolean' }).notNull().default(true),
+    isPrivate: integer('is_private', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     sortOrder: integer('sort_order').notNull().default(0),
   },
   (t) => [
@@ -233,6 +236,9 @@ export const packages = sqliteTable(
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
     active: integer('active', { mode: 'boolean' }).notNull().default(true),
+    isPrivate: integer('is_private', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     sortOrder: integer('sort_order').notNull().default(0),
   },
   (t) => [

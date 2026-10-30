@@ -23,7 +23,11 @@ export async function loadCalculatorCatalog(db: Db): Promise<
       listPackages(db, 'active'),
       db.query.settings.findFirst(),
     ])
-  const activeIds = new Set(services.map((s) => s.id))
+  // Private services and packages stay out of the public catalog. The quote
+  // endpoints validate against this catalog, so they reject private ids too.
+  const publicServices = services.filter((s) => !s.isPrivate)
+  const publicPackages = packages.filter((p) => !p.isPrivate)
+  const activeIds = new Set(publicServices.map((s) => s.id))
 
   return {
     businessName: settings?.businessName ?? '',
@@ -34,7 +38,7 @@ export async function loadCalculatorCatalog(db: Db): Promise<
     taxRateBps: settings?.taxRateBps ?? 0,
     categories,
     packageCategories,
-    packages: packages
+    packages: publicPackages
       .map((p) => ({
         id: p.id,
         categoryId: p.categoryId,
@@ -49,7 +53,7 @@ export async function loadCalculatorCatalog(db: Db): Promise<
           })),
       }))
       .filter((p) => p.items.length > 0),
-    services: services.map((s) => ({
+    services: publicServices.map((s) => ({
       id: s.id,
       name: s.name,
       categoryId: s.categoryId,
