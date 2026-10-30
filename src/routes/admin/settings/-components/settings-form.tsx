@@ -42,6 +42,14 @@ import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 type FieldName = Exclude<keyof SettingsFormValues, 'sendReminders'>
 
+function RequiredMark() {
+  return (
+    <span aria-hidden="true" className="text-red-500">
+      *
+    </span>
+  )
+}
+
 export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
   const router = useRouter()
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({})
@@ -88,7 +96,10 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
         const invalid = errors.length > 0
         return (
           <Field data-invalid={invalid}>
-            <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+              {label}
+              {props.required && <RequiredMark />}
+            </FieldLabel>
             <Input
               id={field.name}
               name={field.name}
@@ -132,6 +143,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
               </FieldDescription>
               <FieldGroup className="md:grid md:grid-cols-2">
                 {text('businessName', 'Business name', {
+                  required: true,
                   autoComplete: 'organization',
                   placeholder: 'Acme Studio',
                 })}
@@ -228,7 +240,10 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                 <form.Field name="currency">
                   {(field) => (
                     <Field>
-                      <FieldLabel htmlFor="currency">Currency</FieldLabel>
+                      <FieldLabel htmlFor="currency">
+                        Currency
+                        <RequiredMark />
+                      </FieldLabel>
                       <Select
                         value={field.state.value}
                         onValueChange={(v) => v && field.handleChange(v)}
@@ -250,22 +265,23 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                 {text(
                   'taxRate',
                   'Tax rate (%)',
-                  { inputMode: 'decimal', placeholder: '15' },
+                  { required: true, inputMode: 'decimal', placeholder: '15' },
                   'Default for new invoices, for example 15 or 7.5.',
                 )}
                 {text('invoicePrefix', 'Invoice prefix', {
+                  required: true,
                   placeholder: 'INV',
                 })}
                 {text(
                   'nextInvoiceNumber',
                   'Next invoice number',
-                  { inputMode: 'numeric', placeholder: '1' },
+                  { required: true, inputMode: 'numeric', placeholder: '1' },
                   'Lowering this below a number already issued will cause a duplicate.',
                 )}
                 {text(
                   'paymentTermDays',
                   'Payment term (days)',
-                  { inputMode: 'numeric', placeholder: '14' },
+                  { required: true, inputMode: 'numeric', placeholder: '14' },
                   'Days between the issue date and the due date on recurring invoices.',
                 )}
                 <form.Field name="sendReminders">
