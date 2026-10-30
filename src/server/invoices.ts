@@ -52,6 +52,7 @@ export type PublicInvoice = {
     currency: string
     taxRateBps: number
     notes: string
+    paymentLink: string
   }
   advance: InvoiceAdvance | null
   client: { name: string; company: string; email: string; address: string }
@@ -230,6 +231,7 @@ export async function createInvoice(
         discount: data.discount,
         advanceBps: data.advance,
         notes: data.notes,
+        paymentLink: data.paymentLink,
       }),
       ...data.items.map((item, index) =>
         db.insert(invoiceItems).values({
@@ -289,6 +291,7 @@ export async function updateInvoice(
         discount: data.discount,
         advanceBps: data.advance,
         notes: data.notes,
+        paymentLink: data.paymentLink,
       })
       .where(and(eq(invoices.id, id), eq(invoices.status, 'draft')))
       .returning({ id: invoices.id }),
@@ -393,6 +396,7 @@ export async function getPublicInvoice(
       currency: invoice.currency,
       taxRateBps: invoice.taxRateBps,
       notes: invoice.notes,
+      paymentLink: invoice.paymentLink,
     },
     advance: advanceFor(
       totals.total,

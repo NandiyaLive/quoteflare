@@ -332,6 +332,8 @@ export const invoices = sqliteTable(
     advancePaidAt: text('advance_paid_at'),
     // Plain text, may span several lines. Shown on the public invoice.
     notes: text('notes').notNull().default(''),
+    // Hosted checkout URL (PayHere, Stripe, Payoneer). Empty means no link.
+    paymentLink: text('payment_link').notNull().default(''),
     sentAt: text('sent_at'),
     lastReminderAt: text('last_reminder_at'),
     createdAt: createdAt(),

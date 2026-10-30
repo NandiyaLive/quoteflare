@@ -61,6 +61,7 @@ const initialValues = (
       discount: '0',
       advance: '',
       notes: '',
+      paymentLink: '',
       items: [{ ...emptyInvoiceItem }],
     }
   }
@@ -75,6 +76,7 @@ const initialValues = (
       ? bpsToPercent(invoice.invoice.advanceBps)
       : '',
     notes: invoice.invoice.notes,
+    paymentLink: invoice.invoice.paymentLink,
     items: invoice.items.map((item) => ({
       description: item.description,
       quantity: String(item.quantity),
@@ -256,6 +258,35 @@ export function InvoiceEditor({
                   inputMode: 'decimal',
                   placeholder: 'No advance',
                 })}
+                <form.Field name="paymentLink">
+                  {(field) => {
+                    const errors = withServerError(
+                      'paymentLink',
+                      field.state.meta.errors,
+                    )
+                    const invalid = errors.length > 0
+                    return (
+                      <Field data-invalid={invalid} className="md:col-span-2">
+                        <FieldLabel htmlFor="invoice-payment-link">
+                          Payment link, optional
+                        </FieldLabel>
+                        <Input
+                          id="invoice-payment-link"
+                          name="paymentLink"
+                          type="url"
+                          inputMode="url"
+                          maxLength={2000}
+                          placeholder="https:// PayHere, Stripe or Payoneer link"
+                          value={field.state.value ?? ''}
+                          aria-invalid={invalid}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                        />
+                        {invalid && <FieldError errors={errors} />}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
                 <form.Field name="notes">
                   {(field) => {
                     const errors = withServerError(
