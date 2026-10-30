@@ -92,6 +92,10 @@ export const settings = sqliteTable(
     email: text('email').notNull().default(''),
     replyToEmail: text('reply_to_email').notNull().default(''),
     currency: text('currency').notNull().default('USD'),
+    approvedCurrencies: text('approved_currencies', { mode: 'json' })
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'`),
     taxRateBps: integer('tax_rate_bps').notNull().default(0),
     invoicePrefix: text('invoice_prefix').notNull().default('INV'),
     nextInvoiceNumber: integer('next_invoice_number').notNull().default(1),

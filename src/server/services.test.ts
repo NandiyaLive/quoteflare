@@ -520,16 +520,14 @@ describe('private services', () => {
     const packageIds = (await db.select().from(schema.packages)).map(
       (p) => p.id,
     )
-    await db
-      .insert(schema.packageItems)
-      .values(
-        packageIds.map((packageId) => ({
-          packageId,
-          serviceId: hidden,
-          quantity: 1,
-          optionIds: [],
-        })),
-      )
+    await db.insert(schema.packageItems).values(
+      packageIds.map((packageId) => ({
+        packageId,
+        serviceId: hidden,
+        quantity: 1,
+        optionIds: [],
+      })),
+    )
 
     const catalog = await loadCalculatorCatalog(db)
     expect(catalog.services.map((s) => s.name)).toEqual(['Public'])

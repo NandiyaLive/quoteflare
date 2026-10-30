@@ -120,6 +120,13 @@
       "when": 1793364941650,
       "tag": "0016_add_invoice_payment_link",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1793366821236,
+      "tag": "0017_add_approved_currencies",
+      "breakpoints": true
     }
   ]
 }

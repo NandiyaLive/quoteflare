@@ -1,4 +1,4 @@
-import { CheckIcon, ChevronsUpDownIcon, XIcon } from "lucide-react"
+import { ChevronsUpDownIcon, XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -114,7 +114,7 @@ export function MultiSelectTrigger({
 
   return (
     <PopoverTrigger render={<Button {...props} variant={props.variant ?? "outline"} role={props.role ?? "combobox"} aria-expanded={props["aria-expanded"] ?? open} className={cn(
-                "flex h-auto min-h-9 w-fit items-center justify-between gap-2 overflow-hidden rounded-md border border-input bg-transparent px-3 py-1.5 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[placeholder]:text-muted-foreground dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
+                "flex h-auto min-h-9 w-fit items-center justify-between gap-2 overflow-hidden rounded-md border border-input bg-transparent px-3 py-1.5 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
                 className,
               )} />}>{children}<ChevronsUpDownIcon className="size-4 shrink-0 opacity-50" /></PopoverTrigger>
   )
@@ -233,7 +233,7 @@ export function MultiSelectValue({
           >
             {items.get(value)}
             {clickToRemove && (
-              <XIcon className="size-2 text-muted-foreground group-hover:text-destructive" />
+              <XIcon className="size-3 text-muted-foreground group-hover:text-destructive" />
             )}
           </Badge>
         ))}
@@ -267,7 +267,10 @@ export function MultiSelectContent({
           <CommandList>{children}</CommandList>
         </Command>
       </div>
-      <PopoverContent className="min-w-[var(--radix-popover-trigger-width)] p-0">
+      <PopoverContent
+        align="start"
+        className="w-(--anchor-width) min-w-(--anchor-width) gap-0 p-0"
+      >
         <Command {...props}>
           {canSearch ? (
             <CommandInput
@@ -278,7 +281,7 @@ export function MultiSelectContent({
           ) : (
             <button autoFocus className="sr-only" />
           )}
-          <CommandList>
+          <CommandList className={cn(canSearch && "mt-2")}>
             {canSearch && (
               <CommandEmpty>
                 {typeof search === "object" ? search.emptyMessage : undefined}
@@ -312,14 +315,13 @@ export function MultiSelectItem({
   return (
     <CommandItem
       {...props}
+      value={value}
+      data-checked={isSelected}
       onSelect={() => {
         toggleValue(value)
         onSelect?.(value)
       }}
     >
-      <CheckIcon
-        className={cn("mr-2 size-4", isSelected ? "opacity-100" : "opacity-0")}
-      />
       {children}
     </CommandItem>
   )
