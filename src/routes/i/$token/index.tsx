@@ -149,6 +149,15 @@ function PublicInvoicePage() {
         />
       </div>
 
+      {invoice.notes && (
+        <section data-print-keep className="flex flex-col gap-1 text-sm">
+          <h3 className="font-medium">Notes</h3>
+          <p className="whitespace-pre-line text-muted-foreground">
+            {invoice.notes}
+          </p>
+        </section>
+      )}
+
       {bankRows.length > 0 && (
         <section data-print-keep className="flex flex-col gap-1 text-sm">
           <h3 className="font-medium">Bank details</h3>

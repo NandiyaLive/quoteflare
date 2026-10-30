@@ -99,6 +99,13 @@
       "when": 1793268151581,
       "tag": "0013_add_calculator_text",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1793348554543,
+      "tag": "0014_add_invoice_notes",
+      "breakpoints": true
     }
   ]
 }
