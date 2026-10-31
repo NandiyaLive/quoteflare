@@ -27,6 +27,7 @@ import {
   EDITABLE_QUOTE_STATUSES,
   INVOICEABLE_QUOTE_STATUSES,
   repriceQuote,
+  type QuoteCreateInput,
   type QuoteEditInput,
   PUBLIC_QUOTE_STATUSES,
   SENDABLE_QUOTE_STATUSES,
@@ -151,6 +152,49 @@ export async function submitQuote(
     logQuoteEvent(db, id, 'received'),
   ])
   await onCreated?.(id)
+  return { ok: true, id }
+}
+
+export type CreateQuoteResult =
+  { ok: true; id: string } | { ok: false; error: string }
+
+/**
+ * Stores a quote the admin wrote. It starts as `new`, like a calculator
+ * request, so the admin reviews it and sends it from the detail page.
+ */
+export async function createQuote(
+  db: Db,
+  input: QuoteCreateInput,
+): Promise<CreateQuoteResult> {
+  const business = await db.query.settings.findFirst()
+  if (!business) {
+    return {
+      ok: false,
+      error: 'Save your business details in settings before creating quotes.',
+    }
+  }
+  const breakdown = repriceQuote(input, [], business.taxRateBps, createId)
+  const id = createId()
+  await batch(db, [
+    db.insert(quotes).values({
+      id,
+      number: quoteNumberSql,
+      contactName: input.name,
+      contactEmail: input.email,
+      selection: [],
+      breakdown,
+      taxRateBps: business.taxRateBps,
+      adminNote: input.adminNote,
+      currency: business.currency,
+      total: breakdown.total,
+      source: 'admin',
+    }),
+    db
+      .update(settings)
+      .set({ nextQuoteNumber: sql`${settings.nextQuoteNumber} + 1` })
+      .where(eq(settings.id, 'main')),
+    logQuoteEvent(db, id, 'created'),
+  ])
   return { ok: true, id }
 }
 

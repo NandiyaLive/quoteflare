@@ -31,6 +31,7 @@ export const quoteStatuses = [
   'converted',
   'dismissed',
 ] as const
+export const quoteSources = ['calculator', 'admin'] as const
 export const modifierTypes = ['flat', 'percent'] as const
 export const recurringIntervals = [
   'weekly',
@@ -58,6 +59,7 @@ export const emailStatuses = [
 
 export const quoteEventTypes = [
   'received',
+  'created',
   'edited',
   'sent',
   'reminded',
@@ -72,6 +74,7 @@ export const quoteEventTypes = [
 export type QuoteEventType = (typeof quoteEventTypes)[number]
 export type InvoiceStatus = (typeof invoiceStatuses)[number]
 export type QuoteStatus = (typeof quoteStatuses)[number]
+export type QuoteSource = (typeof quoteSources)[number]
 export type ModifierType = (typeof modifierTypes)[number]
 export type RecurringInterval = (typeof recurringIntervals)[number]
 export type PricingMode = (typeof pricingModes)[number]
@@ -338,10 +341,15 @@ export const quotes = sqliteTable(
     currency: text('currency').notNull().default('LKR'),
     total: integer('total').notNull(),
     status: text('status', { enum: quoteStatuses }).notNull().default('new'),
+    // Where the quote started: a visitor's calculator request or the admin.
+    source: text('source', { enum: quoteSources })
+      .notNull()
+      .default('calculator'),
     createdAt: createdAt(),
   },
   (t) => [
     check('quotes_status', inList('status', quoteStatuses)),
+    check('quotes_source', inList('source', quoteSources)),
     index('quotes_status_idx').on(t.status),
   ],
 )

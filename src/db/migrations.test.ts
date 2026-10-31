@@ -152,3 +152,68 @@ describe('widening the quote statuses', () => {
     await fresh.dispose()
   })
 })
+
+describe('adding the quote source', () => {
+  it('marks existing quotes as calculator requests and accepts created events', async () => {
+    const files = readdirSync(migrationsDir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort()
+    const target = files.findIndex((f) => f.startsWith('0022_'))
+    const fresh = new Miniflare({
+      modules: true,
+      script: 'export default { fetch() { return new Response(null) } }',
+      d1Databases: { DB: createId() },
+    })
+    const db = await fresh.getD1Database('DB')
+    const run = async (file: string) => {
+      const statements = readFileSync(join(migrationsDir, file), 'utf8')
+        .split('--> statement-breakpoint')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      await db.batch(statements.map((s) => db.prepare(s)))
+    }
+    for (const file of files.slice(0, target)) await run(file)
+
+    const quoteId = createId()
+    await db.batch([
+      db
+        .prepare(
+          "insert into quotes (id, contact_name, contact_email, selection, total) values (?, 'Jo', 'jo@example.com', '[]', 100)",
+        )
+        .bind(quoteId),
+      db
+        .prepare(
+          "insert into quote_events (id, quote_id, type) values (?, ?, 'received')",
+        )
+        .bind(createId(), quoteId),
+    ])
+
+    await run(files[target])
+
+    expect(
+      await db
+        .prepare('select source from quotes where id = ?')
+        .bind(quoteId)
+        .first(),
+    ).toEqual({ source: 'calculator' })
+    expect(
+      await db
+        .prepare('select type from quote_events where quote_id = ?')
+        .bind(quoteId)
+        .all(),
+    ).toMatchObject({ results: [{ type: 'received' }] })
+    await db
+      .prepare(
+        "insert into quote_events (id, quote_id, type) values (?, ?, 'created')",
+      )
+      .bind(createId(), quoteId)
+      .run()
+    await expect(
+      db
+        .prepare("update quotes set source = 'other' where id = ?")
+        .bind(quoteId)
+        .run(),
+    ).rejects.toThrow()
+    await fresh.dispose()
+  })
+})

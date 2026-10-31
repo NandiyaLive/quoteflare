@@ -89,7 +89,10 @@ export function buildOverview(input: {
     (i) => i.status === 'sent' || i.status === 'overdue',
   )
   const newQuotes = input.quotes.filter(
-    (q) => q.status === 'new' && q.currency === currency,
+    (q) =>
+      q.status === 'new' &&
+      q.source === 'calculator' &&
+      q.currency === currency,
   )
 
   const months = lastMonths(today, CHART_MONTHS).map((month) => {

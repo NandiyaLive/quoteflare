@@ -15,6 +15,7 @@ import type { PricedLine, PricingBreakdown } from './pricing'
 
 export const QUOTE_EVENT_LABELS = {
   received: 'Request received',
+  created: 'Created by you',
   edited: 'Edited',
   sent: 'Sent to the client',
   reminded: 'Reminder sent',
@@ -251,6 +252,13 @@ export const quoteEditSchema = z.strictObject({
 })
 
 export type QuoteEditInput = z.infer<typeof quoteEditSchema>
+
+/** A quote the admin writes from scratch, for a client who did not use the calculator. */
+export const quoteCreateSchema = quoteEditSchema
+  .omit({ id: true })
+  .extend(quoteDetailsSchema.pick({ name: true, email: true }).shape)
+
+export type QuoteCreateInput = z.infer<typeof quoteCreateSchema>
 
 /**
  * Rebuilds a quote's one-time lines from edited items and totals them again.

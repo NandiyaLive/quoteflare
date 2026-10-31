@@ -2,7 +2,7 @@ import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import { dismissQuotesAction, getQuotes } from '#/server/quote-actions'
 import { useMemo } from 'react'
 import { Subscribe, type ColumnDef } from '@tanstack/react-table'
-import { CircleDotIcon, DownloadIcon, SearchIcon } from 'lucide-react'
+import { CircleDotIcon, DownloadIcon, PlusIcon, SearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { useConfirm } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
@@ -104,6 +104,7 @@ function QuotesPage() {
             </Link>
             <div className="text-muted-foreground">
               {row.original.number ? `${row.original.number} · ` : ''}
+              {row.original.source === 'admin' ? 'Created by you · ' : ''}
               {row.original.contactEmail}
             </div>
           </>
@@ -205,9 +206,13 @@ function QuotesPage() {
         description={
           counts.new
             ? `${counts.new} new ${counts.new === 1 ? 'request' : 'requests'} waiting.`
-            : 'Requests submitted from the calculator.'
+            : 'Requests from the calculator and quotes you create.'
         }
       >
+        <Button nativeButton={false} render={<Link to="/admin/quotes/new" />}>
+          <PlusIcon data-icon="inline-start" />
+          New quote
+        </Button>
         <Button
           variant="outline"
           disabled={quotes.length === 0}

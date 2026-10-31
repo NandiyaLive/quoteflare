@@ -32,6 +32,7 @@ const quote = (over: Partial<QuoteRow>): QuoteRow =>
     currency: 'LKR',
     total: 500,
     status: 'new',
+    source: 'calculator',
     createdAt: '2026-10-20T10:00:00.000Z',
     ...over,
   }) as QuoteRow
@@ -62,6 +63,15 @@ describe('buildOverview', () => {
     })
     expect(overview.outstanding.count).toBe(0)
     expect(overview.newQuotes.count).toBe(0)
+  })
+
+  it('leaves quotes the admin created out of the new requests', () => {
+    const overview = buildOverview({
+      ...base,
+      invoices: [],
+      quotes: [quote({ source: 'admin' }), quote({ source: 'calculator' })],
+    })
+    expect(overview.newQuotes.count).toBe(1)
   })
 
   it('builds six months ending at the current one, across a year boundary', () => {

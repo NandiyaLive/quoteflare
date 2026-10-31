@@ -3,7 +3,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { createDb, schema, type Db } from '#/db'
 import { createTestD1 } from '#/db/test-db'
 import { isCuid } from '#/lib/id'
-import { quoteEditSchema, quoteRequestSchema } from '#/lib/quotes'
+import {
+  quoteCreateSchema,
+  quoteEditSchema,
+  quoteRequestSchema,
+} from '#/lib/quotes'
 import { serviceSchema } from '#/lib/services'
 import {
   sendQuoteEmails,
@@ -13,6 +17,7 @@ import {
 } from './quote-email'
 import {
   convertQuoteToInvoice,
+  createQuote,
   dismissQuotes,
   expireQuotes,
   listQuoteEvents,
@@ -682,6 +687,89 @@ describe('editing a quote', () => {
     await setQuoteStatus(db, id, 'new')
     const types = (await listQuoteEvents(db, id)).map((e) => e.type)
     expect(types).toEqual(['reopened', 'dismissed', 'received'])
+  })
+})
+
+describe('creating a quote as the admin', () => {
+  const input = (over: Record<string, unknown> = {}) =>
+    quoteCreateSchema.parse({
+      name: 'Pat',
+      email: 'pat@example.com',
+      items: [
+        {
+          description: 'Design',
+          quantity: '2',
+          unitPrice: '50',
+          taxable: true,
+        },
+      ],
+      discount: '0',
+      adminNote: 'Phone call',
+      ...over,
+    })
+
+  it('stores a numbered new quote priced at the settings tax rate', async () => {
+    const result = await createQuote(db, input())
+    if (!result.ok) throw new Error(result.error)
+    const quote = (await getQuote(db, result.id))!
+    expect(quote).toMatchObject({
+      number: 'QUO-0001',
+      source: 'admin',
+      status: 'new',
+      contactName: 'Pat',
+      contactEmail: 'pat@example.com',
+      adminNote: 'Phone call',
+      currency: 'LKR',
+      taxRateBps: 1000,
+      selection: [],
+      total: 11000,
+    })
+    expect(quote.breakdown?.lines.map((l) => l.name)).toEqual(['Design'])
+    const events = await listQuoteEvents(db, result.id)
+    expect(events.map((e) => e.type)).toEqual(['created'])
+    const settings = await db.query.settings.findFirst()
+    expect(settings?.nextQuoteNumber).toBe(2)
+  })
+
+  it('gives each quote its own number', async () => {
+    const first = await createQuote(db, input())
+    const second = await createQuote(db, input())
+    if (!first.ok || !second.ok) throw new Error('create failed')
+    expect((await getQuote(db, second.id))?.number).toBe('QUO-0002')
+  })
+
+  it('refuses without business settings', async () => {
+    await db.delete(schema.settings)
+    expect(await createQuote(db, input())).toMatchObject({ ok: false })
+    expect(await listQuotes(db, 'all')).toHaveLength(0)
+  })
+
+  it('can be edited, sent and turned into an invoice like any quote', async () => {
+    const result = await createQuote(db, input())
+    if (!result.ok) throw new Error(result.error)
+    const converted = await convertQuoteToInvoice(db, result.id, '2026-06-01')
+    expect(converted).toMatchObject({ ok: true, created: true })
+    const clients = await db.select().from(schema.clients)
+    expect(clients.map((c) => c.email)).toEqual(['pat@example.com'])
+  })
+
+  it('rejects a bad email, empty items and unknown fields', () => {
+    const valid = input()
+    const raw = {
+      ...valid,
+      discount: '0',
+      items: [{ ...valid.items[0], quantity: '1', unitPrice: '1' }],
+    }
+    expect(quoteCreateSchema.safeParse(raw).success).toBe(true)
+    expect(quoteCreateSchema.safeParse({ ...raw, email: 'nope' }).success).toBe(
+      false,
+    )
+    expect(quoteCreateSchema.safeParse({ ...raw, items: [] }).success).toBe(
+      false,
+    )
+    expect(quoteCreateSchema.safeParse({ ...raw, total: 1 }).success).toBe(
+      false,
+    )
   })
 })
 

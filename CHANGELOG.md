@@ -2,6 +2,17 @@
 
 All notable changes are listed here, newest first. Versions follow semver.
 
+## Unreleased
+
+### Added
+
+- Admins can create quotes at `/admin/quotes/new`, with an optional client picker, items, discount and an internal note. The quote starts as `new` and is sent from its detail page.
+- `quotes.source` records whether a quote came from the calculator or the admin, and the activity log shows `Created by you` for admin quotes.
+
+### Changed
+
+- The dashboard's new quote requests leave out quotes the admin created.
+
 ## 1.5.0 - 2026-10-30
 
 Commits `bb1b3bd` to `cca2f54`.

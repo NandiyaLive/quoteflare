@@ -11,6 +11,7 @@ import {
   bulkDismissSchema,
   convertQuoteSchema,
   MAX_PUBLIC_BODY_BYTES,
+  quoteCreateSchema,
   quoteFilterSchema,
   quoteEditSchema,
   quoteRequestSchema,
@@ -24,6 +25,7 @@ import { requireAdmin } from './admin-middleware'
 import { isRateLimited, tooManyRequests } from './rate-limit'
 import {
   convertQuoteToInvoice,
+  createQuote,
   dismissQuotes,
   getQuote,
   getQuoteInvoice,
@@ -220,6 +222,11 @@ export const saveQuoteEditAction = createServerFn({ method: 'POST' })
   .validator((input: unknown) => quoteEditSchema.parse(input))
   .middleware([requireAdmin])
   .handler(({ data }) => saveQuoteEdit(createDb(env.DB), data))
+
+export const createQuoteAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => quoteCreateSchema.parse(input))
+  .middleware([requireAdmin])
+  .handler(({ data }) => createQuote(createDb(env.DB), data))
 
 export const dismissQuotesAction = createServerFn({ method: 'POST' })
   .validator((input: unknown) => bulkDismissSchema.parse(input))

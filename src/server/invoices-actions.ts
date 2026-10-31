@@ -52,6 +52,7 @@ export const getInvoiceFormContext = createServerFn()
         id: c.id,
         name: c.name,
         company: c.company,
+        email: c.email,
       })),
       services: services.map((s) => ({
         id: s.id,
