@@ -18,12 +18,51 @@ import {
   type ChosenService,
   type Evaluation,
 } from '#/lib/calculator'
+import { createId } from '@paralleldrive/cuid2'
 import { convertMinor, formatConverted } from '#/lib/currencies'
 import { formatMinor } from '#/lib/decimal'
 
 export const SCRATCH = 'scratch'
 
 const STORAGE_KEY = 'quoteflare:calculator:v1'
+const QUOTES_KEY = 'quoteflare:local-quotes:v1'
+
+type StoredQuote = {
+  id: string
+  name: string
+  savedAt: number
+  state: CalculatorState
+  chosen: string | null
+}
+
+/** A quote saved in this browser, priced against the current catalog. */
+export type LocalQuote = {
+  id: string
+  name: string
+  savedAt: number
+  /** Total in the catalog currency, in minor units. */
+  total: number
+  serviceCount: number
+}
+
+function readStoredQuotes(catalog: CalculatorCatalog): StoredQuote[] {
+  try {
+    const raw = window.localStorage.getItem(QUOTES_KEY)
+    const list: unknown = raw ? JSON.parse(raw) : []
+    if (!Array.isArray(list)) return []
+    return list.flatMap((item) => {
+      const { id, name, savedAt } = (item ?? {}) as Record<string, unknown>
+      const saved = restoreSaved(catalog, item)
+      if (!saved || typeof id !== 'string' || typeof savedAt !== 'number')
+        return []
+      return [
+        { id, name: typeof name === 'string' ? name : '', savedAt, ...saved },
+      ]
+    })
+  } catch {
+    return []
+  }
+}
 
 // Storage can throw or be empty in private windows, so every access is guarded.
 export function clearSavedCalculator() {
@@ -48,6 +87,13 @@ type CalculatorValue = {
   choose: (target: string) => void
   toggle: (id: string, checked: boolean) => void
   change: (id: string, patch: Partial<ChosenService>) => void
+  /** Empties the selection and forgets the chosen package. */
+  reset: () => void
+  /** Quotes saved in this browser, newest first. */
+  localQuotes: LocalQuote[]
+  saveLocalQuote: (name: string) => void
+  loadLocalQuote: (id: string) => void
+  removeLocalQuote: (id: string) => void
 }
 
 const CalculatorContext = createContext<CalculatorValue | null>(null)
@@ -68,6 +114,7 @@ export function CalculatorProvider({
       : catalog.currency
   const evaluation = useMemo(() => evaluate(catalog, state), [catalog, state])
   const [restored, setRestored] = useState(false)
+  const [stored, setStored] = useState<StoredQuote[]>([])
 
   // Storage is only readable after hydration, so restore in an effect.
   useEffect(() => {
@@ -82,8 +129,33 @@ export function CalculatorProvider({
     } catch {
       // A corrupt or blocked store leaves the default selection.
     }
+    setStored(readStoredQuotes(catalog))
     setRestored(true)
   }, [catalog])
+
+  const localQuotes = useMemo<LocalQuote[]>(
+    () =>
+      stored.map((quote) => {
+        const { breakdown } = evaluate(catalog, quote.state)
+        return {
+          id: quote.id,
+          name: quote.name,
+          savedAt: quote.savedAt,
+          total: breakdown.total,
+          serviceCount: breakdown.lines.length,
+        }
+      }),
+    [catalog, stored],
+  )
+
+  const updateStored = (next: StoredQuote[]) => {
+    setStored(next)
+    try {
+      window.localStorage.setItem(QUOTES_KEY, JSON.stringify(next))
+    } catch {
+      // The list still works until the page closes.
+    }
+  }
 
   useEffect(() => {
     if (!restored || chosen === null) return
@@ -132,8 +204,27 @@ export function CalculatorProvider({
           ...current,
           [id]: { ...current[id], ...patch },
         })),
+      reset: () => {
+        setState(baseState(catalog))
+        setChosen(null)
+        clearSavedCalculator()
+      },
+      localQuotes,
+      saveLocalQuote: (name) =>
+        updateStored([
+          { id: createId(), name, savedAt: Date.now(), state, chosen },
+          ...stored,
+        ]),
+      loadLocalQuote: (id) => {
+        const quote = stored.find((q) => q.id === id)
+        if (!quote) return
+        setState(quote.state)
+        setChosen(quote.chosen ?? SCRATCH)
+      },
+      removeLocalQuote: (id) => updateStored(stored.filter((q) => q.id !== id)),
     }),
-    [catalog, state, evaluation, chosen, displayCurrency],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [catalog, state, evaluation, chosen, displayCurrency, localQuotes],
   )
 
   return (

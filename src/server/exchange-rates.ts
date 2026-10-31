@@ -3,9 +3,11 @@ const FRANKFURTER_URL = 'https://api.frankfurter.dev/v2/rates'
 type FrankfurterRate = { quote: string; rate: number }
 
 /**
- * Latest rates from `base` to each of `quotes`, from Frankfurter. Returns an
- * empty map when the request fails or a currency has no rate, so the
- * calculator keeps working in the base currency.
+ * Latest rates from `base` to each of `quotes`, from Frankfurter. Asks for
+ * every rate and filters here, because Frankfurter rejects the whole request
+ * if one code is unsupported. Returns an empty map when the request fails,
+ * and omits currencies with no rate, so the calculator keeps working in the
+ * base currency.
  */
 export async function fetchRates(
   base: string,
@@ -15,7 +17,6 @@ export async function fetchRates(
   if (wanted.length === 0) return {}
   const url = new URL(FRANKFURTER_URL)
   url.searchParams.set('base', base)
-  url.searchParams.set('quotes', wanted.join(','))
   try {
     const response = await fetch(url, {
       headers: { Accept: 'application/json' },
