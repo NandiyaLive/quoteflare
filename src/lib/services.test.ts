@@ -15,6 +15,7 @@ const base = {
   quantityStep: '1',
   taxable: true,
   isPrivate: false,
+  alwaysIncluded: false,
   estimatedDaysMin: '',
   estimatedDaysMax: '',
   requires: [],
@@ -63,6 +64,26 @@ describe('serviceSchema prices', () => {
     expect(
       errorPaths({ ...base, pricingMode: 'custom', unitPrice: 'abc' }),
     ).toContain('unitPrice')
+  })
+})
+
+describe('serviceSchema always included', () => {
+  it('accepts a public service with a fixed price', () => {
+    expect(
+      serviceSchema.parse({ ...base, alwaysIncluded: true }),
+    ).toMatchObject({ alwaysIncluded: true })
+  })
+
+  it('rejects a private service', () => {
+    expect(
+      errorPaths({ ...base, alwaysIncluded: true, isPrivate: true }),
+    ).toEqual(['alwaysIncluded'])
+  })
+
+  it('rejects per-quote pricing', () => {
+    expect(
+      errorPaths({ ...base, alwaysIncluded: true, pricingMode: 'custom' }),
+    ).toEqual(['alwaysIncluded'])
   })
 })
 

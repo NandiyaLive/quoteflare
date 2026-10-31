@@ -63,6 +63,7 @@ const emptyValues: ServiceFormValues = {
   quantityStep: '1',
   taxable: true,
   isPrivate: false,
+  alwaysIncluded: false,
   estimatedDaysMin: '',
   estimatedDaysMax: '',
   requires: [],
@@ -88,6 +89,7 @@ const toFormValues = (service: ServiceRow): ServiceFormValues => ({
   quantityStep: String(service.quantityStep),
   taxable: service.taxable,
   isPrivate: service.isPrivate,
+  alwaysIncluded: service.alwaysIncluded,
   estimatedDaysMin: optionalNumber(service.estimatedDaysMin),
   estimatedDaysMax: optionalNumber(service.estimatedDaysMax),
   requires: service.requires.map((r) => r.id),
@@ -354,6 +356,26 @@ function ServiceForm({
               </FieldLabel>
             </Field>
           )}
+        </form.Field>
+
+        <form.Field name="alwaysIncluded">
+          {(field) => {
+            const errors = withServerErrors(field.name, field.state.meta.errors)
+            return (
+              <Field orientation="horizontal" data-invalid={errors.length > 0}>
+                <Checkbox
+                  id="service-always-included"
+                  checked={field.state.value}
+                  aria-invalid={errors.length > 0}
+                  onCheckedChange={(checked) => field.handleChange(checked)}
+                />
+                <FieldLabel htmlFor="service-always-included">
+                  Always included (added to every quote)
+                </FieldLabel>
+                {errors.length > 0 && <FieldError errors={errors} />}
+              </Field>
+            )
+          }}
         </form.Field>
 
         <FieldSet>

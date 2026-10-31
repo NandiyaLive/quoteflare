@@ -218,6 +218,9 @@ function ServicesPage() {
               {row.original.active ? 'Active' : 'Archived'}
             </Badge>
             {row.original.isPrivate && <Badge variant="outline">Private</Badge>}
+            {row.original.alwaysIncluded && (
+              <Badge variant="outline">Always included</Badge>
+            )}
           </div>
         ),
         meta: {

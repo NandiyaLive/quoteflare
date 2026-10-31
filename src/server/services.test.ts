@@ -47,6 +47,7 @@ const form = {
   quantityStep: '1',
   taxable: true,
   isPrivate: false,
+  alwaysIncluded: false,
   estimatedDaysMin: '',
   estimatedDaysMax: '',
   requires: [] as string[],

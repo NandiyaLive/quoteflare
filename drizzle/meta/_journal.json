@@ -127,6 +127,13 @@
       "when": 1793366821236,
       "tag": "0017_add_approved_currencies",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1793414043464,
+      "tag": "0018_add_always_included",
+      "breakpoints": true
     }
   ]
 }

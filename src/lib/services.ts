@@ -121,6 +121,7 @@ export const serviceSchema = z
     quantityStep: z.string().trim(),
     taxable: z.boolean(),
     isPrivate: z.boolean(),
+    alwaysIncluded: z.boolean(),
     estimatedDaysMin: z.string().trim(),
     estimatedDaysMax: z.string().trim(),
     requires: z
@@ -145,6 +146,19 @@ export const serviceSchema = z
   .superRefine((service, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: 'custom', path, message })
+
+    if (service.alwaysIncluded && service.isPrivate) {
+      issue(
+        ['alwaysIncluded'],
+        'A private service cannot be always included, because customers would never see the charge',
+      )
+    }
+    if (service.alwaysIncluded && service.pricingMode === 'custom') {
+      issue(
+        ['alwaysIncluded'],
+        'An always included service needs a fixed price',
+      )
+    }
 
     if (service.unitPrice === '' && service.pricingMode === 'fixed') {
       issue(['unitPrice'], 'Enter a price like 49.99')

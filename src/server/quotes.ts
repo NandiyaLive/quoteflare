@@ -2,6 +2,7 @@ import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import type { Db } from '#/db'
 import { schema } from '#/db'
 import type { RecurringInterval } from '#/db/schema'
+import { missingIncluded } from '#/lib/calculator'
 import { minorToDecimal } from '#/lib/decimal'
 import { addDays } from '#/lib/invoices'
 import { createId } from '#/lib/id'
@@ -40,10 +41,15 @@ export async function submitQuote(
   }
 
   const catalog = await loadCalculatorCatalog(db)
-  const chosen = new Set(request.selections.map((s) => s.serviceId))
+  const chosenIds = new Set(request.selections.map((s) => s.serviceId))
+  const requested = [
+    ...request.selections,
+    ...missingIncluded(catalog, chosenIds),
+  ]
+  const chosen = new Set(requested.map((s) => s.serviceId))
   const byId = new Map(catalog.services.map((s) => [s.id, s]))
 
-  for (const selection of request.selections) {
+  for (const selection of requested) {
     const service = byId.get(selection.serviceId)
     const missing = service?.requires.find((id) => !chosen.has(id))
     if (missing) {
@@ -54,7 +60,7 @@ export async function submitQuote(
     }
   }
 
-  const selections: PricingSelection[] = request.selections.map((s) => ({
+  const selections: PricingSelection[] = requested.map((s) => ({
     ...s,
     optionIds: [...s.optionIds],
   }))
@@ -86,7 +92,7 @@ export async function submitQuote(
     contactName: request.name,
     contactEmail: request.email,
     message: request.message,
-    selection: request.selections,
+    selection: requested,
     breakdown,
     currency: catalog.currency,
     total: breakdown.total,

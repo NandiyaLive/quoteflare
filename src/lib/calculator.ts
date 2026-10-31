@@ -14,6 +14,7 @@ export type CalculatorService = PricingService & {
   estimatedDaysMin: number | null
   estimatedDaysMax: number | null
   requires: string[]
+  alwaysIncluded: boolean
 }
 
 export type CalculatorPackage = {
@@ -68,16 +69,60 @@ export function selectService(
 }
 
 /**
+ * The services every quote carries: those marked always included, plus
+ * whatever they require.
+ */
+export function includedServiceIds(catalog: CalculatorCatalog): Set<string> {
+  const byId = new Map(catalog.services.map((s) => [s.id, s]))
+  const ids = new Set<string>()
+  const stack = catalog.services
+    .filter((s) => s.alwaysIncluded)
+    .map((s) => s.id)
+  while (stack.length > 0) {
+    const id = stack.pop()!
+    const service = byId.get(id)
+    if (!service || ids.has(id)) continue
+    ids.add(id)
+    stack.push(...service.requires)
+  }
+  return ids
+}
+
+/** The selection a quote starts from before the customer picks anything. */
+export function baseState(catalog: CalculatorCatalog): CalculatorState {
+  let state: CalculatorState = {}
+  for (const service of catalog.services) {
+    if (service.alwaysIncluded)
+      state = selectService(catalog, state, service.id)
+  }
+  return state
+}
+
+/**
+ * Selections for the always included services missing from `chosenIds`, at
+ * their minimum quantity with no options.
+ */
+export function missingIncluded(
+  catalog: CalculatorCatalog,
+  chosenIds: Set<string>,
+): PricingSelection[] {
+  const included = includedServiceIds(catalog)
+  return catalog.services
+    .filter((s) => included.has(s.id) && !chosenIds.has(s.id))
+    .map((s) => ({ serviceId: s.id, quantity: s.minQuantity, optionIds: [] }))
+}
+
+/**
  * Builds the selection a package starts from. Services that are no longer
  * in the catalog and options that no longer exist are skipped, and required
- * services are pulled in.
+ * and always included services are pulled in.
  */
 export function stateForPackage(
   catalog: CalculatorCatalog,
   pkg: CalculatorPackage,
 ): CalculatorState {
   const byId = new Map(catalog.services.map((s) => [s.id, s]))
-  let state: CalculatorState = {}
+  let state = baseState(catalog)
   for (const item of pkg.items) {
     if (!byId.has(item.serviceId)) continue
     state = selectService(catalog, state, item.serviceId)
@@ -106,9 +151,13 @@ export function dependentsOf(
 }
 
 export function deselectService(
+  catalog: CalculatorCatalog,
   state: CalculatorState,
   serviceId: string,
 ): CalculatorState {
+  if (catalog.services.some((s) => s.id === serviceId && s.alwaysIncluded)) {
+    return state
+  }
   const next = { ...state }
   delete next[serviceId]
   return next

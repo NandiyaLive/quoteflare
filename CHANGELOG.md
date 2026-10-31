@@ -7,6 +7,7 @@ All notable changes are listed here, newest first. Versions follow semver.
 Commits `bb1b3bd` to `cca2f54`.
 
 ### Added
+
 - Notes field on invoices.
 - Payment link field on invoices.
 - Private flag on services and packages.
@@ -14,6 +15,7 @@ Commits `bb1b3bd` to `cca2f54`.
 - Multi-select component and its registry dependencies.
 
 ### Changed
+
 - The admin settings form marks required fields.
 
 ## 1.4.0 - 2026-10-29
@@ -21,10 +23,12 @@ Commits `bb1b3bd` to `cca2f54`.
 Commits `329bf7a` to `df80fde`.
 
 ### Added
+
 - R2 bucket binding for logo uploads. R2 is optional in the docs.
 - Customizable calculator title and description in settings.
 
 ### Changed
+
 - Invoices read payment terms from settings.
 - SVG logo uploads are sanitized, and server error handling is stricter.
 - `keep_vars` moved into the wrangler config.
@@ -35,6 +39,7 @@ Commits `329bf7a` to `df80fde`.
 Commits `ec52b63` to `233bb6d`.
 
 ### Added
+
 - Charts on the admin overview, built with recharts.
 - Site icons, logos, and a web manifest.
 - Security policy and HTTP security headers.
@@ -46,6 +51,7 @@ Commits `ec52b63` to `233bb6d`.
 - Project guide and updated setup docs.
 
 ### Changed
+
 - Personal configuration moved out of the repo, leaving generic config files (PR #1).
 - `db:seed` only seeds the service catalogue.
 - Email templates share one layout component.
@@ -54,6 +60,7 @@ Commits `ec52b63` to `233bb6d`.
 - Dev tools are hidden in the admin sidebar in development mode.
 
 ### Fixed
+
 - The deploy script no longer passes a redundant wrangler config flag.
 
 ## 1.2.0 - 2026-10-27
@@ -61,6 +68,7 @@ Commits `ec52b63` to `233bb6d`.
 Commits `1394b4b` to `027972b`.
 
 ### Added
+
 - Automated invoice reminder emails and a daily job that marks overdue invoices.
 - Recurring invoices and schedules.
 - Package management and a package selection step in the calculator.
@@ -75,12 +83,14 @@ Commits `1394b4b` to `027972b`.
 - Dynamic branding in the site header.
 
 ### Changed
+
 - Error handling, validation, and request limits are stricter.
 - Server actions share a helper for error handling.
 - The custom price override and options steps were removed from the calculator.
 - The custom container component was replaced with the Tailwind container utility.
 
 ### Fixed
+
 - Invoice form state resets after saving an existing invoice.
 
 ## 1.1.0 - 2026-10-27
@@ -88,6 +98,7 @@ Commits `1394b4b` to `027972b`.
 Commits `f2d21e0` to `bb6c5b5`.
 
 ### Added
+
 - Quote requests and quote management.
 - Client management in the admin panel.
 - Admin invoice list and creation UI.
@@ -100,12 +111,14 @@ Commits `f2d21e0` to `bb6c5b5`.
 - Turnstile site key in the wrangler config.
 
 ### Changed
+
 - Admin lists use the data table component.
 - Action buttons use ButtonGroup.
 - The application was renamed from QuoteKit to Quoteflare.
 - Form layouts have more spacing, and the codebase was reformatted.
 
 ### Removed
+
 - The unused `cn` package.
 
 ## 1.0.0 - 2026-10-27
@@ -113,6 +126,7 @@ Commits `f2d21e0` to `bb6c5b5`.
 Commits `1b9fc61` to `f09f046`.
 
 ### Added
+
 - TanStack Start project on Cloudflare Workers.
 - Drizzle ORM schema and database migrations.
 - Cloudflare Access authentication for admin routes.
@@ -125,5 +139,6 @@ Commits `1b9fc61` to `f09f046`.
 - Data table component.
 
 ### Changed
+
 - Currency set to LKR.
 - Header, step navigation, theme toggle, and fonts were updated.

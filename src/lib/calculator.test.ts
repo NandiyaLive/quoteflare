@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  baseState,
   deselectService,
+  includedServiceIds,
+  missingIncluded,
   dependentsOf,
   evaluate,
   selectService,
@@ -26,6 +29,7 @@ const base: CalculatorService = {
   estimatedDaysMin: null,
   estimatedDaysMax: null,
   requires: [],
+  alwaysIncluded: false,
   groups: [],
   options: [],
 }
@@ -69,7 +73,7 @@ describe('selectService', () => {
     expect(dependentsOf(chain, state, 'a')).toEqual([])
     expect(dependentsOf(chain, state, 'b').map((s) => s.id)).toEqual(['a'])
     expect(dependentsOf(chain, state, 'c').map((s) => s.id)).toEqual(['b'])
-    expect(Object.keys(deselectService(state, 'a'))).not.toContain('a')
+    expect(Object.keys(deselectService(chain, state, 'a'))).not.toContain('a')
   })
 })
 
@@ -204,5 +208,48 @@ describe('stateForPackage', () => {
     })
     expect(Object.keys(state)).toEqual(['b'])
     expect(state.b).toMatchObject({ quantity: '2', optionIds: [] })
+  })
+})
+
+describe('always included services', () => {
+  const c = catalog([
+    { ...base, id: 'setup', alwaysIncluded: true, requires: ['tools'] },
+    { ...base, id: 'tools' },
+    { ...base, id: 'extra', minQuantity: 2 },
+    { ...base, id: 'fee', alwaysIncluded: true, minQuantity: 3 },
+  ])
+
+  it('includes them and what they require', () => {
+    expect([...includedServiceIds(c)].sort()).toEqual(['fee', 'setup', 'tools'])
+    expect(Object.keys(baseState(c)).sort()).toEqual(['fee', 'setup', 'tools'])
+  })
+
+  it('starts a package selection with them', () => {
+    const pkg = {
+      id: 'p',
+      categoryId: null,
+      name: 'P',
+      description: '',
+      items: [{ serviceId: 'extra', quantity: 2, optionIds: [] }],
+    }
+    expect(Object.keys(stateForPackage(c, pkg)).sort()).toEqual([
+      'extra',
+      'fee',
+      'setup',
+      'tools',
+    ])
+  })
+
+  it('refuses to deselect one', () => {
+    const state = baseState(c)
+    expect(deselectService(c, state, 'fee')).toBe(state)
+  })
+
+  it('lists the ones a selection is missing at minimum quantity', () => {
+    expect(missingIncluded(c, new Set(['setup']))).toEqual([
+      { serviceId: 'tools', quantity: 1, optionIds: [] },
+      { serviceId: 'fee', quantity: 3, optionIds: [] },
+    ])
+    expect(missingIncluded(c, includedServiceIds(c))).toEqual([])
   })
 })

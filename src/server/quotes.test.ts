@@ -6,7 +6,7 @@ import { isCuid } from '#/lib/id'
 import { quoteRequestSchema } from '#/lib/quotes'
 import { serviceSchema } from '#/lib/services'
 import { getQuote, listQuotes, setQuoteStatus, submitQuote } from './quotes'
-import { saveService } from './services'
+import { saveService, setServiceActive } from './services'
 import { verifyTurnstile } from './turnstile'
 
 let db: Db
@@ -49,6 +49,7 @@ const form = {
   quantityStep: '1',
   taxable: true,
   isPrivate: false,
+  alwaysIncluded: false,
   estimatedDaysMin: '',
   estimatedDaysMax: '',
   requires: [] as string[],
@@ -172,6 +173,58 @@ describe('submitting a quote', () => {
       human,
     )
     expect(both.ok).toBe(true)
+  })
+
+  it('adds always included services and what they require', async () => {
+    const tools = await create('Tools')
+    const setup = await create('Setup', {
+      alwaysIncluded: true,
+      requires: [tools],
+      minQuantity: '2',
+    })
+    const web = await create('Web')
+    const result = await submitQuote(
+      db,
+      request([{ serviceId: web, quantity: 1, optionIds: [] }]),
+      human,
+    )
+    expect(result.ok).toBe(true)
+    const [row] = await listQuotes(db, 'all')
+    expect(row.selection).toHaveLength(3)
+    expect(row.selection).toEqual(
+      expect.arrayContaining([
+        { serviceId: web, quantity: 1, optionIds: [] },
+        { serviceId: setup, quantity: 2, optionIds: [] },
+        { serviceId: tools, quantity: 1, optionIds: [] },
+      ]),
+    )
+    expect(row.total).toBe(11000 + 22000 + 11000)
+  })
+
+  it('keeps the quantity a customer chose for an included service', async () => {
+    const setup = await create('Setup', { alwaysIncluded: true })
+    await submitQuote(
+      db,
+      request([{ serviceId: setup, quantity: 3, optionIds: [] }]),
+      human,
+    )
+    const [row] = await listQuotes(db, 'all')
+    expect(row.selection).toEqual([
+      { serviceId: setup, quantity: 3, optionIds: [] },
+    ])
+  })
+
+  it('does not add an archived included service', async () => {
+    const setup = await create('Setup', { alwaysIncluded: true })
+    await setServiceActive(db, setup, false)
+    const web = await create('Web')
+    const result = await submitQuote(
+      db,
+      request([{ serviceId: web, quantity: 1, optionIds: [] }]),
+      human,
+    )
+    expect(result.ok).toBe(true)
+    expect((await listQuotes(db, 'all'))[0].total).toBe(11000)
   })
 
   it('rejects quantities outside the rules', async () => {

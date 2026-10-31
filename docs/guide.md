@@ -120,6 +120,7 @@ A service has these settings:
 - Quantity rules (minimum, maximum, step), a taxable flag, estimated days and a short note.
 - Option groups. An option can sit in a group where the client chooses one or any, and a group can be required. Options outside a group are independent add-ons.
 - Required services. A service can depend on others. Self references and loops are rejected.
+- Always included. The calculator selects the service for every quote, including quotes started from a package, and the customer cannot remove it. They can still change its quantity and options. The server adds the service (and anything it requires) at its minimum quantity when a quote arrives without it, so a stale page or a direct request cannot skip it. A private service or a `custom` priced service cannot be always included. Archiving the service stops it being added.
 
 ### Importing services
 

@@ -52,7 +52,8 @@ export function ServiceCard({
 }) {
   const { money } = useCalculator()
   const checked = Boolean(choice)
-  const locked = requiredBy.length > 0
+  const included = service.alwaysIncluded
+  const locked = included || requiredBy.length > 0
   const single = service.maxQuantity === 1
   const hasDetails =
     !single || service.options.length > 0 || problems.length > 0
@@ -113,6 +114,7 @@ export function ServiceCard({
             )}
             <div className="flex flex-wrap gap-2">
               {days && <Badge variant="secondary">{days}</Badge>}
+              {included && <Badge>Included</Badge>}
               {!service.taxable && <Badge variant="outline">No tax</Badge>}
               {service.requires.length > 0 && (
                 <Badge variant="outline">Includes {requires.join(', ')}</Badge>
@@ -124,10 +126,16 @@ export function ServiceCard({
                 <AlertDescription>{service.note}</AlertDescription>
               </Alert>
             )}
-            {locked && (
+            {included ? (
               <p className="text-sm text-muted-foreground">
-                Needed by {requiredBy.join(', ')}.
+                Included in every quote.
               </p>
+            ) : (
+              requiredBy.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Needed by {requiredBy.join(', ')}.
+                </p>
+              )
             )}
           </div>
         </div>

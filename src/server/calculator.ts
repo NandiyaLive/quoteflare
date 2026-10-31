@@ -73,6 +73,7 @@ export async function loadCalculatorCatalog(db: Db): Promise<
       taxable: s.taxable,
       estimatedDaysMin: s.estimatedDaysMin,
       estimatedDaysMax: s.estimatedDaysMax,
+      alwaysIncluded: s.alwaysIncluded,
       requires: s.requires.map((r) => r.id).filter((id) => activeIds.has(id)),
       groups: s.groups,
       options: s.options.map((o) => ({ ...o, active: true })),

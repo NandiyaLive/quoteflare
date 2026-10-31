@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  baseState,
   deselectService,
   evaluate,
   selectService,
@@ -45,7 +46,7 @@ export function CalculatorProvider({
   catalog: CalculatorCatalog
   children: ReactNode
 }) {
-  const [state, setState] = useState<CalculatorState>({})
+  const [state, setState] = useState<CalculatorState>(() => baseState(catalog))
   const [chosen, setChosen] = useState<string | null>(null)
   const [picked, setPicked] = useState(catalog.currency)
   const displayCurrency =
@@ -75,14 +76,14 @@ export function CalculatorProvider({
             ),
       choose: (target) => {
         const pkg = catalog.packages.find((p) => p.id === target)
-        setState(pkg ? stateForPackage(catalog, pkg) : {})
+        setState(pkg ? stateForPackage(catalog, pkg) : baseState(catalog))
         setChosen(pkg ? pkg.id : SCRATCH)
       },
       toggle: (id, checked) =>
         setState((current) =>
           checked
             ? selectService(catalog, current, id)
-            : deselectService(current, id),
+            : deselectService(catalog, current, id),
         ),
       change: (id, patch) =>
         setState((current) => ({

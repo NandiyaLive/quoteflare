@@ -191,6 +191,7 @@ export async function importServices(
     quantityStep: service.quantityStep,
     taxable: service.taxable,
     isPrivate: false,
+    alwaysIncluded: false,
     estimatedDaysMin: service.estimatedDays
       ? String(service.estimatedDays[0])
       : '',

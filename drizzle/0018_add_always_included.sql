@@ -1,0 +1,1 @@
+ALTER TABLE `services` ADD `always_included` integer DEFAULT false NOT NULL;

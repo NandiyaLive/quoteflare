@@ -32,6 +32,7 @@ export type ServiceRow = {
   estimatedDaysMax: number | null
   active: boolean
   isPrivate: boolean
+  alwaysIncluded: boolean
   sortOrder: number
   requires: { id: string; name: string }[]
   groups: {
@@ -132,6 +133,7 @@ export async function listServices(
     estimatedDaysMax: row.estimatedDaysMax,
     active: row.active,
     isPrivate: row.isPrivate,
+    alwaysIncluded: row.alwaysIncluded,
     sortOrder: row.sortOrder,
     requires: dependencies
       .filter((d) => d.serviceId === row.id)
@@ -250,6 +252,7 @@ export async function saveService(
     quantityStep: data.quantityStep,
     taxable: data.taxable,
     isPrivate: data.isPrivate,
+    alwaysIncluded: data.alwaysIncluded,
     estimatedDaysMin: data.estimatedDaysMin,
     estimatedDaysMax: data.estimatedDaysMax,
   }

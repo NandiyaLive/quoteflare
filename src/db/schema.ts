@@ -158,6 +158,9 @@ export const services = sqliteTable(
     isPrivate: integer('is_private', { mode: 'boolean' })
       .notNull()
       .default(false),
+    alwaysIncluded: integer('always_included', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     sortOrder: integer('sort_order').notNull().default(0),
   },
   (t) => [
