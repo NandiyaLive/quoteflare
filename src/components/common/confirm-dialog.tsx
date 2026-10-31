@@ -14,6 +14,8 @@ export type ConfirmOptions = {
   title: string
   description: string
   confirmLabel: string
+  /** Defaults to true. Set false for actions that are not destructive. */
+  destructive?: boolean
 }
 
 /**
@@ -55,7 +57,10 @@ export function useConfirm() {
           <DialogClose render={<Button variant="outline" />}>
             Cancel
           </DialogClose>
-          <Button variant="destructive" onClick={() => settle(true)}>
+          <Button
+            variant={options?.destructive === false ? 'default' : 'destructive'}
+            onClick={() => settle(true)}
+          >
             {options?.confirmLabel}
           </Button>
         </DialogFooter>

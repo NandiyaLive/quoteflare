@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useRouter } from '@tanstack/react-router'
+import { useConfirm } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -39,8 +40,19 @@ export function InvoiceStatusActions({
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [confirmVoid, setConfirmVoid] = useState(false)
+  const { confirm, dialog } = useConfirm()
 
   const change = async (next: InvoiceStatus) => {
+    if (
+      next === 'paid' &&
+      !(await confirm({
+        title: 'Mark this invoice as paid?',
+        description: 'You can undo this later with Undo paid.',
+        confirmLabel: 'Mark as paid',
+        destructive: false,
+      }))
+    )
+      return
     setBusy(true)
     try {
       const result = await callAction(
@@ -58,6 +70,16 @@ export function InvoiceStatusActions({
   }
 
   const send = async () => {
+    if (
+      !(await confirm({
+        title:
+          status === 'draft' ? 'Send this invoice?' : 'Resend this invoice?',
+        description: 'The client receives an email with a link to the invoice.',
+        confirmLabel: status === 'draft' ? 'Send invoice' : 'Resend invoice',
+        destructive: false,
+      }))
+    )
+      return
     setBusy(true)
     try {
       const result = await callAction(
@@ -121,6 +143,7 @@ export function InvoiceStatusActions({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {dialog}
     </>
   )
 }

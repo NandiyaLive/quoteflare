@@ -176,6 +176,15 @@ function QuotePage() {
   }
 
   const sendQuote = async () => {
+    if (
+      !(await confirm({
+        title: 'Send this quote?',
+        description: `The client receives an email with a link to the quote.`,
+        confirmLabel: 'Send quote',
+        destructive: false,
+      }))
+    )
+      return
     setBusy(true)
     try {
       const result = await callAction(
@@ -193,6 +202,16 @@ function QuotePage() {
   }
 
   const createInvoice = async () => {
+    if (
+      !(await confirm({
+        title: 'Create an invoice from this quote?',
+        description:
+          'The quote is marked as converted and can no longer be edited.',
+        confirmLabel: 'Create invoice',
+        destructive: false,
+      }))
+    )
+      return
     setBusy(true)
     try {
       const result = await callAction(

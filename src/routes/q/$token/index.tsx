@@ -113,7 +113,9 @@ function PublicQuotePage() {
   const { quote, contactName, breakdown, business } = Route.useLoaderData()
   const router = useRouter()
   const [busy, setBusy] = useState(false)
-  const [confirming, setConfirming] = useState(false)
+  const [confirming, setConfirming] = useState<'accepted' | 'declined' | null>(
+    null,
+  )
   const { currency } = quote
   const money = (minor: number) => formatMinor(minor, currency)
 
@@ -129,7 +131,7 @@ function PublicQuotePage() {
       await router.invalidate()
     } finally {
       setBusy(false)
-      setConfirming(false)
+      setConfirming(null)
     }
   }
 
@@ -223,38 +225,49 @@ function PublicQuotePage() {
 
       {quote.status === 'sent' ? (
         <section data-print-hide className="flex flex-wrap gap-2">
-          <Button disabled={busy} onClick={() => setConfirming(true)}>
+          <Button disabled={busy} onClick={() => setConfirming('accepted')}>
             Accept quote
           </Button>
           <Button
             variant="outline"
             disabled={busy}
-            onClick={() => void respond('declined')}
+            onClick={() => setConfirming('declined')}
           >
             Decline
           </Button>
-          <Dialog open={confirming} onOpenChange={setConfirming}>
+          <Dialog
+            open={confirming !== null}
+            onOpenChange={(open) => {
+              if (!open) setConfirming(null)
+            }}
+          >
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Accept this quote?</DialogTitle>
+                <DialogTitle>
+                  {confirming === 'declined'
+                    ? 'Decline this quote?'
+                    : 'Accept this quote?'}
+                </DialogTitle>
                 <DialogDescription>
-                  You are accepting quote {quote.number ?? ''} for{' '}
-                  {money(quote.total)}. You cannot undo this.
+                  You are{' '}
+                  {confirming === 'declined' ? 'declining' : 'accepting'} quote{' '}
+                  {quote.number ?? ''} for {money(quote.total)}. You cannot undo
+                  this.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
                 <Button
                   variant="outline"
                   disabled={busy}
-                  onClick={() => setConfirming(false)}
+                  onClick={() => setConfirming(null)}
                 >
                   Cancel
                 </Button>
                 <Button
                   disabled={busy}
-                  onClick={() => void respond('accepted')}
+                  onClick={() => confirming && void respond(confirming)}
                 >
-                  Accept quote
+                  {confirming === 'declined' ? 'Decline quote' : 'Accept quote'}
                 </Button>
               </DialogFooter>
             </DialogContent>
