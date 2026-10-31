@@ -25,6 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatDate } from '@/lib/format'
+import { ConvertedAmount } from '@/components/common/converted-amount'
 import { formatMinor } from '#/lib/decimal'
 import {
   MAX_ADVANCE_PERCENT,
@@ -377,8 +378,14 @@ function QuotePage() {
                   </div>
                   <div className="flex justify-between gap-4 text-base font-semibold">
                     <dt>Total</dt>
-                    <dd data-testid="quote-total">
+                    <dd data-testid="quote-total" className="text-right">
                       {formatMinor(quote.total, currency)}
+                      <ConvertedAmount
+                        minor={quote.total}
+                        currency={currency}
+                        record={quote}
+                        showRate
+                      />
                     </dd>
                   </div>
                 </dl>

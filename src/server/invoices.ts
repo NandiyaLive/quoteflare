@@ -27,6 +27,8 @@ export type InvoiceListRow = {
   issueDate: string
   dueDate: string
   currency: string
+  displayCurrency: string | null
+  displayRate: number | null
 } & InvoiceTotals
 
 type InvoiceItemRow = {
@@ -122,6 +124,8 @@ export async function listInvoices(db: Db): Promise<InvoiceListRow[]> {
         issueDate: invoices.issueDate,
         dueDate: invoices.dueDate,
         currency: invoices.currency,
+        displayCurrency: invoices.displayCurrency,
+        displayRate: invoices.displayRate,
         taxRateBps: invoices.taxRateBps,
         discount: invoices.discount,
       })

@@ -14,6 +14,8 @@ const invoice = (over: Partial<InvoiceListRow>): InvoiceListRow => ({
   issueDate: '2026-10-01',
   dueDate: '2026-10-15',
   currency: 'LKR',
+  displayCurrency: null,
+  displayRate: null,
   subtotal: 0,
   discountAmount: 0,
   taxAmount: 0,

@@ -11,6 +11,7 @@ import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
 import { useDataTable } from '@/hooks/use-data-table'
 import type { DataTableFeatures } from '@/lib/data-table-features'
 import { formatDate } from '@/lib/format'
+import { ConvertedAmount } from '@/components/common/converted-amount'
 import { formatMinor } from '#/lib/decimal'
 import { INVOICE_STATUS_OPTIONS } from '#/lib/invoices'
 import type { InvoiceListRow } from '#/server/invoices'
@@ -95,6 +96,11 @@ function InvoicesPage() {
         cell: ({ row }) => (
           <div className="tabular-nums">
             {formatMinor(row.original.total, row.original.currency)}
+            <ConvertedAmount
+              minor={row.original.total}
+              currency={row.original.currency}
+              record={row.original}
+            />
           </div>
         ),
         meta: { label: 'Total' },

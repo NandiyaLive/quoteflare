@@ -108,16 +108,25 @@ describe('quotesToCsv', () => {
     total: 12345,
     validUntil: '2026-07-01',
     message: 'Line one\nLine two',
+    displayCurrency: null,
+    displayRate: null,
   }
 
   it('writes a header and quotes cells that need it', () => {
     const [header, line] = quotesToCsv([row]).split('\r\n')
     expect(header).toBe(
-      'Number,Received,Name,Email,Status,Currency,Total,Valid until,Message',
+      'Number,Received,Name,Email,Status,Currency,Total,Valid until,Message,Display currency,Display rate',
     )
     expect(line).toBe(
-      'QUO-0001,2026-06-01T10:00:00.000Z,"Jo, the ""Boss""",jo@example.com,Sent,USD,123.45,2026-07-01,"Line one\nLine two"',
+      'QUO-0001,2026-06-01T10:00:00.000Z,"Jo, the ""Boss""",jo@example.com,Sent,USD,123.45,2026-07-01,"Line one\nLine two",,',
     )
+  })
+
+  it('writes the display currency and rate when a quote has them', () => {
+    const [, line] = quotesToCsv([
+      { ...row, displayCurrency: 'EUR', displayRate: 0.92 },
+    ]).split('\r\n')
+    expect(line.endsWith(',EUR,0.92')).toBe(true)
   })
 
   it('defuses spreadsheet formulas and blanks missing values', () => {

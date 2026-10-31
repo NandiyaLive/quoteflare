@@ -15,6 +15,7 @@ import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
 import { useDataTable } from '@/hooks/use-data-table'
 import type { DataTableFeatures } from '@/lib/data-table-features'
 import { formatDate } from '@/lib/format'
+import { ConvertedAmount } from '@/components/common/converted-amount'
 import { formatMinor } from '#/lib/decimal'
 import { QUOTE_STATUS_LABELS, quotesToCsv } from '#/lib/quotes'
 import type { QuoteRow } from '#/server/quotes'
@@ -161,6 +162,11 @@ function QuotesPage() {
         cell: ({ row }) => (
           <div className="text-right">
             {formatMinor(row.original.total, row.original.currency)}
+            <ConvertedAmount
+              minor={row.original.total}
+              currency={row.original.currency}
+              record={row.original}
+            />
           </div>
         ),
         meta: { label: 'Total' },

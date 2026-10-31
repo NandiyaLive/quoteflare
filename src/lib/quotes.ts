@@ -301,6 +301,8 @@ const CSV_HEADER = [
   'Total',
   'Valid until',
   'Message',
+  'Display currency',
+  'Display rate',
 ]
 
 // A cell that starts with one of these runs as a formula in spreadsheets.
@@ -320,6 +322,8 @@ export function quotesToCsv(
     total: number
     validUntil: string | null
     message: string
+    displayCurrency: string | null
+    displayRate: number | null
   }[],
 ): string {
   const lines = rows.map((row) =>
@@ -333,6 +337,8 @@ export function quotesToCsv(
       minorToDecimal(row.total),
       row.validUntil ?? '',
       row.message,
+      row.displayCurrency ?? '',
+      row.displayCurrency && row.displayRate ? String(row.displayRate) : '',
     ]
       .map(csvCell)
       .join(','),

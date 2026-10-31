@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatDate } from '@/lib/format'
+import { ConvertedAmount } from '@/components/common/converted-amount'
 import { formatMinor } from '#/lib/decimal'
 import { advanceFor } from '#/lib/invoices'
 import { AdvancePaymentCard } from '../-components/advance-payment-card'
@@ -155,6 +156,13 @@ function InvoicePage() {
                 currency={invoice.currency}
                 taxRateBps={invoice.taxRateBps}
                 advance={advance}
+              />
+              <ConvertedAmount
+                minor={totals.total}
+                currency={invoice.currency}
+                record={invoice}
+                showRate
+                className="mt-2"
               />
             </CardContent>
           </Card>
