@@ -2,7 +2,7 @@ import { and, asc, eq, gte, isNull, lte, ne } from 'drizzle-orm'
 import { render } from '@react-email/render'
 import type { Db } from '#/db'
 import { schema } from '#/db'
-import { formatMinor } from '#/lib/decimal'
+import { displayOf, moneyIn, moneyWithBase } from '#/lib/currencies'
 import { QuoteEmail, type QuoteEmailProps } from '#/emails/quote-email'
 import { createId, createPublicToken } from '#/lib/id'
 import { sendEmail, type EmailMessage } from './email'
@@ -81,9 +81,9 @@ export async function sendQuoteEmails(
     const lines = (quote.breakdown?.lines ?? []).map((line) => ({
       description: line.name,
       quantity: line.quantity,
-      amount: formatMinor(line.amount, quote.currency),
+      amount: moneyIn(quote.currency, displayOf(quote))(line.amount),
     }))
-    const total = formatMinor(quote.total, quote.currency)
+    const total = moneyWithBase(quote.currency, displayOf(quote))(quote.total)
     const businessName = settings.businessName
 
     await deliver(db, deps, quote.id, 'quote_confirmation', {
@@ -164,7 +164,7 @@ export async function sendQuoteToClient(
   const lines = quote.breakdown.lines.map((line) => ({
     description: line.name,
     quantity: line.quantity,
-    amount: formatMinor(line.amount, quote.currency),
+    amount: moneyIn(quote.currency, displayOf(quote))(line.amount),
   }))
   const validUntil = addDays(today, settings.quoteValidityDays)
   const businessName = settings.businessName
@@ -194,7 +194,7 @@ export async function sendQuoteToClient(
       heading: label,
       intro: `Hi ${quote.contactName}, your quote is ready. It is valid until ${validUntil}. You can accept or decline it online.`,
       lines,
-      total: formatMinor(quote.total, quote.currency),
+      total: moneyWithBase(quote.currency, displayOf(quote))(quote.total),
       buttonLabel: 'View the quote',
       url: `${deps.origin}/q/${token}`,
       preview: `Your quote ${label} from ${businessName}`,
@@ -254,7 +254,7 @@ export async function sendQuoteResponseEmail(
         heading: `${label} ${verb}`,
         intro: `${quote.contactName} (${quote.contactEmail}) ${verb} the quote.`,
         lines: [],
-        total: formatMinor(quote.total, quote.currency),
+        total: moneyWithBase(quote.currency, displayOf(quote))(quote.total),
         buttonLabel: 'Open the quote',
         url: `${deps.origin}/admin/quotes/${quote.id}`,
         preview: `${quote.contactName} ${verb} quote ${label}`,
@@ -328,7 +328,7 @@ export async function sendQuoteReminders(
         heading: label,
         intro: `Hi ${quote.contactName}, your quote from ${settings.businessName} is valid until ${quote.validUntil}. You can accept or decline it online.`,
         lines: [],
-        total: formatMinor(quote.total, quote.currency),
+        total: moneyWithBase(quote.currency, displayOf(quote))(quote.total),
         buttonLabel: 'View the quote',
         url: `${deps.origin}/q/${quote.publicToken}`,
         preview: `Quote ${label} is valid until ${quote.validUntil}`,

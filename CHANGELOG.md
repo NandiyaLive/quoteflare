@@ -6,6 +6,8 @@ All notable changes are listed here, newest first. Versions follow semver.
 
 ### Added
 
+- Exchange rates are stored in `exchange_rates` and refreshed by the daily job and when settings are saved. If Frankfurter is down, the stored rates are used.
+- A quote keeps the currency and rate the client chose in the calculator (`quotes.display_currency`, `quotes.display_rate`). The public quote page and the quote emails show amounts in that currency, with the base total beside it.
 - Admins can create quotes at `/admin/quotes/new`, with an optional client picker, items, discount and an internal note. The quote starts as `new` and is sent from its detail page.
 - `quotes.source` records whether a quote came from the calculator or the admin, and the activity log shows `Created by you` for admin quotes.
 

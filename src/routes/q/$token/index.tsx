@@ -23,6 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatDate } from '@/lib/format'
+import { moneyIn } from '#/lib/currencies'
 import { formatMinor } from '#/lib/decimal'
 import { callAction } from '#/lib/action-errors'
 import { QUOTE_STATUS_LABELS } from '#/lib/quotes'
@@ -58,11 +59,11 @@ export const Route = createFileRoute('/q/$token/')({
 
 function Lines({
   lines,
-  currency,
+  money,
   recurring,
 }: {
   lines: PricedLine[]
-  currency: string
+  money: (minor: number) => string
   recurring?: boolean
 }) {
   return (
@@ -90,16 +91,16 @@ function Lines({
               </div>
               {line.options.map((option) => (
                 <div key={option.optionId} className="text-muted-foreground">
-                  {option.name}: {formatMinor(option.amount, currency)}
+                  {option.name}: {money(option.amount)}
                 </div>
               ))}
             </TableCell>
             <TableCell className="text-right">{line.quantity}</TableCell>
             <TableCell className="text-right tabular-nums">
-              {formatMinor(line.unitPrice, currency)}
+              {money(line.unitPrice)}
             </TableCell>
             <TableCell className="text-right tabular-nums">
-              {formatMinor(line.amount, currency)}
+              {money(line.amount)}
             </TableCell>
           </TableRow>
         ))}
@@ -116,8 +117,8 @@ function PublicQuotePage() {
   const [confirming, setConfirming] = useState<'accepted' | 'declined' | null>(
     null,
   )
-  const { currency } = quote
-  const money = (minor: number) => formatMinor(minor, currency)
+  const { currency, display } = quote
+  const money = moneyIn(currency, display)
 
   const respond = async (response: 'accepted' | 'declined') => {
     setBusy(true)
@@ -189,16 +190,12 @@ function PublicQuotePage() {
         )}
       </section>
 
-      <Lines lines={breakdown.lines} currency={currency} />
+      <Lines lines={breakdown.lines} money={money} />
 
       {breakdown.recurring.lines.length > 0 && (
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">Recurring charges</p>
-          <Lines
-            lines={breakdown.recurring.lines}
-            currency={currency}
-            recurring
-          />
+          <Lines lines={breakdown.recurring.lines} money={money} recurring />
           <p className="text-right text-sm">
             Recurring total {money(breakdown.recurring.total)}
           </p>
@@ -221,6 +218,13 @@ function PublicQuotePage() {
             <dd className="tabular-nums">{money(quote.total)}</dd>
           </div>
         </dl>
+        {display && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Shown in {display.currency} at 1 {currency} = {display.rate}{' '}
+            {display.currency}. The quote total is{' '}
+            {formatMinor(quote.total, currency)}.
+          </p>
+        )}
       </div>
 
       {quote.status === 'sent' ? (

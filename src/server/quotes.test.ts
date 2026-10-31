@@ -947,3 +947,50 @@ describe('dismissing quotes in bulk', () => {
     expect(await dismissQuotes(db, ids)).toBe(0)
   })
 })
+
+describe('display currency on a submitted quote', () => {
+  const approve = async () => {
+    await db.delete(schema.exchangeRates)
+    await db.update(schema.settings).set({ approvedCurrencies: ['EUR'] })
+    await db.insert(schema.exchangeRates).values({
+      base: 'LKR',
+      quote: 'EUR',
+      rate: 0.003,
+      fetchedAt: new Date().toISOString(),
+    })
+  }
+
+  const submitIn = async (displayCurrency?: string) => {
+    const id = await create(`Display ${displayCurrency ?? 'base'}`)
+    const result = await submitQuote(
+      db,
+      request([{ serviceId: id, quantity: 1, optionIds: [] }], {
+        displayCurrency,
+      }),
+      human,
+    )
+    if (!result.ok) throw new Error(result.error)
+    return (await getQuote(db, result.id))!
+  }
+
+  it('keeps the approved currency and its rate', async () => {
+    await approve()
+    const quote = await submitIn('EUR')
+    expect(quote.displayCurrency).toBe('EUR')
+    expect(quote.displayRate).toBe(0.003)
+    expect(quote.currency).toBe('LKR')
+  })
+
+  it('ignores a currency that is not approved', async () => {
+    await approve()
+    const quote = await submitIn('GBP')
+    expect(quote.displayCurrency).toBeNull()
+    expect(quote.displayRate).toBeNull()
+  })
+
+  it('leaves the display currency empty for the base currency', async () => {
+    await approve()
+    expect((await submitIn()).displayCurrency).toBeNull()
+    expect((await submitIn('LKR')).displayCurrency).toBeNull()
+  })
+})

@@ -12,6 +12,7 @@ import { bpsToPercent } from '#/lib/decimal'
 import { createId } from '#/lib/id'
 import { isSafeSvg } from '#/lib/svg'
 import { withDefaults, type InvoiceEmailTemplate } from '#/lib/email-template'
+import { refreshRates } from './exchange-rates'
 
 const { settings } = schema
 
@@ -107,6 +108,9 @@ export async function saveSettings(db: Db, data: SettingsData) {
     .insert(settings)
     .values({ id: 'main', ...columns })
     .onConflictDoUpdate({ target: settings.id, set: columns })
+  // Fetch rates now so a newly approved currency shows up without waiting for
+  // the daily job. A failed fetch keeps the stored rates.
+  await refreshRates(db, columns.currency, columns.approvedCurrencies)
 }
 
 const startsWith = (bytes: Uint8Array, magic: number[]) =>

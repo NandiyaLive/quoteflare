@@ -14,6 +14,7 @@ import type { Db } from '#/db'
 import { schema } from '#/db'
 import type { QuoteEventType, RecurringInterval } from '#/db/schema'
 import { missingIncluded } from '#/lib/calculator'
+import { displayOf, type DisplayCurrency } from '#/lib/currencies'
 import { formatMinor, minorToDecimal } from '#/lib/decimal'
 import { addDays } from '#/lib/invoices'
 import { createId, createPublicToken, isPublicToken } from '#/lib/id'
@@ -131,6 +132,13 @@ export async function submitQuote(
   const duplicate = await findRecentDuplicate(db, request.email, requested)
   if (duplicate) return { ok: true, id: duplicate }
 
+  // Keep the rate the visitor saw. A currency that is no longer approved falls
+  // back to the base currency.
+  const displayRate =
+    request.displayCurrency && request.displayCurrency !== catalog.currency
+      ? catalog.rates[request.displayCurrency]
+      : undefined
+
   const id = createId()
   await batch(db, [
     db.insert(quotes).values({
@@ -143,6 +151,8 @@ export async function submitQuote(
       breakdown,
       taxRateBps: catalog.taxRateBps,
       currency: catalog.currency,
+      displayCurrency: displayRate ? request.displayCurrency : null,
+      displayRate: displayRate ?? null,
       total: breakdown.total,
     }),
     db
@@ -451,6 +461,8 @@ export type PublicQuote = {
     status: (typeof PUBLIC_QUOTE_STATUSES)[number]
     validUntil: string | null
     currency: string
+    /** Currency and rate the customer saw when they requested the quote. */
+    display: DisplayCurrency | null
     total: number
   }
   contactName: string
@@ -495,6 +507,7 @@ export async function getPublicQuote(
         : (quote.status as PublicQuote['quote']['status']),
       validUntil: quote.validUntil,
       currency: quote.currency,
+      display: displayOf(quote),
       total: quote.total,
     },
     contactName: quote.contactName,

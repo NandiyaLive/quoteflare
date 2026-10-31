@@ -1,4 +1,5 @@
 import { data } from 'currency-codes'
+import { formatMinor } from './decimal'
 
 export type CurrencyOption = { code: string; name: string }
 
@@ -20,3 +21,35 @@ export const formatConverted = (minor: number, currency: string) =>
   new Intl.NumberFormat('en', { style: 'currency', currency }).format(
     minor / 10 ** digitsOf(currency),
   )
+
+/** Currency a customer views amounts in and the rate from the base currency. */
+export type DisplayCurrency = { currency: string; rate: number }
+
+/**
+ * The display currency stored on a quote, or null when the customer saw the
+ * base currency.
+ */
+export const displayOf = (row: {
+  displayCurrency: string | null
+  displayRate: number | null
+}): DisplayCurrency | null =>
+  row.displayCurrency && row.displayRate && row.displayRate > 0
+    ? { currency: row.displayCurrency, rate: row.displayRate }
+    : null
+
+/** Formats base-currency minor units in the display currency when there is one. */
+export const moneyIn =
+  (base: string, display: DisplayCurrency | null) => (minor: number) =>
+    display
+      ? formatConverted(
+          convertMinor(minor, display.rate, display.currency),
+          display.currency,
+        )
+      : formatMinor(minor, base)
+
+/** Like `moneyIn`, with the base amount after a converted one: "€92.00 ($100.00)". */
+export const moneyWithBase =
+  (base: string, display: DisplayCurrency | null) => (minor: number) =>
+    display
+      ? `${moneyIn(base, display)(minor)} (${formatMinor(minor, base)})`
+      : formatMinor(minor, base)

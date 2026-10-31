@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { convertMinor, CURRENCY_OPTIONS, formatConverted } from './currencies'
+import {
+  convertMinor,
+  CURRENCY_OPTIONS,
+  displayOf,
+  formatConverted,
+  moneyIn,
+  moneyWithBase,
+} from './currencies'
 
 describe('currencies', () => {
   it('lists ISO currencies without funds and metals', () => {
@@ -16,5 +23,25 @@ describe('currencies', () => {
   it('formats converted minor units', () => {
     expect(formatConverted(9200, 'EUR')).toBe('€92.00')
     expect(formatConverted(15000, 'JPY')).toBe('¥15,000')
+  })
+
+  it('formats in the base currency without a display currency', () => {
+    expect(moneyIn('USD', null)(10000)).toBe('$100.00')
+    expect(moneyWithBase('USD', null)(10000)).toBe('$100.00')
+  })
+
+  it('formats in the display currency and shows the base amount beside it', () => {
+    const display = { currency: 'EUR', rate: 0.92 }
+    expect(moneyIn('USD', display)(10000)).toBe('€92.00')
+    expect(moneyWithBase('USD', display)(10000)).toBe('€92.00 ($100.00)')
+  })
+
+  it('ignores a stored display currency with no usable rate', () => {
+    expect(displayOf({ displayCurrency: null, displayRate: null })).toBeNull()
+    expect(displayOf({ displayCurrency: 'EUR', displayRate: 0 })).toBeNull()
+    expect(displayOf({ displayCurrency: 'EUR', displayRate: 0.92 })).toEqual({
+      currency: 'EUR',
+      rate: 0.92,
+    })
   })
 })

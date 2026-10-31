@@ -305,9 +305,10 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                             </MultiSelectContent>
                           </MultiSelect>
                           <FieldDescription>
-                            Clients can view the calculator estimate in these
-                            currencies, converted at the daily rate from
-                            Frankfurter. Quotes stay in the base currency.
+                            Clients can view prices in these currencies,
+                            converted at the daily rate from Frankfurter. A
+                            quote keeps the rate the client saw, and its total
+                            stays in the base currency.
                           </FieldDescription>
                         </Field>
                       )}

@@ -19,8 +19,7 @@ import {
   type Evaluation,
 } from '#/lib/calculator'
 import { createId } from '@paralleldrive/cuid2'
-import { convertMinor, formatConverted } from '#/lib/currencies'
-import { formatMinor } from '#/lib/decimal'
+import { moneyIn } from '#/lib/currencies'
 
 export const SCRATCH = 'scratch'
 
@@ -177,17 +176,12 @@ export function CalculatorProvider({
       chosen,
       displayCurrency,
       setDisplayCurrency: setPicked,
-      money: (minor) =>
+      money: moneyIn(
+        catalog.currency,
         displayCurrency === catalog.currency
-          ? formatMinor(minor, catalog.currency)
-          : formatConverted(
-              convertMinor(
-                minor,
-                catalog.rates[displayCurrency],
-                displayCurrency,
-              ),
-              displayCurrency,
-            ),
+          ? null
+          : { currency: displayCurrency, rate: catalog.rates[displayCurrency] },
+      ),
       choose: (target) => {
         const pkg = catalog.packages.find((p) => p.id === target)
         setState(pkg ? stateForPackage(catalog, pkg) : baseState(catalog))

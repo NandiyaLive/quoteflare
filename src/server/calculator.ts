@@ -5,7 +5,7 @@ import {
 } from '#/lib/settings'
 import type { Db } from '#/db'
 import type { CalculatorCatalog } from '#/lib/calculator'
-import { fetchRates } from './exchange-rates'
+import { getRates } from './exchange-rates'
 import { listPackageCategories, listPackages } from './packages'
 import { listCategories, listServices } from './services'
 
@@ -27,7 +27,7 @@ export async function loadCalculatorCatalog(db: Db): Promise<
   // Private services and packages stay out of the public catalog. The quote
   // endpoints validate against this catalog, so they reject private ids too.
   const currency = settings?.currency ?? DEFAULT_CURRENCY
-  const rates = await fetchRates(currency, settings?.approvedCurrencies ?? [])
+  const rates = await getRates(db, currency, settings?.approvedCurrencies ?? [])
   const publicServices = services.filter((s) => !s.isPrivate)
   const publicPackages = packages.filter((p) => !p.isPrivate)
   const activeIds = new Set(publicServices.map((s) => s.id))

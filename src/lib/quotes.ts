@@ -86,6 +86,12 @@ export const quoteRequestSchema = z.strictObject({
     .array(selectionSchema)
     .min(1, 'Select at least one service')
     .max(MAX_QUOTE_SERVICES),
+  // Currency the visitor viewed prices in. The server checks it against the
+  // approved list and ignores it otherwise.
+  displayCurrency: z
+    .string()
+    .regex(/^[A-Z]{3}$/)
+    .optional(),
 })
 
 export type QuoteRequest = z.infer<typeof quoteRequestSchema>

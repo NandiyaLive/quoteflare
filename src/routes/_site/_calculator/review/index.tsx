@@ -38,7 +38,7 @@ export const Route = createFileRoute('/_site/_calculator/review/')({
 
 function ReviewPage() {
   const { turnstileSiteKey } = Route.useLoaderData()
-  const { catalog, state, evaluation } = useCalculator()
+  const { catalog, state, evaluation, displayCurrency } = useCalculator()
   const [token, setToken] = useState('')
   const [widgetKey, setWidgetKey] = useState(0)
   const [sent, setSent] = useState(false)
@@ -67,7 +67,15 @@ function ReviewPage() {
       const result = await callAction(
         () =>
           submitQuoteAction({
-            data: { ...value, turnstileToken: token, selections },
+            data: {
+              ...value,
+              turnstileToken: token,
+              selections,
+              displayCurrency:
+                displayCurrency === catalog.currency
+                  ? undefined
+                  : displayCurrency,
+            },
           }),
         'Could not send your quote request. Try again.',
       )

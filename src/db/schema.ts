@@ -3,6 +3,7 @@ import {
   check,
   index,
   integer,
+  primaryKey,
   real,
   sqliteTable,
   text,
@@ -319,6 +320,18 @@ export const clients = sqliteTable(
   (t) => [index('clients_email_idx').on(t.email)],
 )
 
+// Latest rate from `base` to `quote`, refreshed by the daily job.
+export const exchangeRates = sqliteTable(
+  'exchange_rates',
+  {
+    base: text('base').notNull(),
+    quote: text('quote').notNull(),
+    rate: real('rate').notNull(),
+    fetchedAt: text('fetched_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.base, t.quote] })],
+)
+
 export const quotes = sqliteTable(
   'quotes',
   {
@@ -339,6 +352,10 @@ export const quotes = sqliteTable(
     taxRateBps: integer('tax_rate_bps'),
     adminNote: text('admin_note').notNull().default(''),
     currency: text('currency').notNull().default('LKR'),
+    // Currency the visitor viewed prices in and the rate from `currency` to it
+    // when the quote was submitted. Both are null when they saw the base currency.
+    displayCurrency: text('display_currency'),
+    displayRate: real('display_rate'),
     total: integer('total').notNull(),
     status: text('status', { enum: quoteStatuses }).notNull().default('new'),
     // Where the quote started: a visitor's calculator request or the admin.

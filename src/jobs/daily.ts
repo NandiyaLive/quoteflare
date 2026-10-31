@@ -2,6 +2,7 @@ import { and, eq, lt } from 'drizzle-orm'
 import { createDb, schema, type Db } from '#/db'
 import { toIsoDate } from '#/lib/invoices'
 import { sendQuoteReminders } from '#/server/quote-email'
+import { refreshRates } from '#/server/exchange-rates'
 import { expireQuotes } from '#/server/quotes'
 import { sendDueReminders } from './reminders'
 import { runRecurringSchedules } from './recurring'
@@ -45,6 +46,18 @@ async function executeDailyJobs(
 
   const markedOverdue = await markOverdueInvoices(db, today)
   console.log(`daily: marked ${markedOverdue} invoices overdue`)
+
+  const settings = await db.query.settings.findFirst()
+  if (settings) {
+    const refreshed = await refreshRates(
+      db,
+      settings.currency,
+      settings.approvedCurrencies,
+      fetcher,
+      now,
+    )
+    console.log(`daily: ${refreshed ? 'refreshed' : 'kept'} exchange rates`)
+  }
 
   const quotesExpired = await expireQuotes(db, today)
   console.log(`daily: expired ${quotesExpired} quotes`)
