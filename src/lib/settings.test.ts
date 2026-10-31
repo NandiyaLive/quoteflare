@@ -18,6 +18,7 @@ const valid = {
   bankSwiftCode: '',
   paymentInstructions: 'Pay by bank transfer.',
   paymentTermDays: '14',
+  quoteValidityDays: '30',
   calculatorTitle: 'Get a quote',
   calculatorDescription: '',
   sendReminders: false,

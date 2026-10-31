@@ -5,8 +5,21 @@ import { createTestD1 } from '#/db/test-db'
 import { isCuid } from '#/lib/id'
 import { quoteRequestSchema } from '#/lib/quotes'
 import { serviceSchema } from '#/lib/services'
-import { sendQuoteEmails } from './quote-email'
-import { getQuote, listQuotes, setQuoteStatus, submitQuote } from './quotes'
+import {
+  sendQuoteEmails,
+  sendQuoteResponseEmail,
+  sendQuoteToClient,
+} from './quote-email'
+import {
+  convertQuoteToInvoice,
+  expireQuotes,
+  getPublicQuote,
+  respondToQuote,
+  getQuote,
+  listQuotes,
+  setQuoteStatus,
+  submitQuote,
+} from './quotes'
 import { saveService, setServiceActive } from './services'
 import { verifyTurnstile } from './turnstile'
 
@@ -23,6 +36,9 @@ afterAll(() => dispose())
 
 beforeEach(async () => {
   await db.delete(schema.emailLog)
+  await db.delete(schema.invoiceItems)
+  await db.delete(schema.invoices)
+  await db.delete(schema.clients)
   await db.delete(schema.quotes)
   await db.delete(schema.serviceDependencies)
   await db.delete(schema.serviceOptions)
@@ -407,5 +423,181 @@ describe('turnstile verification', () => {
     const boom = (() =>
       Promise.reject(new Error('down'))) as unknown as typeof fetch
     expect(await verifyTurnstile('s', 't', undefined, boom)).toBe(false)
+  })
+})
+
+describe('quote lifecycle', () => {
+  const NOW = new Date('2026-06-01T10:00:00Z')
+  const deps = (sent: { to: string[]; html: string }[] = []) => ({
+    apiKey: 're_test',
+    from: 'Acme <a@example.test>',
+    origin: 'https://x.test',
+    fetcher: (async (_url: unknown, init?: RequestInit) => {
+      sent.push(JSON.parse(String(init?.body)))
+      return Response.json({ id: `msg-${sent.length}` })
+    }) as typeof fetch,
+  })
+  const submit = async () => {
+    const id = await create('Web')
+    const result = await submitQuote(
+      db,
+      request([{ serviceId: id, quantity: 1, optionIds: [] }]),
+      human,
+    )
+    if (!result.ok) throw new Error(result.error)
+    return result.id
+  }
+  const sendOut = async (quoteId: string) => {
+    const result = await sendQuoteToClient(db, deps(), quoteId, NOW)
+    if (!result.ok) throw new Error(result.error)
+    return (await getQuote(db, quoteId))!
+  }
+
+  it('emails the link, sets the validity date and marks the quote sent', async () => {
+    const sent: { to: string[]; html: string }[] = []
+    const quoteId = await submit()
+    const result = await sendQuoteToClient(db, deps(sent), quoteId, NOW)
+    expect(result).toMatchObject({
+      ok: true,
+      to: 'jo@example.com',
+      validUntil: '2026-07-01',
+    })
+    const quote = (await getQuote(db, quoteId))!
+    expect(quote).toMatchObject({ status: 'sent', validUntil: '2026-07-01' })
+    expect(quote.publicToken).toMatch(/^[0-9a-f]{32}$/)
+    expect(sent[0].html).toContain(`/q/${quote.publicToken}`)
+  })
+
+  it('leaves the quote untouched when the email fails', async () => {
+    const quoteId = await submit()
+    const result = await sendQuoteToClient(
+      db,
+      { apiKey: undefined, from: 'a@example.test', origin: 'https://x.test' },
+      quoteId,
+      NOW,
+    )
+    expect(result.ok).toBe(false)
+    expect(await getQuote(db, quoteId)).toMatchObject({ status: 'new' })
+  })
+
+  it('keeps the same link when a quote is sent again', async () => {
+    const quoteId = await submit()
+    const first = await sendOut(quoteId)
+    const second = await sendOut(quoteId)
+    expect(second.publicToken).toBe(first.publicToken)
+  })
+
+  it('does not send dismissed or converted quotes', async () => {
+    const quoteId = await submit()
+    await setQuoteStatus(db, quoteId, 'dismissed')
+    expect((await sendQuoteToClient(db, deps(), quoteId, NOW)).ok).toBe(false)
+  })
+
+  it('shows a sent quote on the public page and hides a new one', async () => {
+    const quoteId = await submit()
+    expect(await getPublicQuote(db, 'a'.repeat(32), '2026-06-01')).toBeNull()
+    const quote = await sendOut(quoteId)
+    const view = await getPublicQuote(db, quote.publicToken!, '2026-06-02')
+    expect(view?.quote).toMatchObject({ status: 'sent', total: 11000 })
+    await setQuoteStatus(db, quoteId, 'dismissed')
+    expect(
+      await getPublicQuote(db, quote.publicToken!, '2026-06-02'),
+    ).toBeNull()
+    expect(await getPublicQuote(db, 'not-a-token', '2026-06-02')).toBeNull()
+  })
+
+  it('reports a lapsed quote as expired before the daily job runs', async () => {
+    const quote = await sendOut(await submit())
+    const view = await getPublicQuote(db, quote.publicToken!, '2026-07-02')
+    expect(view?.quote.status).toBe('expired')
+  })
+
+  it('accepts on the last valid day and records the answer once', async () => {
+    const quote = await sendOut(await submit())
+    const token = quote.publicToken!
+    expect(
+      await respondToQuote(db, token, 'accepted', '2026-07-01'),
+    ).toMatchObject({
+      ok: true,
+      status: 'accepted',
+    })
+    expect((await getQuote(db, quote.id))?.respondedAt).not.toBeNull()
+    const again = await respondToQuote(db, token, 'declined', '2026-07-01')
+    expect(again).toMatchObject({ ok: false })
+    expect((await getQuote(db, quote.id))?.status).toBe('accepted')
+  })
+
+  it('refuses an answer after the validity date', async () => {
+    const quote = await sendOut(await submit())
+    const result = await respondToQuote(
+      db,
+      quote.publicToken!,
+      'accepted',
+      '2026-07-02',
+    )
+    expect(result).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('expired'),
+    })
+    expect((await getQuote(db, quote.id))?.status).toBe('sent')
+  })
+
+  it('refuses an answer for a quote that was never sent', async () => {
+    const quoteId = await submit()
+    await db.update(schema.quotes).set({ publicToken: 'b'.repeat(32) })
+    expect(
+      await respondToQuote(db, 'b'.repeat(32), 'accepted', '2026-06-01'),
+    ).toMatchObject({
+      ok: false,
+      error: 'Quote not found.',
+    })
+    expect((await getQuote(db, quoteId))?.status).toBe('new')
+  })
+
+  it('expires only sent quotes past their date', async () => {
+    const lapsed = await sendOut(await submit())
+    const open = await sendOut(await submit())
+    await db
+      .update(schema.quotes)
+      .set({ validUntil: '2026-06-10' })
+      .where(eq(schema.quotes.id, lapsed.id))
+    const fresh = await submit()
+    expect(await expireQuotes(db, '2026-06-15')).toBe(1)
+    expect((await getQuote(db, lapsed.id))?.status).toBe('expired')
+    expect((await getQuote(db, open.id))?.status).toBe('sent')
+    expect((await getQuote(db, fresh))?.status).toBe('new')
+    expect(await expireQuotes(db, '2026-06-15')).toBe(0)
+  })
+
+  it('lets an expired quote be sent again with a new date', async () => {
+    const quote = await sendOut(await submit())
+    await db.update(schema.quotes).set({ status: 'expired' })
+    const result = await sendQuoteToClient(
+      db,
+      deps(),
+      quote.id,
+      new Date('2026-08-01T00:00:00Z'),
+    )
+    expect(result).toMatchObject({ ok: true, validUntil: '2026-08-31' })
+    expect((await getQuote(db, quote.id))?.status).toBe('sent')
+  })
+
+  it('tells the business how the client answered', async () => {
+    await db.update(schema.settings).set({ email: 'owner@example.com' })
+    const quote = await sendOut(await submit())
+    await respondToQuote(db, quote.publicToken!, 'accepted', '2026-06-02')
+    const sent: { to: string[]; html: string }[] = []
+    await sendQuoteResponseEmail(db, deps(sent), quote.id)
+    expect(sent.map((m) => m.to)).toEqual([['owner@example.com']])
+    const log = await db.select().from(schema.emailLog)
+    expect(log.map((l) => l.type)).toContain('quote_response')
+  })
+
+  it('converts an accepted quote to an invoice', async () => {
+    const quote = await sendOut(await submit())
+    await respondToQuote(db, quote.publicToken!, 'accepted', '2026-06-02')
+    const result = await convertQuoteToInvoice(db, quote.id, '2026-06-03')
+    expect(result).toMatchObject({ ok: true, created: true })
+    expect((await getQuote(db, quote.id))?.status).toBe('converted')
   })
 })

@@ -336,6 +336,12 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                   { required: true, inputMode: 'numeric', placeholder: '14' },
                   'Days between the issue date and the due date on recurring invoices.',
                 )}
+                {text(
+                  'quoteValidityDays',
+                  'Quote validity (days)',
+                  { required: true, inputMode: 'numeric', placeholder: '30' },
+                  'How long a quote you send stays open for acceptance.',
+                )}
                 <form.Field name="sendReminders">
                   {(field) => (
                     <Field orientation="horizontal" className="md:col-span-2">

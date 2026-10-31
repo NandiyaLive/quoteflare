@@ -4,6 +4,10 @@ import { QUOTE_STATUS_LABELS } from '#/lib/quotes'
 
 const VARIANTS = {
   new: 'default',
+  sent: 'outline',
+  accepted: 'secondary',
+  declined: 'destructive',
+  expired: 'outline',
   converted: 'secondary',
   dismissed: 'outline',
 } as const

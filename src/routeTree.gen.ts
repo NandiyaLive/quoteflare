@@ -28,6 +28,7 @@ import { Route as AdminServicesIndexRouteImport } from './routes/admin/services/
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as FilesLogoIndexRouteImport } from './routes/files/logo/index'
 import { Route as ITokenIndexRouteImport } from './routes/i/$token/index'
+import { Route as QTokenIndexRouteImport } from './routes/q/$token/index'
 import { Route as SiteCalculatorReviewIndexRouteImport } from './routes/_site/_calculator/review/index'
 import { Route as SiteCalculatorScopeIndexRouteImport } from './routes/_site/_calculator/scope/index'
 import { Route as AdminClientsClientIdIndexRouteImport } from './routes/admin/clients/$clientId/index'
@@ -130,6 +131,11 @@ const ITokenIndexRoute = ITokenIndexRouteImport.update({
   path: '/i/$token/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QTokenIndexRoute = QTokenIndexRouteImport.update({
+  id: '/q/$token/',
+  path: '/q/$token/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SiteCalculatorReviewIndexRoute =
   SiteCalculatorReviewIndexRouteImport.update({
     id: '/review/',
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
   '/i/$token/': typeof ITokenIndexRoute
+  '/q/$token/': typeof QTokenIndexRoute
   '/review/': typeof SiteCalculatorReviewIndexRoute
   '/scope/': typeof SiteCalculatorScopeIndexRoute
   '/admin/clients/$clientId/': typeof AdminClientsClientIdIndexRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/files/logo': typeof FilesLogoIndexRoute
   '/i/$token': typeof ITokenIndexRoute
+  '/q/$token': typeof QTokenIndexRoute
   '/review': typeof SiteCalculatorReviewIndexRoute
   '/scope': typeof SiteCalculatorScopeIndexRoute
   '/admin/clients/$clientId': typeof AdminClientsClientIdIndexRoute
@@ -245,6 +253,7 @@ export interface FileRoutesById {
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/files/logo/': typeof FilesLogoIndexRoute
   '/i/$token/': typeof ITokenIndexRoute
+  '/q/$token/': typeof QTokenIndexRoute
   '/_site/_calculator/review/': typeof SiteCalculatorReviewIndexRoute
   '/_site/_calculator/scope/': typeof SiteCalculatorScopeIndexRoute
   '/admin/clients/$clientId/': typeof AdminClientsClientIdIndexRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/admin/settings/'
     | '/files/logo/'
     | '/i/$token/'
+    | '/q/$token/'
     | '/review/'
     | '/scope/'
     | '/admin/clients/$clientId/'
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/files/logo'
     | '/i/$token'
+    | '/q/$token'
     | '/review'
     | '/scope'
     | '/admin/clients/$clientId'
@@ -324,6 +335,7 @@ export interface FileRouteTypes {
     | '/admin/settings/'
     | '/files/logo/'
     | '/i/$token/'
+    | '/q/$token/'
     | '/_site/_calculator/review/'
     | '/_site/_calculator/scope/'
     | '/admin/clients/$clientId/'
@@ -339,6 +351,7 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   FilesLogoIndexRoute: typeof FilesLogoIndexRoute
   ITokenIndexRoute: typeof ITokenIndexRoute
+  QTokenIndexRoute: typeof QTokenIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -474,6 +487,13 @@ declare module '@tanstack/react-router' {
       path: '/i/$token'
       fullPath: '/i/$token/'
       preLoaderRoute: typeof ITokenIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/q/$token/': {
+      id: '/q/$token/'
+      path: '/q/$token'
+      fullPath: '/q/$token/'
+      preLoaderRoute: typeof QTokenIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_site/_calculator/review/': {
@@ -660,6 +680,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   FilesLogoIndexRoute: FilesLogoIndexRoute,
   ITokenIndexRoute: ITokenIndexRoute,
+  QTokenIndexRoute: QTokenIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

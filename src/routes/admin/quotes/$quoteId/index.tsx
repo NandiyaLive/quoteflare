@@ -6,6 +6,7 @@ import {
   useRouter,
 } from '@tanstack/react-router'
 import { getQuoteDetail } from '#/server/quote-actions'
+import { ExternalLinkIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useConfirm } from '@/components/common/confirm-dialog'
 import BackButton from '@/components/common/back-button'
@@ -31,11 +32,17 @@ import {
   todayIso,
 } from '#/lib/invoices'
 import type { PricedLine } from '#/lib/pricing'
-import { quoteRecurringIntervals } from '#/lib/quotes'
+import {
+  INVOICEABLE_QUOTE_STATUSES,
+  PUBLIC_QUOTE_STATUSES,
+  quoteRecurringIntervals,
+  SENDABLE_QUOTE_STATUSES,
+} from '#/lib/quotes'
 import { RECURRING_INTERVAL_LABELS } from '#/lib/recurring'
 import { BILLING_LABELS } from '#/lib/services'
 import {
   convertQuoteAction,
+  sendQuoteAction,
   setQuoteStatusAction,
 } from '#/server/quote-actions'
 import { QuoteStatusBadge } from '../-components/quote-status-badge'
@@ -122,6 +129,19 @@ function QuotePage() {
   const { breakdown, currency } = quote
   const recurringIntervals = breakdown ? quoteRecurringIntervals(breakdown) : []
 
+  const canSend =
+    !invoice &&
+    breakdown !== null &&
+    breakdown.lines.length > 0 &&
+    (SENDABLE_QUOTE_STATUSES as readonly string[]).includes(quote.status)
+  const canInvoice =
+    !invoice &&
+    (INVOICEABLE_QUOTE_STATUSES as readonly string[]).includes(quote.status)
+  const canDismiss = canInvoice || quote.status === 'declined'
+  const showLink =
+    quote.publicToken &&
+    (PUBLIC_QUOTE_STATUSES as readonly string[]).includes(quote.status)
+
   const { confirm, dialog } = useConfirm()
 
   const change = async (status: 'new' | 'dismissed') => {
@@ -144,6 +164,23 @@ function QuotePage() {
         toast.success(status === 'new' ? 'Quote reopened.' : 'Quote dismissed.')
       else if (result) toast.error('This quote can no longer be changed.')
       await router.invalidate()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const sendQuote = async () => {
+    setBusy(true)
+    try {
+      const result = await callAction(
+        () => sendQuoteAction({ data: { id: quote.id } }),
+        'Could not send the quote. Try again.',
+      )
+      if (!result) return
+      if (result.ok) {
+        toast.success(`Quote sent to ${result.to}.`)
+        await router.invalidate()
+      } else toast.error(result.error)
     } finally {
       setBusy(false)
     }
@@ -228,22 +265,31 @@ function QuotePage() {
                 ` (${RECURRING_INTERVAL_LABELS[interval]})`}
             </Button>
           ))}
-        {!invoice && quote.status === 'new' && (
-          <>
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => void change('dismissed')}
-            >
-              Dismiss
-            </Button>
-            <Button
-              disabled={busy || (advance && !advanceValid)}
-              onClick={() => void createInvoice()}
-            >
-              Create invoice
-            </Button>
-          </>
+        {canDismiss && (
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={() => void change('dismissed')}
+          >
+            Dismiss
+          </Button>
+        )}
+        {canSend && (
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={() => void sendQuote()}
+          >
+            {quote.status === 'new' ? 'Send quote' : 'Resend quote'}
+          </Button>
+        )}
+        {canInvoice && (
+          <Button
+            disabled={busy || (advance && !advanceValid)}
+            onClick={() => void createInvoice()}
+          >
+            Create invoice
+          </Button>
         )}
         {quote.status === 'dismissed' && (
           <Button
@@ -332,7 +378,37 @@ function QuotePage() {
             </CardContent>
           </Card>
 
-          {!invoice && quote.status === 'new' && breakdown && (
+          {showLink && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Client link</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3 text-sm">
+                {quote.validUntil && (
+                  <p className="text-muted-foreground">
+                    Valid until {formatDate(`${quote.validUntil}T00:00:00`)}
+                  </p>
+                )}
+                <Button
+                  variant="outline"
+                  className="self-start"
+                  nativeButton={false}
+                  render={
+                    <a
+                      href={`/q/${quote.publicToken}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    />
+                  }
+                >
+                  <ExternalLinkIcon />
+                  Open public quote
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {canInvoice && breakdown && (
             <Card>
               <CardHeader>
                 <CardTitle>Advance payment</CardTitle>

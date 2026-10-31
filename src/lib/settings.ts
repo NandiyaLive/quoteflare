@@ -96,6 +96,12 @@ export const settingsSchema = z.strictObject({
     .regex(/^\d{1,3}$/, 'Enter a whole number of days')
     .transform(Number)
     .refine((n) => n <= 365, 'Use 365 days or fewer'),
+  quoteValidityDays: z
+    .string()
+    .trim()
+    .regex(/^\d{1,3}$/, 'Enter a whole number of days')
+    .transform(Number)
+    .refine((n) => n >= 1 && n <= 365, 'Use 1 to 365 days'),
   calculatorTitle: z
     .string()
     .trim()

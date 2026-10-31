@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Miniflare } from 'miniflare'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -71,5 +71,84 @@ describe('extending an existing database', () => {
       .bind(optionId)
       .first()
     expect(option).toMatchObject({ name: 'Opt', group_id: null, active: 1 })
+  })
+})
+
+describe('widening the quote statuses', () => {
+  it('keeps quotes and the rows that reference them', async () => {
+    const files = readdirSync(migrationsDir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort()
+    const target = files.findIndex((f) => f.startsWith('0020_'))
+    // 0000 to 0002 already ran in the first test's database, so use a new one.
+    const fresh = new Miniflare({
+      modules: true,
+      script: 'export default { fetch() { return new Response(null) } }',
+      d1Databases: { DB: createId() },
+    })
+    const db = await fresh.getD1Database('DB')
+    const run = async (file: string) => {
+      const statements = readFileSync(join(migrationsDir, file), 'utf8')
+        .split('--> statement-breakpoint')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      await db.batch(statements.map((s) => db.prepare(s)))
+    }
+    for (const file of files.slice(0, target)) await run(file)
+
+    const quoteId = createId()
+    const clientId = createId()
+    const invoiceId = createId()
+    await db.batch([
+      db
+        .prepare(
+          "insert into quotes (id, contact_name, contact_email, selection, total, status) values (?, 'Jo', 'jo@example.com', '[]', 100, 'converted')",
+        )
+        .bind(quoteId),
+      db
+        .prepare("insert into clients (id, name) values (?, 'Jo')")
+        .bind(clientId),
+      db
+        .prepare(
+          "insert into invoices (id, number, client_id, source_quote_id, issue_date, due_date, currency) values (?, 'INV-1', ?, ?, '2026-01-01', '2026-01-15', 'USD')",
+        )
+        .bind(invoiceId, clientId, quoteId),
+      db
+        .prepare(
+          "insert into email_log (id, quote_id, type, to_address, status) values (?, ?, 'quote_confirmation', 'jo@example.com', 'sent')",
+        )
+        .bind(createId(), quoteId),
+    ])
+
+    await run(files[target])
+
+    expect(
+      await db
+        .prepare('select * from quotes where id = ?')
+        .bind(quoteId)
+        .first(),
+    ).toMatchObject({
+      status: 'converted',
+      number: null,
+      public_token: null,
+      valid_until: null,
+    })
+    expect(
+      await db
+        .prepare('select source_quote_id from invoices where id = ?')
+        .bind(invoiceId)
+        .first(),
+    ).toEqual({ source_quote_id: quoteId })
+    expect(
+      await db
+        .prepare('select count(*) as n from email_log where quote_id = ?')
+        .bind(quoteId)
+        .first(),
+    ).toEqual({ n: 1 })
+    await db
+      .prepare("update quotes set status = 'accepted' where id = ?")
+      .bind(quoteId)
+      .run()
+    await fresh.dispose()
   })
 })

@@ -65,7 +65,7 @@ export default {
       return withSecurityHeaders(tooManyRequests())
     }
     if (
-      pathname.startsWith('/i/') &&
+      (pathname.startsWith('/i/') || pathname.startsWith('/q/')) &&
       (await isRateLimited(env.INVOICE_LIMITER, request))
     ) {
       return withSecurityHeaders(tooManyRequests())

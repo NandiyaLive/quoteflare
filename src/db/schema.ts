@@ -22,7 +22,15 @@ export const invoiceStatuses = [
   'overdue',
   'void',
 ] as const
-export const quoteStatuses = ['new', 'converted', 'dismissed'] as const
+export const quoteStatuses = [
+  'new',
+  'sent',
+  'accepted',
+  'declined',
+  'expired',
+  'converted',
+  'dismissed',
+] as const
 export const modifierTypes = ['flat', 'percent'] as const
 export const recurringIntervals = [
   'weekly',
@@ -114,6 +122,7 @@ export const settings = sqliteTable(
       .notNull()
       .default(false),
     paymentTermDays: integer('payment_term_days').notNull().default(14),
+    quoteValidityDays: integer('quote_validity_days').notNull().default(30),
     calculatorTitle: text('calculator_title').notNull().default(''),
     calculatorDescription: text('calculator_description').notNull().default(''),
   },
@@ -298,6 +307,10 @@ export const quotes = sqliteTable(
   {
     id: id(),
     number: text('number').unique(),
+    publicToken: text('public_token').unique(),
+    validUntil: text('valid_until'),
+    sentAt: text('sent_at'),
+    respondedAt: text('responded_at'),
     contactName: text('contact_name').notNull(),
     contactEmail: text('contact_email').notNull(),
     message: text('message').notNull().default(''),

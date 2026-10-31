@@ -105,6 +105,35 @@ describe('runDailyJobs', () => {
     ])
   })
 
+  it('expires sent quotes whose validity date has passed', async () => {
+    await db.delete(schema.quotes)
+    const quote = (valid: string, status: 'sent' | 'new') => ({
+      contactName: 'Jo',
+      contactEmail: 'jo@example.com',
+      selection: [],
+      total: 100,
+      status,
+      validUntil: valid,
+    })
+    const [lapsed, open, unsent] = await db
+      .insert(schema.quotes)
+      .values([
+        quote('2026-06-14', 'sent'),
+        quote('2026-06-15', 'sent'),
+        quote('2026-06-01', 'new'),
+      ])
+      .returning({ id: schema.quotes.id })
+    const result = await runDailyJobs(env(), now)
+    expect(result.quotesExpired).toBe(1)
+    const status = async (id: string) =>
+      (await db.select().from(schema.quotes).where(eq(schema.quotes.id, id)))[0]
+        .status
+    expect(await status(lapsed.id)).toBe('expired')
+    expect(await status(open.id)).toBe('sent')
+    expect(await status(unsent.id)).toBe('new')
+    await db.delete(schema.quotes)
+  })
+
   it('changes nothing on a second run', async () => {
     await addInvoice('A-1', 'sent', '2026-06-14')
     expect((await runDailyJobs(env(), now)).markedOverdue).toBe(1)

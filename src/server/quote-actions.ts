@@ -12,23 +12,31 @@ import {
   MAX_PUBLIC_BODY_BYTES,
   quoteFilterSchema,
   quoteRequestSchema,
+  quoteResponseSchema,
   quoteStatusUpdateSchema,
+  sendQuoteSchema,
 } from '#/lib/quotes'
 import { toIsoDate } from '#/lib/invoices'
 import { z } from 'zod'
 import { requireAdmin } from './admin-middleware'
-import { isRateLimited } from './rate-limit'
+import { isRateLimited, tooManyRequests } from './rate-limit'
 import {
   convertQuoteToInvoice,
   getQuote,
   getQuoteInvoice,
+  getPublicQuote,
   getQuoteSchedulePrefill,
   listQuotes,
+  respondToQuote,
   setQuoteStatus,
   submitQuote,
   type SubmitQuoteResult,
 } from './quotes'
-import { sendQuoteEmails } from './quote-email'
+import {
+  sendQuoteEmails,
+  sendQuoteResponseEmail,
+  sendQuoteToClient,
+} from './quote-email'
 import { verifyTurnstile } from './turnstile'
 
 export const getQuoteConfig = createServerFn().handler(() => ({
@@ -136,3 +144,63 @@ export const getQuoteSchedulePrefillAction = createServerFn()
       toIsoDate(new Date()),
     ),
   )
+
+export const sendQuoteAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => sendQuoteSchema.parse(input))
+  .middleware([requireAdmin])
+  .handler(({ data }) =>
+    sendQuoteToClient(
+      createDb(env.DB),
+      {
+        apiKey: env.RESEND_API_KEY,
+        from: env.EMAIL_FROM,
+        origin: env.APP_ORIGIN || getRequestUrl().origin,
+      },
+      data.id,
+    ),
+  )
+
+// server.ts limits page loads of /q/<token>, and rendering that page calls this
+// function inside the same request. Client-side navigation and the accept and
+// decline buttons call the server function endpoint, so only those count here.
+const limitPublicCall = async () => {
+  const request = getRequest()
+  if (
+    !new URL(request.url).pathname.startsWith('/q/') &&
+    (await isRateLimited(env.INVOICE_LIMITER, request))
+  ) {
+    throw tooManyRequests()
+  }
+}
+
+export const getPublicQuoteAction = createServerFn()
+  .validator((input: unknown) => String(input).slice(0, 64))
+  .handler(async ({ data }) => {
+    await limitPublicCall()
+    return getPublicQuote(createDb(env.DB), data, toIsoDate(new Date()))
+  })
+
+export const respondToQuoteAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => quoteResponseSchema.parse(input))
+  .handler(async ({ data }) => {
+    await limitPublicCall()
+    const db = createDb(env.DB)
+    const result = await respondToQuote(
+      db,
+      data.token,
+      data.response,
+      toIsoDate(new Date()),
+    )
+    if (result.ok) {
+      await sendQuoteResponseEmail(
+        db,
+        {
+          apiKey: env.RESEND_API_KEY,
+          from: env.EMAIL_FROM,
+          origin: env.APP_ORIGIN || getRequestUrl().origin,
+        },
+        result.id,
+      )
+    }
+    return result
+  })

@@ -46,6 +46,7 @@ const input = {
   bankSwiftCode: '',
   paymentInstructions: 'IBAN 123',
   paymentTermDays: '14',
+  quoteValidityDays: '30',
   calculatorTitle: '',
   calculatorDescription: '',
   sendReminders: false,

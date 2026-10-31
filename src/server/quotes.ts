@@ -1,11 +1,22 @@
-import { and, asc, desc, eq, sql } from 'drizzle-orm'
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  or,
+  sql,
+} from 'drizzle-orm'
 import type { Db } from '#/db'
 import { schema } from '#/db'
 import type { RecurringInterval } from '#/db/schema'
 import { missingIncluded } from '#/lib/calculator'
 import { minorToDecimal } from '#/lib/decimal'
 import { addDays } from '#/lib/invoices'
-import { createId } from '#/lib/id'
+import { createId, createPublicToken, isPublicToken } from '#/lib/id'
 import {
   calculatePrice,
   type PricingBreakdown,
@@ -13,6 +24,9 @@ import {
 } from '#/lib/pricing'
 import type { RecurringFormValues } from '#/lib/recurring'
 import {
+  INVOICEABLE_QUOTE_STATUSES,
+  PUBLIC_QUOTE_STATUSES,
+  SENDABLE_QUOTE_STATUSES,
   quoteInvoiceItems,
   quoteRecurringItems,
   type QuoteRequest,
@@ -235,7 +249,12 @@ export async function convertQuoteToInvoice(
       db
         .update(quotes)
         .set({ status: 'converted' })
-        .where(and(eq(quotes.id, quoteId), eq(quotes.status, 'new'))),
+        .where(
+          and(
+            eq(quotes.id, quoteId),
+            inArray(quotes.status, [...INVOICEABLE_QUOTE_STATUSES]),
+          ),
+        ),
     ])
   } catch (error) {
     if (isDuplicateNumber(error)) {
@@ -309,4 +328,162 @@ export async function getQuoteSchedulePrefill(
       })),
     },
   }
+}
+
+export type MarkSentResult =
+  { ok: true; token: string; validUntil: string } | { ok: false; error: string }
+
+/**
+ * Opens the quote to the client: it gets a public token, a validity date and
+ * the `sent` status. Call it after the email left, so a failed send changes
+ * nothing.
+ */
+export async function markQuoteSent(
+  db: Db,
+  quoteId: string,
+  today: string,
+  validityDays: number,
+): Promise<MarkSentResult> {
+  const token = createPublicToken()
+  const validUntil = addDays(today, validityDays)
+  const [row] = await db
+    .update(quotes)
+    .set({
+      status: 'sent',
+      publicToken: sql`coalesce(${quotes.publicToken}, ${token})`,
+      validUntil,
+      sentAt: new Date().toISOString(),
+      respondedAt: null,
+    })
+    .where(
+      and(
+        eq(quotes.id, quoteId),
+        inArray(quotes.status, [...SENDABLE_QUOTE_STATUSES]),
+      ),
+    )
+    .returning({ token: quotes.publicToken })
+  if (!row?.token) {
+    return { ok: false, error: 'This quote can no longer be sent.' }
+  }
+  return { ok: true, token: row.token, validUntil }
+}
+
+export type PublicQuote = {
+  quote: {
+    number: string | null
+    status: (typeof PUBLIC_QUOTE_STATUSES)[number]
+    validUntil: string | null
+    currency: string
+    total: number
+  }
+  contactName: string
+  breakdown: PricingBreakdown
+  business: { name: string; address: string; email: string; hasLogo: boolean }
+}
+
+const isLapsed = (
+  quote: { status: string; validUntil: string | null },
+  today: string,
+) =>
+  quote.status === 'sent' &&
+  quote.validUntil !== null &&
+  quote.validUntil < today
+
+export async function getPublicQuote(
+  db: Db,
+  token: string,
+  today: string,
+): Promise<PublicQuote | null> {
+  if (!isPublicToken(token)) return null
+  const [quote] = await db
+    .select()
+    .from(quotes)
+    .where(
+      and(
+        eq(quotes.publicToken, token),
+        inArray(quotes.status, [...PUBLIC_QUOTE_STATUSES]),
+      ),
+    )
+    .limit(1)
+  if (!quote?.breakdown) return null
+
+  const business = await db.query.settings.findFirst()
+  return {
+    quote: {
+      number: quote.number,
+      // The daily job flips lapsed quotes to `expired`; until it runs, the
+      // page must not let the client accept one.
+      status: isLapsed(quote, today)
+        ? 'expired'
+        : (quote.status as PublicQuote['quote']['status']),
+      validUntil: quote.validUntil,
+      currency: quote.currency,
+      total: quote.total,
+    },
+    contactName: quote.contactName,
+    breakdown: quote.breakdown,
+    business: {
+      name: business?.businessName ?? '',
+      address: business?.address ?? '',
+      email: business?.email ?? '',
+      hasLogo: Boolean(business?.logoKey),
+    },
+  }
+}
+
+export type RespondResult =
+  | { ok: true; id: string; status: 'accepted' | 'declined' }
+  | { ok: false; error: string }
+
+export async function respondToQuote(
+  db: Db,
+  token: string,
+  response: 'accepted' | 'declined',
+  today: string,
+): Promise<RespondResult> {
+  if (!isPublicToken(token)) return { ok: false, error: 'Quote not found.' }
+  const [updated] = await db
+    .update(quotes)
+    .set({ status: response, respondedAt: new Date().toISOString() })
+    .where(
+      and(
+        eq(quotes.publicToken, token),
+        eq(quotes.status, 'sent'),
+        or(isNull(quotes.validUntil), gte(quotes.validUntil, today)),
+      ),
+    )
+    .returning({ id: quotes.id })
+  if (updated) return { ok: true, id: updated.id, status: response }
+
+  const [quote] = await db
+    .select({ status: quotes.status, validUntil: quotes.validUntil })
+    .from(quotes)
+    .where(
+      and(
+        eq(quotes.publicToken, token),
+        inArray(quotes.status, [...PUBLIC_QUOTE_STATUSES]),
+      ),
+    )
+    .limit(1)
+  if (!quote) return { ok: false, error: 'Quote not found.' }
+  if (quote.status === 'expired' || isLapsed(quote, today)) {
+    return {
+      ok: false,
+      error: 'This quote has expired. Ask us for a new one.',
+    }
+  }
+  return {
+    ok: false,
+    error: 'This quote has already been answered.',
+  }
+}
+
+/** Marks sent quotes past their validity date as expired. */
+export async function expireQuotes(db: Db, today: string): Promise<number> {
+  const rows = await db
+    .update(quotes)
+    .set({ status: 'expired' })
+    .where(and(eq(quotes.status, 'sent'), lt(quotes.validUntil, today)))
+    .returning({ id: quotes.id })
+  return rows.length
 }

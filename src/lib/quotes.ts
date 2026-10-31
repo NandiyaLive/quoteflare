@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { quoteStatuses, type RecurringInterval } from '#/db/schema'
+import {
+  quoteStatuses,
+  type QuoteStatus,
+  type RecurringInterval,
+} from '#/db/schema'
 import {
   dateSchema,
   MAX_ADVANCE_PERCENT,
@@ -12,6 +16,10 @@ export type QuoteStatusFilter = (typeof QUOTE_STATUS_FILTERS)[number]
 
 export const QUOTE_STATUS_LABELS = {
   new: 'New',
+  sent: 'Sent',
+  accepted: 'Accepted',
+  declined: 'Declined',
+  expired: 'Expired',
   converted: 'Converted',
   dismissed: 'Dismissed',
 } as const
@@ -74,6 +82,38 @@ export const convertQuoteSchema = z.strictObject({
     .min(MIN_ADVANCE_PERCENT)
     .max(MAX_ADVANCE_PERCENT)
     .nullish(),
+})
+
+/** Statuses a client may see through the public link. */
+export const PUBLIC_QUOTE_STATUSES = [
+  'sent',
+  'accepted',
+  'declined',
+  'expired',
+  'converted',
+] as const satisfies readonly QuoteStatus[]
+
+/** Statuses an admin may still send to the client or turn into an invoice. */
+export const SENDABLE_QUOTE_STATUSES = [
+  'new',
+  'sent',
+  'expired',
+] as const satisfies readonly QuoteStatus[]
+
+export const INVOICEABLE_QUOTE_STATUSES = [
+  'new',
+  'sent',
+  'accepted',
+  'expired',
+] as const satisfies readonly QuoteStatus[]
+
+export const quoteResponseSchema = z.strictObject({
+  token: z.string().min(1).max(64),
+  response: z.enum(['accepted', 'declined']),
+})
+
+export const sendQuoteSchema = z.strictObject({
+  id: z.string().min(1).max(64),
 })
 
 export const quoteFilterSchema = z.object({
