@@ -3,16 +3,19 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { createDb, schema, type Db } from '#/db'
 import { createTestD1 } from '#/db/test-db'
 import { isCuid } from '#/lib/id'
-import { quoteRequestSchema } from '#/lib/quotes'
+import { quoteEditSchema, quoteRequestSchema } from '#/lib/quotes'
 import { serviceSchema } from '#/lib/services'
 import {
   sendQuoteEmails,
+  sendQuoteReminders,
   sendQuoteResponseEmail,
   sendQuoteToClient,
 } from './quote-email'
 import {
   convertQuoteToInvoice,
   expireQuotes,
+  listQuoteEvents,
+  saveQuoteEdit,
   getPublicQuote,
   respondToQuote,
   getQuote,
@@ -599,5 +602,165 @@ describe('quote lifecycle', () => {
     const result = await convertQuoteToInvoice(db, quote.id, '2026-06-03')
     expect(result).toMatchObject({ ok: true, created: true })
     expect((await getQuote(db, quote.id))?.status).toBe('converted')
+  })
+})
+
+describe('editing a quote', () => {
+  const submit = async () => {
+    const id = await create('Web')
+    const result = await submitQuote(
+      db,
+      request([{ serviceId: id, quantity: 1, optionIds: [] }]),
+      human,
+    )
+    if (!result.ok) throw new Error(result.error)
+    return result.id
+  }
+  const edit = (id: string, over: Record<string, unknown> = {}) =>
+    quoteEditSchema.parse({
+      id,
+      items: [
+        {
+          description: 'Design',
+          quantity: '2',
+          unitPrice: '50',
+          taxable: true,
+        },
+        {
+          description: 'Setup',
+          quantity: '1',
+          unitPrice: '20',
+          taxable: false,
+        },
+      ],
+      discount: '10',
+      adminNote: 'Friend of a friend',
+      ...over,
+    })
+
+  it('replaces the items, reprices with the stored tax rate and logs it', async () => {
+    const id = await submit()
+    // The settings tax rate changes after the quote, but the quote keeps its own.
+    await db.update(schema.settings).set({ taxRateBps: 5000 })
+    expect(await saveQuoteEdit(db, edit(id))).toEqual({ ok: true })
+    const quote = (await getQuote(db, id))!
+    expect(quote.adminNote).toBe('Friend of a friend')
+    expect(quote.breakdown?.lines.map((l) => l.name)).toEqual([
+      'Design',
+      'Setup',
+    ])
+    // 100 taxable + 20 untaxed = 120, less 10 -> taxable base 91.67 at 10%.
+    expect(quote.breakdown).toMatchObject({
+      subtotal: 12000,
+      discountAmount: 1000,
+    })
+    expect(quote.breakdown?.taxAmount).toBe(917)
+    expect(quote.total).toBe(12000 - 1000 + 917)
+    const events = await listQuoteEvents(db, id)
+    expect(events.map((e) => e.type)).toEqual(['edited', 'received'])
+    expect(events[0].detail).toContain('to')
+  })
+
+  it('refuses edits once the quote is accepted, converted or invoiced', async () => {
+    const id = await submit()
+    await db.update(schema.quotes).set({ status: 'accepted' })
+    expect(await saveQuoteEdit(db, edit(id))).toMatchObject({ ok: false })
+    await db.update(schema.quotes).set({ status: 'converted' })
+    expect(await saveQuoteEdit(db, edit(id))).toMatchObject({ ok: false })
+    expect(await saveQuoteEdit(db, edit('missing'))).toMatchObject({
+      ok: false,
+    })
+  })
+
+  it('records the lifecycle in the activity log', async () => {
+    const id = await submit()
+    await setQuoteStatus(db, id, 'dismissed')
+    await setQuoteStatus(db, id, 'dismissed')
+    await setQuoteStatus(db, id, 'new')
+    const types = (await listQuoteEvents(db, id)).map((e) => e.type)
+    expect(types).toEqual(['reopened', 'dismissed', 'received'])
+  })
+})
+
+describe('quote reminders', () => {
+  const NOW = new Date('2026-06-01T10:00:00Z')
+  const sentMail: { to: string[]; subject: string }[] = []
+  const deps = {
+    apiKey: 're_test',
+    from: 'Acme <a@example.test>',
+    origin: 'https://x.test',
+    fetcher: (async (_url: unknown, init?: RequestInit) => {
+      sentMail.push(JSON.parse(String(init?.body)))
+      return Response.json({ id: `msg-${sentMail.length}` })
+    }) as typeof fetch,
+  }
+  const sendOut = async () => {
+    const serviceId = await create('Web')
+    const submitted = await submitQuote(
+      db,
+      request([{ serviceId, quantity: 1, optionIds: [] }]),
+      human,
+    )
+    if (!submitted.ok) throw new Error(submitted.error)
+    const result = await sendQuoteToClient(db, deps, submitted.id, NOW)
+    if (!result.ok) throw new Error(result.error)
+    sentMail.length = 0
+    return submitted.id
+  }
+
+  it('does nothing while reminders are off', async () => {
+    await sendOut()
+    expect(
+      await sendQuoteReminders(db, deps, new Date('2026-06-29T00:00:00Z')),
+    ).toEqual({ sent: 0, failed: 0 })
+  })
+
+  it('reminds once, only inside the last three days', async () => {
+    await db.update(schema.settings).set({ sendReminders: true })
+    const id = await sendOut()
+    // Valid until 2026-07-01.
+    expect(
+      await sendQuoteReminders(db, deps, new Date('2026-06-20T00:00:00Z')),
+    ).toEqual({ sent: 0, failed: 0 })
+    const near = new Date('2026-06-28T00:00:00Z')
+    expect(await sendQuoteReminders(db, deps, near)).toEqual({
+      sent: 1,
+      failed: 0,
+    })
+    expect(sentMail[0].to).toEqual(['jo@example.com'])
+    expect(
+      await sendQuoteReminders(db, deps, new Date('2026-06-29T00:00:00Z')),
+    ).toEqual({ sent: 0, failed: 0 })
+    expect((await listQuoteEvents(db, id)).map((e) => e.type)).toContain(
+      'reminded',
+    )
+  })
+
+  it('skips answered and expired quotes', async () => {
+    await db.update(schema.settings).set({ sendReminders: true })
+    await sendOut()
+    await db.update(schema.quotes).set({ status: 'accepted' })
+    expect(
+      await sendQuoteReminders(db, deps, new Date('2026-06-29T00:00:00Z')),
+    ).toEqual({ sent: 0, failed: 0 })
+  })
+
+  it('reminds again after the quote is sent again', async () => {
+    await db.update(schema.settings).set({ sendReminders: true })
+    const id = await sendOut()
+    const near = new Date('2026-06-28T00:00:00Z')
+    await sendQuoteReminders(db, deps, near)
+    await new Promise((r) => setTimeout(r, 5))
+    const again = await sendQuoteToClient(
+      db,
+      deps,
+      id,
+      new Date('2026-06-26T00:00:00Z'),
+    )
+    expect(again.ok).toBe(true)
+    sentMail.length = 0
+    expect(
+      await sendQuoteReminders(db, deps, new Date('2026-07-24T00:00:00Z')),
+    ).toEqual({ sent: 1, failed: 0 })
   })
 })

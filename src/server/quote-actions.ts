@@ -11,6 +11,7 @@ import {
   convertQuoteSchema,
   MAX_PUBLIC_BODY_BYTES,
   quoteFilterSchema,
+  quoteEditSchema,
   quoteRequestSchema,
   quoteResponseSchema,
   quoteStatusUpdateSchema,
@@ -26,7 +27,9 @@ import {
   getQuoteInvoice,
   getPublicQuote,
   getQuoteSchedulePrefill,
+  listQuoteEvents,
   listQuotes,
+  saveQuoteEdit,
   respondToQuote,
   setQuoteStatus,
   submitQuote,
@@ -106,7 +109,13 @@ export const getQuoteDetail = createServerFn()
     const db = createDb(env.DB)
     const quote = await getQuote(db, data)
     if (!quote) return null
-    return { quote, invoice: (await getQuoteInvoice(db, data)) ?? null }
+    return {
+      quote,
+      invoice: (await getQuoteInvoice(db, data)) ?? null,
+      events: await listQuoteEvents(db, data),
+      fallbackTaxRateBps:
+        (await db.query.settings.findFirst())?.taxRateBps ?? 0,
+    }
   })
 
 export const setQuoteStatusAction = createServerFn({ method: 'POST' })
@@ -204,3 +213,8 @@ export const respondToQuoteAction = createServerFn({ method: 'POST' })
     }
     return result
   })
+
+export const saveQuoteEditAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => quoteEditSchema.parse(input))
+  .middleware([requireAdmin])
+  .handler(({ data }) => saveQuoteEdit(createDb(env.DB), data))

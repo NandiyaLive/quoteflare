@@ -148,6 +148,13 @@
       "when": 1793419893437,
       "tag": "0020_quote_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1793420301008,
+      "tag": "0021_quote_editing",
+      "breakpoints": true
     }
   ]
 }

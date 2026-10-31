@@ -56,6 +56,20 @@ export const emailStatuses = [
   'complained',
 ] as const
 
+export const quoteEventTypes = [
+  'received',
+  'edited',
+  'sent',
+  'reminded',
+  'accepted',
+  'declined',
+  'expired',
+  'dismissed',
+  'reopened',
+  'converted',
+] as const
+
+export type QuoteEventType = (typeof quoteEventTypes)[number]
 export type InvoiceStatus = (typeof invoiceStatuses)[number]
 export type QuoteStatus = (typeof quoteStatuses)[number]
 export type ModifierType = (typeof modifierTypes)[number]
@@ -318,6 +332,9 @@ export const quotes = sqliteTable(
       .$type<QuoteSelection>()
       .notNull(),
     breakdown: text('breakdown', { mode: 'json' }).$type<PricingBreakdown>(),
+    // Rate the breakdown was priced at. Null on quotes made before it was kept.
+    taxRateBps: integer('tax_rate_bps'),
+    adminNote: text('admin_note').notNull().default(''),
     currency: text('currency').notNull().default('LKR'),
     total: integer('total').notNull(),
     status: text('status', { enum: quoteStatuses }).notNull().default('new'),
@@ -326,6 +343,23 @@ export const quotes = sqliteTable(
   (t) => [
     check('quotes_status', inList('status', quoteStatuses)),
     index('quotes_status_idx').on(t.status),
+  ],
+)
+
+export const quoteEvents = sqliteTable(
+  'quote_events',
+  {
+    id: id(),
+    quoteId: text('quote_id')
+      .notNull()
+      .references(() => quotes.id, { onDelete: 'cascade' }),
+    type: text('type', { enum: quoteEventTypes }).notNull(),
+    detail: text('detail').notNull().default(''),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check('quote_events_type', inList('type', quoteEventTypes)),
+    index('quote_events_quote_idx').on(t.quoteId, t.createdAt),
   ],
 )
 

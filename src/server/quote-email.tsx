@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, asc, eq, gte, isNull, lte, ne } from 'drizzle-orm'
 import { render } from '@react-email/render'
 import type { Db } from '#/db'
 import { schema } from '#/db'
@@ -8,7 +8,7 @@ import { createId, createPublicToken } from '#/lib/id'
 import { sendEmail, type EmailMessage } from './email'
 import { z } from 'zod'
 import { addDays, toIsoDate } from '#/lib/invoices'
-import { getQuote, markQuoteSent } from './quotes'
+import { getQuote, logQuoteEvent, markQuoteSent } from './quotes'
 
 const { emailLog } = schema
 
@@ -38,9 +38,10 @@ async function deliver(
     | 'quote_confirmation'
     | 'quote_notification'
     | 'quote_link'
-    | 'quote_response',
+    | 'quote_response'
+    | 'quote_reminder',
   message: EmailMessage,
-) {
+): Promise<boolean> {
   const logId = createId()
   await db.insert(emailLog).values({
     id: logId,
@@ -58,6 +59,7 @@ async function deliver(
         : { status: 'failed', error: sent.error },
     )
     .where(eq(emailLog.id, logId))
+  return sent.ok
 }
 
 /**
@@ -261,4 +263,81 @@ export async function sendQuoteResponseEmail(
   } catch (error) {
     console.error('quote response email failed', error)
   }
+}
+
+export const QUOTE_REMINDER_DAYS = 3
+export const MAX_QUOTE_REMINDERS_PER_RUN = 20
+
+/**
+ * Reminds clients whose sent quote lapses within `QUOTE_REMINDER_DAYS`. Each
+ * sending of a quote gets one reminder: a log row that is not `failed` and is
+ * newer than the quote's `sent_at` blocks another.
+ */
+export async function sendQuoteReminders(
+  db: Db,
+  deps: QuoteEmailDeps,
+  now: Date,
+): Promise<{ sent: number; failed: number }> {
+  const settings = await db.query.settings.findFirst()
+  if (!settings?.sendReminders) return { sent: 0, failed: 0 }
+
+  const { quotes } = schema
+  const today = toIsoDate(now)
+  const candidates = await db
+    .select()
+    .from(quotes)
+    .where(
+      and(
+        eq(quotes.status, 'sent'),
+        gte(quotes.validUntil, today),
+        lte(quotes.validUntil, addDays(today, QUOTE_REMINDER_DAYS)),
+      ),
+    )
+    .orderBy(asc(quotes.validUntil), asc(quotes.id))
+  if (candidates.length === 0) return { sent: 0, failed: 0 }
+
+  const logged = await db
+    .select({ quoteId: emailLog.quoteId, createdAt: emailLog.createdAt })
+    .from(emailLog)
+    .where(
+      and(eq(emailLog.type, 'quote_reminder'), ne(emailLog.status, 'failed')),
+    )
+
+  let sent = 0
+  let failed = 0
+  let attempted = 0
+  for (const quote of candidates) {
+    if (attempted >= MAX_QUOTE_REMINDERS_PER_RUN) break
+    const to = quote.contactEmail.trim()
+    if (!quote.publicToken || !quote.sentAt || !z.email().safeParse(to).success)
+      continue
+    const reminded = logged.some(
+      (row) => row.quoteId === quote.id && row.createdAt >= quote.sentAt!,
+    )
+    if (reminded) continue
+
+    attempted++
+    const label = quote.number ?? 'Quote'
+    const ok = await deliver(db, deps, quote.id, 'quote_reminder', {
+      from: deps.from,
+      to,
+      replyTo: settings.replyToEmail || settings.email || undefined,
+      subject: `Reminder: quote ${label} is valid until ${quote.validUntil}`,
+      ...(await build({
+        businessName: settings.businessName,
+        heading: label,
+        intro: `Hi ${quote.contactName}, your quote from ${settings.businessName} is valid until ${quote.validUntil}. You can accept or decline it online.`,
+        lines: [],
+        total: formatMinor(quote.total, quote.currency),
+        buttonLabel: 'View the quote',
+        url: `${deps.origin}/q/${quote.publicToken}`,
+        preview: `Quote ${label} is valid until ${quote.validUntil}`,
+      })),
+    })
+    if (ok) {
+      sent++
+      await logQuoteEvent(db, quote.id, 'reminded')
+    } else failed++
+  }
+  return { sent, failed }
 }

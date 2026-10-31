@@ -271,33 +271,47 @@ export const calculatePrice = (input: PricingInput): PricingResult => {
 
   if (errors.length > 0) return { ok: false, errors }
 
-  const oneTime = lines.filter((l) => l.billing === 'one_time')
-  const recurringLines = lines.filter((l) => l.billing !== 'one_time')
+  return {
+    ok: true,
+    ...totalsFor(
+      lines.filter((l) => l.billing === 'one_time'),
+      lines.filter((l) => l.billing !== 'one_time'),
+      input.taxRateBps,
+      input.discount,
+    ),
+  }
+}
 
+/**
+ * Totals for lines that are already priced. `calculatePrice` uses it, and so
+ * does an admin edit of a stored quote, which has no catalog to price from.
+ */
+export const totalsFor = (
+  oneTime: PricedLine[],
+  recurring: PricedLine[],
+  taxRateBps: number,
+  discount: number,
+): PricingBreakdown => {
   const subtotal = sum(oneTime)
-  const discountAmount = Math.min(input.discount, subtotal)
+  const discountAmount = Math.min(discount, subtotal)
   const taxableSubtotal = taxableSum(oneTime)
   const taxableDiscount =
     subtotal === 0
       ? 0
       : mulDivRoundHalfUp(discountAmount, taxableSubtotal, subtotal)
-  const taxAmount = percentOf(
-    taxableSubtotal - taxableDiscount,
-    input.taxRateBps,
-  )
+  const taxAmount = percentOf(taxableSubtotal - taxableDiscount, taxRateBps)
 
-  const recurringSubtotal = sum(recurringLines)
-  const recurringTax = percentOf(taxableSum(recurringLines), input.taxRateBps)
+  const recurringSubtotal = sum(recurring)
+  const recurringTax = percentOf(taxableSum(recurring), taxRateBps)
 
   return {
-    ok: true,
     lines: oneTime,
     subtotal,
     discountAmount,
     taxAmount,
     total: subtotal - discountAmount + taxAmount,
     recurring: {
-      lines: recurringLines,
+      lines: recurring,
       subtotal: recurringSubtotal,
       taxAmount: recurringTax,
       total: recurringSubtotal + recurringTax,

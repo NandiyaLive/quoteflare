@@ -12,9 +12,9 @@ import {
 } from 'drizzle-orm'
 import type { Db } from '#/db'
 import { schema } from '#/db'
-import type { RecurringInterval } from '#/db/schema'
+import type { QuoteEventType, RecurringInterval } from '#/db/schema'
 import { missingIncluded } from '#/lib/calculator'
-import { minorToDecimal } from '#/lib/decimal'
+import { formatMinor, minorToDecimal } from '#/lib/decimal'
 import { addDays } from '#/lib/invoices'
 import { createId, createPublicToken, isPublicToken } from '#/lib/id'
 import {
@@ -24,7 +24,10 @@ import {
 } from '#/lib/pricing'
 import type { RecurringFormValues } from '#/lib/recurring'
 import {
+  EDITABLE_QUOTE_STATUSES,
   INVOICEABLE_QUOTE_STATUSES,
+  repriceQuote,
+  type QuoteEditInput,
   PUBLIC_QUOTE_STATUSES,
   SENDABLE_QUOTE_STATUSES,
   quoteInvoiceItems,
@@ -40,7 +43,23 @@ import {
   isDuplicateNumber,
 } from './invoices'
 
-const { quotes, invoices, invoiceItems, clients, settings } = schema
+const { quotes, quoteEvents, invoices, invoiceItems, clients, settings } =
+  schema
+
+// Returns an unexecuted insert so callers can add it to a batch or await it.
+export const logQuoteEvent = (
+  db: Db,
+  quoteId: string,
+  type: QuoteEventType,
+  detail = '',
+) => db.insert(quoteEvents).values({ quoteId, type, detail })
+
+export const listQuoteEvents = (db: Db, quoteId: string) =>
+  db
+    .select()
+    .from(quoteEvents)
+    .where(eq(quoteEvents.quoteId, quoteId))
+    .orderBy(desc(quoteEvents.createdAt), desc(quoteEvents.id))
 
 // Reads and increments the same row inside one batch, so two requests cannot
 // receive the same number. Without a settings row the number stays null.
@@ -115,6 +134,7 @@ export async function submitQuote(
       message: request.message,
       selection: requested,
       breakdown,
+      taxRateBps: catalog.taxRateBps,
       currency: catalog.currency,
       total: breakdown.total,
     }),
@@ -122,6 +142,7 @@ export async function submitQuote(
       .update(settings)
       .set({ nextQuoteNumber: sql`${settings.nextQuoteNumber} + 1` })
       .where(eq(settings.id, 'main')),
+    logQuoteEvent(db, id, 'received'),
   ])
   await onCreated?.(id)
   return { ok: true, id }
@@ -148,7 +169,11 @@ export async function setQuoteStatus(
 ): Promise<boolean> {
   const current = await getQuote(db, id)
   if (!current || current.status === 'converted') return false
-  await db.update(quotes).set({ status }).where(eq(quotes.id, id))
+  if (current.status === status) return true
+  await batch(db, [
+    db.update(quotes).set({ status }).where(eq(quotes.id, id)),
+    logQuoteEvent(db, id, status === 'new' ? 'reopened' : 'dismissed'),
+  ])
   return true
 }
 
@@ -246,6 +271,7 @@ export async function convertQuoteToInvoice(
         }),
       ),
       incrementInvoiceNumber(db),
+      logQuoteEvent(db, quoteId, 'converted'),
       db
         .update(quotes)
         .set({ status: 'converted' })
@@ -365,6 +391,7 @@ export async function markQuoteSent(
   if (!row?.token) {
     return { ok: false, error: 'This quote can no longer be sent.' }
   }
+  await logQuoteEvent(db, quoteId, 'sent', `Valid until ${validUntil}`)
   return { ok: true, token: row.token, validUntil }
 }
 
@@ -453,7 +480,10 @@ export async function respondToQuote(
       ),
     )
     .returning({ id: quotes.id })
-  if (updated) return { ok: true, id: updated.id, status: response }
+  if (updated) {
+    await logQuoteEvent(db, updated.id, response)
+    return { ok: true, id: updated.id, status: response }
+  }
 
   const [quote] = await db
     .select({ status: quotes.status, validUntil: quotes.validUntil })
@@ -485,5 +515,68 @@ export async function expireQuotes(db: Db, today: string): Promise<number> {
     .set({ status: 'expired' })
     .where(and(eq(quotes.status, 'sent'), lt(quotes.validUntil, today)))
     .returning({ id: quotes.id })
+  // D1 allows 100 bound values per statement, and each event binds three.
+  for (let i = 0; i < rows.length; i += 30) {
+    await db.insert(quoteEvents).values(
+      rows.slice(i, i + 30).map((row) => ({
+        quoteId: row.id,
+        type: 'expired' as const,
+      })),
+    )
+  }
   return rows.length
+}
+
+export type SaveQuoteEditResult = { ok: true } | { ok: false; error: string }
+
+export async function saveQuoteEdit(
+  db: Db,
+  edit: QuoteEditInput,
+): Promise<SaveQuoteEditResult> {
+  const quote = await getQuote(db, edit.id)
+  if (!quote) return { ok: false, error: 'Quote not found.' }
+  if (!(EDITABLE_QUOTE_STATUSES as readonly string[]).includes(quote.status)) {
+    return { ok: false, error: `A ${quote.status} quote cannot be edited.` }
+  }
+  if (await getQuoteInvoice(db, edit.id)) {
+    return { ok: false, error: 'This quote already has an invoice.' }
+  }
+  if (!quote.breakdown) {
+    return { ok: false, error: 'This quote has no items to edit.' }
+  }
+  const business = await db.query.settings.findFirst()
+  const taxRateBps = quote.taxRateBps ?? business?.taxRateBps ?? 0
+  const breakdown = repriceQuote(
+    edit,
+    quote.breakdown.recurring.lines,
+    taxRateBps,
+    createId,
+  )
+
+  const changed = breakdown.total !== quote.total
+  await batch(db, [
+    db
+      .update(quotes)
+      .set({
+        breakdown,
+        total: breakdown.total,
+        taxRateBps,
+        adminNote: edit.adminNote,
+      })
+      .where(
+        and(
+          eq(quotes.id, edit.id),
+          inArray(quotes.status, [...EDITABLE_QUOTE_STATUSES]),
+        ),
+      ),
+    logQuoteEvent(
+      db,
+      edit.id,
+      'edited',
+      changed
+        ? `Total ${formatMinor(quote.total, quote.currency)} to ${formatMinor(breakdown.total, quote.currency)}`
+        : '',
+    ),
+  ])
+  return { ok: true }
 }

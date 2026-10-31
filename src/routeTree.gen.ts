@@ -37,6 +37,7 @@ import { Route as AdminInvoicesNewIndexRouteImport } from './routes/admin/invoic
 import { Route as AdminQuotesQuoteIdIndexRouteImport } from './routes/admin/quotes/$quoteId/index'
 import { Route as AdminRecurringScheduleIdIndexRouteImport } from './routes/admin/recurring/$scheduleId/index'
 import { Route as AdminRecurringNewIndexRouteImport } from './routes/admin/recurring/new/index'
+import { Route as AdminQuotesQuoteIdEditIndexRouteImport } from './routes/admin/quotes/$quoteId/edit/index'
 
 const SiteRouteRoute = SiteRouteRouteImport.update({
   id: '/_site',
@@ -181,6 +182,12 @@ const AdminRecurringNewIndexRoute = AdminRecurringNewIndexRouteImport.update({
   path: '/new/',
   getParentRoute: () => AdminRecurringRouteRoute,
 } as any)
+const AdminQuotesQuoteIdEditIndexRoute =
+  AdminQuotesQuoteIdEditIndexRouteImport.update({
+    id: '/$quoteId/edit/',
+    path: '/$quoteId/edit/',
+    getParentRoute: () => AdminQuotesRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof SiteCalculatorIndexRoute
@@ -209,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
   '/admin/recurring/$scheduleId/': typeof AdminRecurringScheduleIdIndexRoute
   '/admin/recurring/new/': typeof AdminRecurringNewIndexRoute
+  '/admin/quotes/$quoteId/edit/': typeof AdminQuotesQuoteIdEditIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof SiteCalculatorIndexRoute
@@ -231,6 +239,7 @@ export interface FileRoutesByTo {
   '/admin/quotes/$quoteId': typeof AdminQuotesQuoteIdIndexRoute
   '/admin/recurring/$scheduleId': typeof AdminRecurringScheduleIdIndexRoute
   '/admin/recurring/new': typeof AdminRecurringNewIndexRoute
+  '/admin/quotes/$quoteId/edit': typeof AdminQuotesQuoteIdEditIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -262,6 +271,7 @@ export interface FileRoutesById {
   '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
   '/admin/recurring/$scheduleId/': typeof AdminRecurringScheduleIdIndexRoute
   '/admin/recurring/new/': typeof AdminRecurringNewIndexRoute
+  '/admin/quotes/$quoteId/edit/': typeof AdminQuotesQuoteIdEditIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -292,6 +302,7 @@ export interface FileRouteTypes {
     | '/admin/quotes/$quoteId/'
     | '/admin/recurring/$scheduleId/'
     | '/admin/recurring/new/'
+    | '/admin/quotes/$quoteId/edit/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -314,6 +325,7 @@ export interface FileRouteTypes {
     | '/admin/quotes/$quoteId'
     | '/admin/recurring/$scheduleId'
     | '/admin/recurring/new'
+    | '/admin/quotes/$quoteId/edit'
   id:
     | '__root__'
     | '/_site'
@@ -344,6 +356,7 @@ export interface FileRouteTypes {
     | '/admin/quotes/$quoteId/'
     | '/admin/recurring/$scheduleId/'
     | '/admin/recurring/new/'
+    | '/admin/quotes/$quoteId/edit/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -552,6 +565,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRecurringNewIndexRouteImport
       parentRoute: typeof AdminRecurringRouteRoute
     }
+    '/admin/quotes/$quoteId/edit/': {
+      id: '/admin/quotes/$quoteId/edit/'
+      path: '/$quoteId/edit'
+      fullPath: '/admin/quotes/$quoteId/edit/'
+      preLoaderRoute: typeof AdminQuotesQuoteIdEditIndexRouteImport
+      parentRoute: typeof AdminQuotesRouteRoute
+    }
   }
 }
 
@@ -624,11 +644,13 @@ const AdminPackagesRouteRouteWithChildren =
 interface AdminQuotesRouteRouteChildren {
   AdminQuotesIndexRoute: typeof AdminQuotesIndexRoute
   AdminQuotesQuoteIdIndexRoute: typeof AdminQuotesQuoteIdIndexRoute
+  AdminQuotesQuoteIdEditIndexRoute: typeof AdminQuotesQuoteIdEditIndexRoute
 }
 
 const AdminQuotesRouteRouteChildren: AdminQuotesRouteRouteChildren = {
   AdminQuotesIndexRoute: AdminQuotesIndexRoute,
   AdminQuotesQuoteIdIndexRoute: AdminQuotesQuoteIdIndexRoute,
+  AdminQuotesQuoteIdEditIndexRoute: AdminQuotesQuoteIdEditIndexRoute,
 }
 
 const AdminQuotesRouteRouteWithChildren =

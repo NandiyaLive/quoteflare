@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { decimalToMinor } from './decimal'
+import { totalsFor } from './pricing'
 import {
   quoteStatuses,
   type QuoteStatus,
@@ -10,6 +12,19 @@ import {
   MIN_ADVANCE_PERCENT,
 } from './invoices'
 import type { PricedLine, PricingBreakdown } from './pricing'
+
+export const QUOTE_EVENT_LABELS = {
+  received: 'Request received',
+  edited: 'Edited',
+  sent: 'Sent to the client',
+  reminded: 'Reminder sent',
+  accepted: 'Accepted by the client',
+  declined: 'Declined by the client',
+  expired: 'Expired',
+  dismissed: 'Dismissed',
+  reopened: 'Reopened',
+  converted: 'Turned into an invoice',
+} as const
 
 const QUOTE_STATUS_FILTERS = ['all', ...quoteStatuses] as const
 export type QuoteStatusFilter = (typeof QUOTE_STATUS_FILTERS)[number]
@@ -175,4 +190,79 @@ function pricedLineItems(lines: PricedLine[]): QuoteInvoiceItem[] {
       taxable: line.taxable,
     })),
   ])
+}
+
+/** Statuses where the admin may still change prices and items. */
+export const EDITABLE_QUOTE_STATUSES = [
+  'new',
+  'sent',
+  'expired',
+] as const satisfies readonly QuoteStatus[]
+
+export const MAX_QUOTE_ITEMS = 50
+
+const editMoney = (max: number, label: string) =>
+  z
+    .string()
+    .trim()
+    .regex(
+      new RegExp(`^\\d{1,${max}}(\\.\\d{1,2})?$`),
+      `${label} must be a number with up to two decimals`,
+    )
+    .transform(decimalToMinor)
+
+export const quoteEditItemSchema = z.strictObject({
+  description: z
+    .string()
+    .trim()
+    .min(1, 'Description is required')
+    .max(500, 'Description must be 500 characters or fewer'),
+  quantity: z
+    .string()
+    .trim()
+    .regex(/^\d{1,4}$/, 'Quantity must be a whole number')
+    .transform(Number)
+    .refine((n) => n >= 1, 'Quantity must be 1 or higher'),
+  unitPrice: editMoney(8, 'Unit price'),
+  taxable: z.boolean(),
+})
+
+export const quoteEditSchema = z.strictObject({
+  id: z.string().min(1).max(64),
+  items: z
+    .array(quoteEditItemSchema)
+    .min(1, 'Keep at least one item')
+    .max(MAX_QUOTE_ITEMS, `Use ${MAX_QUOTE_ITEMS} items or fewer`),
+  discount: editMoney(9, 'Discount'),
+  adminNote: z
+    .string()
+    .trim()
+    .max(2000, 'Note must be 2000 characters or fewer'),
+})
+
+export type QuoteEditInput = z.infer<typeof quoteEditSchema>
+
+/**
+ * Rebuilds a quote's one-time lines from edited items and totals them again.
+ * Each item becomes a plain line, so options fold into the items the admin
+ * saw in the editor. Recurring lines stay as they were.
+ */
+export function repriceQuote(
+  edit: Pick<QuoteEditInput, 'items' | 'discount'>,
+  recurring: PricedLine[],
+  taxRateBps: number,
+  makeId: () => string,
+): PricingBreakdown {
+  const lines: PricedLine[] = edit.items.map((item) => ({
+    serviceId: `item-${makeId()}`,
+    name: item.description,
+    billing: 'one_time',
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    baseAmount: item.unitPrice * item.quantity,
+    options: [],
+    amount: item.unitPrice * item.quantity,
+    taxable: item.taxable,
+  }))
+  return totalsFor(lines, recurring, taxRateBps, edit.discount)
 }

@@ -1,6 +1,7 @@
 import { and, eq, lt } from 'drizzle-orm'
 import { createDb, schema, type Db } from '#/db'
 import { toIsoDate } from '#/lib/invoices'
+import { sendQuoteReminders } from '#/server/quote-email'
 import { expireQuotes } from '#/server/quotes'
 import { sendDueReminders } from './reminders'
 import { runRecurringSchedules } from './recurring'
@@ -12,6 +13,7 @@ export type DailyEnv = Pick<Env, 'DB' | 'RESEND_API_KEY' | 'EMAIL_FROM'> & {
 export interface DailyJobResult {
   markedOverdue: number
   quotesExpired: number
+  quoteRemindersSent: number
   remindersSent: number
   remindersFailed: number
   recurringCreated: number
@@ -47,6 +49,20 @@ async function executeDailyJobs(
   const quotesExpired = await expireQuotes(db, today)
   console.log(`daily: expired ${quotesExpired} quotes`)
 
+  const quoteReminders = await sendQuoteReminders(
+    db,
+    {
+      apiKey: env.RESEND_API_KEY,
+      from: env.EMAIL_FROM,
+      origin: env.APP_ORIGIN,
+      fetcher,
+    },
+    now,
+  )
+  console.log(
+    `daily: sent ${quoteReminders.sent} quote reminders, ${quoteReminders.failed} failed`,
+  )
+
   const reminders = await sendDueReminders(
     db,
     {
@@ -78,6 +94,7 @@ async function executeDailyJobs(
   return {
     markedOverdue,
     quotesExpired,
+    quoteRemindersSent: quoteReminders.sent,
     remindersSent: reminders.sent,
     remindersFailed: reminders.failed,
     recurringCreated: recurring.created,

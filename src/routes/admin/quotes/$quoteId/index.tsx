@@ -33,7 +33,9 @@ import {
 } from '#/lib/invoices'
 import type { PricedLine } from '#/lib/pricing'
 import {
+  EDITABLE_QUOTE_STATUSES,
   INVOICEABLE_QUOTE_STATUSES,
+  QUOTE_EVENT_LABELS,
   PUBLIC_QUOTE_STATUSES,
   quoteRecurringIntervals,
   SENDABLE_QUOTE_STATUSES,
@@ -115,7 +117,7 @@ function LinesTable({
 }
 
 function QuotePage() {
-  const { quote, invoice } = Route.useLoaderData()
+  const { quote, invoice, events } = Route.useLoaderData()
   const router = useRouter()
   const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
@@ -137,6 +139,10 @@ function QuotePage() {
   const canInvoice =
     !invoice &&
     (INVOICEABLE_QUOTE_STATUSES as readonly string[]).includes(quote.status)
+  const canEdit =
+    !invoice &&
+    breakdown !== null &&
+    (EDITABLE_QUOTE_STATUSES as readonly string[]).includes(quote.status)
   const canDismiss = canInvoice || quote.status === 'declined'
   const showLink =
     quote.publicToken &&
@@ -274,6 +280,20 @@ function QuotePage() {
             Dismiss
           </Button>
         )}
+        {canEdit && (
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={
+              <Link
+                to="/admin/quotes/$quoteId/edit"
+                params={{ quoteId: quote.id }}
+              />
+            }
+          >
+            Edit
+          </Button>
+        )}
         {canSend && (
           <Button
             variant="outline"
@@ -375,6 +395,45 @@ function QuotePage() {
                   {quote.message || 'No message.'}
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {quote.adminNote && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Internal note</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm whitespace-pre-wrap text-muted-foreground">
+                {quote.adminNote}
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ol
+                className="flex flex-col gap-3 text-sm"
+                data-testid="quote-activity"
+              >
+                {events.map((event) => (
+                  <li key={event.id} className="flex flex-col">
+                    <span className="font-medium">
+                      {QUOTE_EVENT_LABELS[event.type]}
+                    </span>
+                    {event.detail && (
+                      <span className="text-muted-foreground">
+                        {event.detail}
+                      </span>
+                    )}
+                    <span className="text-muted-foreground">
+                      {formatDate(event.createdAt, { month: 'short' })}
+                    </span>
+                  </li>
+                ))}
+              </ol>
             </CardContent>
           </Card>
 
