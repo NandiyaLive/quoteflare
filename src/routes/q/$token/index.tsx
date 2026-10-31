@@ -5,6 +5,14 @@ import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import {
   Table,
@@ -105,6 +113,7 @@ function PublicQuotePage() {
   const { quote, contactName, breakdown, business } = Route.useLoaderData()
   const router = useRouter()
   const [busy, setBusy] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const { currency } = quote
   const money = (minor: number) => formatMinor(minor, currency)
 
@@ -120,6 +129,7 @@ function PublicQuotePage() {
       await router.invalidate()
     } finally {
       setBusy(false)
+      setConfirming(false)
     }
   }
 
@@ -213,7 +223,7 @@ function PublicQuotePage() {
 
       {quote.status === 'sent' ? (
         <section data-print-hide className="flex flex-wrap gap-2">
-          <Button disabled={busy} onClick={() => void respond('accepted')}>
+          <Button disabled={busy} onClick={() => setConfirming(true)}>
             Accept quote
           </Button>
           <Button
@@ -223,6 +233,32 @@ function PublicQuotePage() {
           >
             Decline
           </Button>
+          <Dialog open={confirming} onOpenChange={setConfirming}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Accept this quote?</DialogTitle>
+                <DialogDescription>
+                  You are accepting quote {quote.number ?? ''} for{' '}
+                  {money(quote.total)}. You cannot undo this.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => setConfirming(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  disabled={busy}
+                  onClick={() => void respond('accepted')}
+                >
+                  Accept quote
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </section>
       ) : (
         <Alert data-print-hide>

@@ -65,6 +65,12 @@ export function QuoteEmail({
           </Button>
         </Section>
       )}
+      {url && buttonLabel && (
+        <Text className="text-ink-2 m-0 mt-4 text-[13px] leading-5">
+          This link is private to you. Anyone you forward it to can view and
+          respond to this quote.
+        </Text>
+      )}
     </EmailLayout>
   )
 }
