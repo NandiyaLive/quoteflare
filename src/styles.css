@@ -175,6 +175,12 @@
   [data-print-hide] {
     display: none !important;
   }
+  html[data-printing-quote] body > :not([data-print-quote]) {
+    display: none !important;
+  }
+  [data-print-quote] {
+    display: block !important;
+  }
   [data-print-root] {
     max-width: none;
     padding: 0;
@@ -190,4 +196,8 @@
   [data-print-keep] {
     break-inside: avoid;
   }
+}
+
+[data-print-quote] {
+  display: none;
 }

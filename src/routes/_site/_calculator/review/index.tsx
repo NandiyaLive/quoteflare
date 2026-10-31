@@ -1,8 +1,10 @@
 import { getQuoteConfig } from '#/server/quote-actions'
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
+import { createPortal } from 'react-dom'
 import { useForm } from '@tanstack/react-form'
-import { CheckCircle2Icon } from 'lucide-react'
+import { format } from 'date-fns'
+import { CheckCircle2Icon, DownloadIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Turnstile } from '@/components/common/turnstile'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -30,18 +32,39 @@ import {
   useCalculator,
 } from '../-components/calculator-context'
 import { callAction } from '#/lib/action-errors'
+import { bpsToPercent } from '#/lib/decimal'
+import { BILLING_LABELS } from '#/lib/services'
 
 export const Route = createFileRoute('/_site/_calculator/review/')({
   loader: () => getQuoteConfig(),
   component: ReviewPage,
 })
 
+const subscribeNothing = () => () => {}
+
+function downloadPdf() {
+  const root = document.documentElement
+  root.setAttribute('data-printing-quote', '')
+  window.addEventListener(
+    'afterprint',
+    () => root.removeAttribute('data-printing-quote'),
+    { once: true },
+  )
+  window.print()
+}
+
 function ReviewPage() {
   const { turnstileSiteKey } = Route.useLoaderData()
-  const { catalog, state, evaluation, displayCurrency } = useCalculator()
+  const { catalog, state, evaluation, displayCurrency, money } = useCalculator()
   const [token, setToken] = useState('')
   const [widgetKey, setWidgetKey] = useState(0)
   const [sent, setSent] = useState(false)
+  // The print copy is portaled into document.body, which the server lacks.
+  const hydrated = useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false,
+  )
 
   const selections = catalog.services.flatMap((service) => {
     const choice = state[service.id]
@@ -229,11 +252,111 @@ function ReviewPage() {
           </FieldGroup>
         </CardContent>
         <CardFooter>
-          <form.Subscribe selector={(s) => s.isSubmitting}>
-            {(submitting) => (
-              <Button type="submit" disabled={blocked || submitting}>
-                {submitting ? 'Sending...' : 'Send quote request'}
-              </Button>
+          <form.Subscribe
+            selector={(s) => ({
+              submitting: s.isSubmitting,
+              name: s.values.name.trim(),
+              email: s.values.email.trim(),
+            })}
+          >
+            {({ submitting, name, email }) => (
+              <div className="flex items-center gap-2">
+                <Button type="submit" disabled={blocked || submitting}>
+                  {submitting ? 'Sending...' : 'Send quote request'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={selections.length === 0 || !name || !email}
+                  onClick={downloadPdf}
+                >
+                  <DownloadIcon data-icon="inline-start" />
+                  Download PDF
+                </Button>
+                {hydrated &&
+                  createPortal(
+                    <div data-print-quote className="p-8 text-sm">
+                      <h1 className="text-2xl font-semibold">Quote estimate</h1>
+                      <p className="mt-2">
+                        Prepared for {name} ({email})
+                      </p>
+                      <p className="text-muted-foreground">
+                        {format(new Date(), 'd MMM yyyy')}
+                      </p>
+                      <table className="mt-6 w-full">
+                        <thead>
+                          <tr className="border-b text-left">
+                            <th className="py-2">Service</th>
+                            <th className="py-2 text-right">Qty</th>
+                            <th className="py-2 text-right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {evaluation.breakdown.lines.map((line) => (
+                            <tr key={line.serviceId} className="border-b">
+                              <td className="py-2">{line.name}</td>
+                              <td className="py-2 text-right">
+                                {line.quantity}
+                              </td>
+                              <td className="py-2 text-right">
+                                {money(line.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <dl className="mt-4 ml-auto flex w-64 flex-col gap-1">
+                        <div className="flex justify-between">
+                          <dt>Subtotal</dt>
+                          <dd>{money(evaluation.breakdown.subtotal)}</dd>
+                        </div>
+                        <div className="flex justify-between">
+                          <dt>Tax ({bpsToPercent(catalog.taxRateBps)}%)</dt>
+                          <dd>{money(evaluation.breakdown.taxAmount)}</dd>
+                        </div>
+                        <div className="flex justify-between text-base font-semibold">
+                          <dt>Total</dt>
+                          <dd>{money(evaluation.breakdown.total)}</dd>
+                        </div>
+                      </dl>
+                      {evaluation.breakdown.recurring.lines.length > 0 && (
+                        <div className="mt-6">
+                          <p className="font-medium">Recurring charges</p>
+                          <dl className="mt-2 flex flex-col gap-1">
+                            {evaluation.breakdown.recurring.lines.map(
+                              (line) => (
+                                <div
+                                  key={line.serviceId}
+                                  className="flex justify-between"
+                                >
+                                  <dt>
+                                    {line.name} (
+                                    {BILLING_LABELS[line.billing].toLowerCase()}
+                                    )
+                                  </dt>
+                                  <dd>{money(line.amount)}</dd>
+                                </div>
+                              ),
+                            )}
+                            <div className="flex justify-between font-medium">
+                              <dt>Recurring total</dt>
+                              <dd>
+                                {money(evaluation.breakdown.recurring.total)}
+                              </dd>
+                            </div>
+                          </dl>
+                        </div>
+                      )}
+                      {displayCurrency !== catalog.currency && (
+                        <p className="mt-6 text-xs text-muted-foreground">
+                          Converted from {catalog.currency} at today&apos;s
+                          rate. The final quote is issued in {catalog.currency}.
+                        </p>
+                      )}
+                    </div>,
+                    document.body,
+                  )}
+              </div>
             )}
           </form.Subscribe>
         </CardFooter>
