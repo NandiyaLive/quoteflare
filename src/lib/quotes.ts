@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { decimalToMinor } from './decimal'
+import { decimalToMinor, minorToDecimal } from './decimal'
 import { totalsFor } from './pricing'
 import {
   quoteStatuses,
@@ -68,8 +68,14 @@ export const quoteDetailsSchema = z.object({
   message: messageSchema,
 })
 
+export const quoteFormSchema = quoteDetailsSchema.extend({
+  website: z.string().max(200),
+})
+
 export const quoteRequestSchema = z.strictObject({
   ...quoteDetailsSchema.shape,
+  // Hidden form field. People leave it empty and form-filling bots do not.
+  website: z.string().max(200).optional(),
   message: messageSchema.default(''),
   turnstileToken: z
     .string()
@@ -129,6 +135,10 @@ export const quoteResponseSchema = z.strictObject({
 
 export const sendQuoteSchema = z.strictObject({
   id: z.string().min(1).max(64),
+})
+
+export const bulkDismissSchema = z.strictObject({
+  ids: z.array(z.string().min(1).max(64)).min(1).max(100),
 })
 
 export const quoteFilterSchema = z.object({
@@ -265,4 +275,53 @@ export function repriceQuote(
     taxable: item.taxable,
   }))
   return totalsFor(lines, recurring, taxRateBps, edit.discount)
+}
+
+const CSV_HEADER = [
+  'Number',
+  'Received',
+  'Name',
+  'Email',
+  'Status',
+  'Currency',
+  'Total',
+  'Valid until',
+  'Message',
+]
+
+// A cell that starts with one of these runs as a formula in spreadsheets.
+const csvCell = (value: string) => {
+  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
+  return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
+}
+
+export function quotesToCsv(
+  rows: {
+    number: string | null
+    createdAt: string
+    contactName: string
+    contactEmail: string
+    status: QuoteStatus
+    currency: string
+    total: number
+    validUntil: string | null
+    message: string
+  }[],
+): string {
+  const lines = rows.map((row) =>
+    [
+      row.number ?? '',
+      row.createdAt,
+      row.contactName,
+      row.contactEmail,
+      QUOTE_STATUS_LABELS[row.status],
+      row.currency,
+      minorToDecimal(row.total),
+      row.validUntil ?? '',
+      row.message,
+    ]
+      .map(csvCell)
+      .join(','),
+  )
+  return [CSV_HEADER.join(','), ...lines].join('\r\n')
 }

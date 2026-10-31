@@ -13,6 +13,7 @@ import {
 } from './quote-email'
 import {
   convertQuoteToInvoice,
+  dismissQuotes,
   expireQuotes,
   listQuoteEvents,
   saveQuoteEdit,
@@ -100,10 +101,12 @@ const request = (selections: unknown[], extra: Record<string, unknown> = {}) =>
 const human = () => Promise.resolve(true)
 
 describe('quote numbers and emails', () => {
+  let quantity = 0
+  // Each call asks for a different quantity so it is not a duplicate.
   const submit = async (id: string) => {
     const result = await submitQuote(
       db,
-      request([{ serviceId: id, quantity: 1, optionIds: [] }]),
+      request([{ serviceId: id, quantity: ++quantity, optionIds: [] }]),
       human,
     )
     if (!result.ok) throw new Error(result.error)
@@ -762,5 +765,97 @@ describe('quote reminders', () => {
     expect(
       await sendQuoteReminders(db, deps, new Date('2026-07-24T00:00:00Z')),
     ).toEqual({ sent: 1, failed: 0 })
+  })
+})
+
+describe('spam and duplicate protection', () => {
+  const line = (serviceId: string, extra: Record<string, unknown> = {}) => ({
+    serviceId,
+    quantity: 1,
+    optionIds: [],
+    ...extra,
+  })
+
+  it('stores nothing when the honeypot is filled and still answers ok', async () => {
+    const id = await create('Web')
+    let checked = false
+    const result = await submitQuote(
+      db,
+      request([line(id)], { website: 'http://spam.example' }),
+      () => {
+        checked = true
+        return Promise.resolve(true)
+      },
+    )
+    expect(result.ok).toBe(true)
+    expect(checked).toBe(false)
+    expect(await listQuotes(db, 'all')).toHaveLength(0)
+  })
+
+  it('returns the first quote for a repeat of the same request', async () => {
+    const id = await create('Web')
+    const first = await submitQuote(db, request([line(id)]), human)
+    let notified = 0
+    const second = await submitQuote(
+      db,
+      request([line(id)], { email: 'JO@example.com' }),
+      human,
+      async () => {
+        notified++
+      },
+    )
+    expect(first.ok && second.ok && first.id === second.id).toBe(true)
+    expect(notified).toBe(0)
+    expect(await listQuotes(db, 'all')).toHaveLength(1)
+  })
+
+  it('treats a different selection, email or time as a new quote', async () => {
+    const a = await create('A')
+    const b = await create('B')
+    await submitQuote(db, request([line(a)]), human)
+    await submitQuote(db, request([line(b)]), human)
+    await submitQuote(db, request([line(a, { quantity: 2 })]), human)
+    await submitQuote(
+      db,
+      request([line(a)], { email: 'other@example.com' }),
+      human,
+    )
+    expect(await listQuotes(db, 'all')).toHaveLength(4)
+
+    await db
+      .update(schema.quotes)
+      .set({ createdAt: '2020-01-01T00:00:00.000Z' })
+    await submitQuote(db, request([line(a)]), human)
+    expect(await listQuotes(db, 'all')).toHaveLength(5)
+  })
+})
+
+describe('dismissing quotes in bulk', () => {
+  it('dismisses what can be dismissed and logs each one', async () => {
+    const id = await create('Web')
+    const ids: string[] = []
+    for (const quantity of [1, 2, 3, 4]) {
+      const r = await submitQuote(
+        db,
+        request([{ serviceId: id, quantity, optionIds: [] }]),
+        human,
+      )
+      if (r.ok) ids.push(r.id)
+    }
+    await db
+      .update(schema.quotes)
+      .set({ status: 'accepted' })
+      .where(eq(schema.quotes.id, ids[2]))
+    await db
+      .update(schema.quotes)
+      .set({ status: 'converted' })
+      .where(eq(schema.quotes.id, ids[3]))
+
+    expect(await dismissQuotes(db, [...ids, 'missing'])).toBe(2)
+    expect((await getQuote(db, ids[0]))?.status).toBe('dismissed')
+    expect((await getQuote(db, ids[2]))?.status).toBe('accepted')
+    expect((await getQuote(db, ids[3]))?.status).toBe('converted')
+    expect((await listQuoteEvents(db, ids[0]))[0].type).toBe('dismissed')
+    expect(await dismissQuotes(db, ids)).toBe(0)
   })
 })

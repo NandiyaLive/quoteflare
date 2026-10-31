@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { quoteDetailsSchema } from '#/lib/quotes'
+import { quoteFormSchema } from '#/lib/quotes'
 import { submitQuoteAction } from '#/server/quote-actions'
 import {
   clearSavedCalculator,
@@ -57,8 +57,8 @@ function ReviewPage() {
   const hasProblems = Object.keys(evaluation.problems).length > 0
 
   const form = useForm({
-    defaultValues: { name: '', email: '', message: '' },
-    validators: { onSubmit: quoteDetailsSchema },
+    defaultValues: { name: '', email: '', message: '', website: '' },
+    validators: { onSubmit: quoteFormSchema },
     onSubmit: async ({ value }) => {
       if (!token) {
         toast.error('Complete the spam check.')
@@ -188,6 +188,22 @@ function ReviewPage() {
                   </Field>
                 )
               }}
+            </form.Field>
+            <form.Field name="website">
+              {(field) => (
+                <div aria-hidden="true" className="absolute left-[-9999px]">
+                  <label htmlFor="website">Leave this field empty</label>
+                  <input
+                    id="website"
+                    name="website"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                </div>
+              )}
             </form.Field>
             {turnstileSiteKey ? (
               <Turnstile

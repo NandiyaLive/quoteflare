@@ -74,6 +74,9 @@ export async function submitQuote(
   verifyHuman: () => Promise<boolean>,
   onCreated?: (id: string) => Promise<void>,
 ): Promise<SubmitQuoteResult> {
+  // A filled honeypot means a bot. Answer as if it worked, so it learns nothing.
+  if (request.website?.trim()) return { ok: true, id: createId() }
+
   if (!(await verifyHuman())) {
     return { ok: false, error: 'The spam check failed. Please try again.' }
   }
@@ -124,6 +127,9 @@ export async function submitQuote(
     total: result.total,
     recurring: result.recurring,
   }
+  const duplicate = await findRecentDuplicate(db, request.email, requested)
+  if (duplicate) return { ok: true, id: duplicate }
+
   const id = createId()
   await batch(db, [
     db.insert(quotes).values({
@@ -579,4 +585,76 @@ export async function saveQuoteEdit(
     ),
   ])
   return { ok: true }
+}
+
+const DUPLICATE_WINDOW_MS = 10 * 60 * 1000
+
+const canonicalSelection = (selection: QuoteSelectionInput) =>
+  JSON.stringify(
+    [...selection]
+      .map((s) => ({
+        serviceId: s.serviceId,
+        quantity: s.quantity,
+        optionIds: [...s.optionIds].sort(),
+      }))
+      .sort((a, b) => a.serviceId.localeCompare(b.serviceId)),
+  )
+
+type QuoteSelectionInput = {
+  serviceId: string
+  quantity: number
+  optionIds: string[]
+}[]
+
+/**
+ * A double click or a retry after a timeout sends the same request twice.
+ * Treat the same email asking for the same selection within ten minutes as
+ * one quote and hand back the first.
+ */
+async function findRecentDuplicate(
+  db: Db,
+  email: string,
+  selection: QuoteSelectionInput,
+): Promise<string | null> {
+  const since = new Date(Date.now() - DUPLICATE_WINDOW_MS).toISOString()
+  const recent = await db
+    .select({ id: quotes.id, selection: quotes.selection })
+    .from(quotes)
+    .where(
+      and(
+        sql`lower(${quotes.contactEmail}) = lower(${email})`,
+        gte(quotes.createdAt, since),
+      ),
+    )
+    .orderBy(desc(quotes.createdAt))
+    .limit(20)
+  const wanted = canonicalSelection(selection)
+  return (
+    recent.find((q) => canonicalSelection(q.selection) === wanted)?.id ?? null
+  )
+}
+
+const DISMISSABLE_STATUSES = ['new', 'sent', 'expired', 'declined'] as const
+
+/** Dismisses the quotes that can be dismissed and returns how many were. */
+export async function dismissQuotes(db: Db, ids: string[]): Promise<number> {
+  const rows = await db
+    .update(quotes)
+    .set({ status: 'dismissed' })
+    .where(
+      and(
+        inArray(quotes.id, ids),
+        inArray(quotes.status, [...DISMISSABLE_STATUSES]),
+      ),
+    )
+    .returning({ id: quotes.id })
+  for (let i = 0; i < rows.length; i += 30) {
+    await db.insert(quoteEvents).values(
+      rows.slice(i, i + 30).map((row) => ({
+        quoteId: row.id,
+        type: 'dismissed' as const,
+      })),
+    )
+  }
+  return rows.length
 }

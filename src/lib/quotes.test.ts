@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { quoteEditSchema, repriceQuote } from './quotes'
+import { quoteEditSchema, quotesToCsv, repriceQuote } from './quotes'
 
 const parse = (items: unknown[], discount = '0') =>
   quoteEditSchema.parse({ id: 'q1', items, discount, adminNote: '' })
@@ -94,5 +94,48 @@ describe('repriceQuote', () => {
     expect(result.discountAmount).toBe(result.subtotal)
     expect(result.total).toBe(0)
     expect(result.recurring.total).toBe(1100)
+  })
+})
+
+describe('quotesToCsv', () => {
+  const row = {
+    number: 'QUO-0001',
+    createdAt: '2026-06-01T10:00:00.000Z',
+    contactName: 'Jo, the "Boss"',
+    contactEmail: 'jo@example.com',
+    status: 'sent' as const,
+    currency: 'USD',
+    total: 12345,
+    validUntil: '2026-07-01',
+    message: 'Line one\nLine two',
+  }
+
+  it('writes a header and quotes cells that need it', () => {
+    const [header, line] = quotesToCsv([row]).split('\r\n')
+    expect(header).toBe(
+      'Number,Received,Name,Email,Status,Currency,Total,Valid until,Message',
+    )
+    expect(line).toBe(
+      'QUO-0001,2026-06-01T10:00:00.000Z,"Jo, the ""Boss""",jo@example.com,Sent,USD,123.45,2026-07-01,"Line one\nLine two"',
+    )
+  })
+
+  it('defuses spreadsheet formulas and blanks missing values', () => {
+    const csv = quotesToCsv([
+      {
+        ...row,
+        number: null,
+        validUntil: null,
+        contactName: '=HYPERLINK("http://x")',
+        message: '+1',
+      },
+    ])
+    expect(csv).toContain('"\'=HYPERLINK(""http://x"")"')
+    expect(csv).toContain(",'+1")
+    expect(csv.split('\r\n')[1].startsWith(',2026')).toBe(true)
+  })
+
+  it('returns only the header for no rows', () => {
+    expect(quotesToCsv([])).not.toContain('\r\n')
   })
 })

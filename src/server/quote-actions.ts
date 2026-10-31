@@ -8,6 +8,7 @@ import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
 import { recurringIntervals } from '#/db/schema'
 import {
+  bulkDismissSchema,
   convertQuoteSchema,
   MAX_PUBLIC_BODY_BYTES,
   quoteFilterSchema,
@@ -23,6 +24,7 @@ import { requireAdmin } from './admin-middleware'
 import { isRateLimited, tooManyRequests } from './rate-limit'
 import {
   convertQuoteToInvoice,
+  dismissQuotes,
   getQuote,
   getQuoteInvoice,
   getPublicQuote,
@@ -218,3 +220,10 @@ export const saveQuoteEditAction = createServerFn({ method: 'POST' })
   .validator((input: unknown) => quoteEditSchema.parse(input))
   .middleware([requireAdmin])
   .handler(({ data }) => saveQuoteEdit(createDb(env.DB), data))
+
+export const dismissQuotesAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => bulkDismissSchema.parse(input))
+  .middleware([requireAdmin])
+  .handler(async ({ data }) => ({
+    dismissed: await dismissQuotes(createDb(env.DB), data.ids),
+  }))
