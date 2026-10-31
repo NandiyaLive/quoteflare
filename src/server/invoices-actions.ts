@@ -12,6 +12,7 @@ import {
 } from '#/lib/invoices'
 import { requireAdmin } from './admin-middleware'
 import { listActiveClients } from './clients'
+import { getRates } from './exchange-rates'
 import { sendInvoiceEmail } from './invoice-email'
 import { isRateLimited, tooManyRequests } from './rate-limit'
 import {
@@ -47,6 +48,7 @@ export const getInvoiceFormContext = createServerFn()
       listServices(db, 'active'),
       db.query.settings.findFirst(),
     ])
+    const currency = settings?.currency ?? DEFAULT_CURRENCY
     return {
       clients: clients.map((c) => ({
         id: c.id,
@@ -61,7 +63,9 @@ export const getInvoiceFormContext = createServerFn()
         minQuantity: s.minQuantity,
         taxable: s.taxable,
       })),
-      currency: settings?.currency ?? DEFAULT_CURRENCY,
+      currency,
+      approvedCurrencies: settings?.approvedCurrencies ?? [],
+      rates: await getRates(db, currency, settings?.approvedCurrencies ?? []),
       taxRateBps: settings?.taxRateBps ?? 0,
       paymentTermDays: settings?.paymentTermDays ?? 14,
     }

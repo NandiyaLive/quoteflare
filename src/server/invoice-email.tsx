@@ -4,7 +4,7 @@ import { z } from 'zod'
 import type { Db } from '#/db'
 import { schema } from '#/db'
 import type { InvoiceStatus } from '#/db/schema'
-import { formatMinor } from '#/lib/decimal'
+import { displayOf, moneyWithBase } from '#/lib/currencies'
 import {
   fillTemplate,
   withDefaults,
@@ -100,10 +100,10 @@ export async function sendInvoiceEmail(
       {
         businessName: settings?.businessName ?? '',
         number: invoice.number,
-        total: formatMinor(
-          amountDue(totals.total, invoice.advanceBps, invoice.advancePaidAt),
+        total: moneyWithBase(
           invoice.currency,
-        ),
+          displayOf(invoice),
+        )(amountDue(totals.total, invoice.advanceBps, invoice.advancePaidAt)),
         dueDate: invoice.dueDate,
         url: `${deps.origin}/i/${token}`,
       },

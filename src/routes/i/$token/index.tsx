@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatDate } from '@/lib/format'
-import { formatMinor } from '#/lib/decimal'
+import { moneyIn } from '#/lib/currencies'
 import { INVOICE_STATUS_LABELS } from '#/lib/invoices'
 import { InvoiceTotalsList } from '@/components/common/invoice-totals-list'
 
@@ -42,7 +42,7 @@ export const Route = createFileRoute('/i/$token/')({
 function PublicInvoicePage() {
   const data = Route.useLoaderData()
   const { invoice, client, business, items, totals, advance } = data
-  const money = (minor: number) => formatMinor(minor, invoice.currency)
+  const money = moneyIn(invoice.currency, invoice.display)
   const bankRows = (
     [
       ['Bank', business.bank.name],
@@ -146,6 +146,7 @@ function PublicInvoicePage() {
           currency={invoice.currency}
           taxRateBps={invoice.taxRateBps}
           advance={advance}
+          display={invoice.display}
         />
       </div>
 

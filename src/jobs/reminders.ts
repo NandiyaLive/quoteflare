@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray, lte, ne } from 'drizzle-orm'
 import { z } from 'zod'
 import { schema, type Db } from '#/db'
-import { formatMinor } from '#/lib/decimal'
+import { displayOf, moneyWithBase } from '#/lib/currencies'
 import { createId } from '#/lib/id'
 import {
   addDays,
@@ -68,6 +68,8 @@ export async function sendDueReminders(
         status: invoices.status,
         dueDate: invoices.dueDate,
         currency: invoices.currency,
+        displayCurrency: invoices.displayCurrency,
+        displayRate: invoices.displayRate,
         taxRateBps: invoices.taxRateBps,
         discount: invoices.discount,
         advanceBps: invoices.advanceBps,
@@ -150,10 +152,10 @@ export async function sendDueReminders(
         {
           businessName: settings.businessName,
           number: invoice.number,
-          total: formatMinor(
-            amountDue(totals.total, invoice.advanceBps, invoice.advancePaidAt),
+          total: moneyWithBase(
             invoice.currency,
-          ),
+            displayOf(invoice),
+          )(amountDue(totals.total, invoice.advanceBps, invoice.advancePaidAt)),
           dueDate: invoice.dueDate,
           url: `${deps.origin}/i/${invoice.publicToken}`,
         },

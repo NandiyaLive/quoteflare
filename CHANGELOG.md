@@ -6,6 +6,7 @@ All notable changes are listed here, newest first. Versions follow semver.
 
 ### Added
 
+- Invoices can show amounts in an approved currency (`invoices.display_currency`, `invoices.display_rate`). The invoice editor has a "Show amounts in" picker that fills in the current rate, which you can edit. Invoices made from a quote inherit the quote's currency and rate. The public invoice page, invoice emails and reminders show the converted amount with the base amount beside it. Totals and stored amounts stay in the base currency.
 - Exchange rates are stored in `exchange_rates` and refreshed by the daily job and when settings are saved. If Frankfurter is down, the stored rates are used.
 - A quote keeps the currency and rate the client chose in the calculator (`quotes.display_currency`, `quotes.display_rate`). The public quote page and the quote emails show amounts in that currency, with the base total beside it.
 - Admins can create quotes at `/admin/quotes/new`, with an optional client picker, items, discount and an internal note. The quote starts as `new` and is sent from its detail page.

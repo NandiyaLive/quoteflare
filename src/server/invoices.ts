@@ -1,3 +1,4 @@
+import { displayOf, type DisplayCurrency } from '#/lib/currencies'
 import { and, asc, desc, eq, inArray, ne, sql, type SQL } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { Db } from '#/db'
@@ -50,6 +51,7 @@ export type PublicInvoice = {
     issueDate: string
     dueDate: string
     currency: string
+    display: DisplayCurrency | null
     taxRateBps: number
     notes: string
     paymentLink: string
@@ -201,18 +203,36 @@ export const isDuplicateNumber = (error: unknown) =>
     'UNIQUE constraint failed: invoices.number',
   )
 
+/** A display currency must be one the business approved, other than the base. */
+function checkDisplayCurrency(
+  business: { currency: string; approvedCurrencies: string[] },
+  data: InvoiceData,
+) {
+  if (!data.displayCurrency) return null
+  if (
+    data.displayCurrency === business.currency ||
+    !business.approvedCurrencies.includes(data.displayCurrency)
+  ) {
+    return `${data.displayCurrency} is not an approved currency. Add it in settings.`
+  }
+  return null
+}
+
 export async function createInvoice(
   db: Db,
   data: InvoiceData,
 ): Promise<SaveInvoiceResult> {
   const clientError = await checkClient(db, data.clientId)
   if (clientError) return { ok: false, error: clientError }
-  if (!(await db.query.settings.findFirst())) {
+  const business = await db.query.settings.findFirst()
+  if (!business) {
     return {
       ok: false,
       error: 'Save your business details in settings before creating invoices.',
     }
   }
+  const displayError = checkDisplayCurrency(business, data)
+  if (displayError) return { ok: false, error: displayError }
 
   const id = createId()
   const number = invoiceNumberSql(data.issueDate)
@@ -227,6 +247,8 @@ export async function createInvoice(
         issueDate: data.issueDate,
         dueDate: data.dueDate,
         currency,
+        displayCurrency: data.displayCurrency,
+        displayRate: data.displayCurrency ? data.displayRate : null,
         taxRateBps: data.taxRate,
         discount: data.discount,
         advanceBps: data.advance,
@@ -275,6 +297,15 @@ export async function updateInvoice(
   }
   const clientError = await checkClient(db, data.clientId, existing.clientId)
   if (clientError) return { ok: false, error: clientError }
+  const business = await db.query.settings.findFirst()
+  const displayError = checkDisplayCurrency(
+    {
+      currency: existing.currency,
+      approvedCurrencies: business?.approvedCurrencies ?? [],
+    },
+    data,
+  )
+  if (displayError) return { ok: false, error: displayError }
 
   // Every statement re-checks the draft status so a status change between the
   // read above and the batch cannot leave a half-edited invoice.
@@ -287,6 +318,8 @@ export async function updateInvoice(
         clientId: data.clientId,
         issueDate: data.issueDate,
         dueDate: data.dueDate,
+        displayCurrency: data.displayCurrency,
+        displayRate: data.displayCurrency ? data.displayRate : null,
         taxRateBps: data.taxRate,
         discount: data.discount,
         advanceBps: data.advance,
@@ -394,6 +427,7 @@ export async function getPublicInvoice(
       issueDate: invoice.issueDate,
       dueDate: invoice.dueDate,
       currency: invoice.currency,
+      display: displayOf(invoice),
       taxRateBps: invoice.taxRateBps,
       notes: invoice.notes,
       paymentLink: invoice.paymentLink,

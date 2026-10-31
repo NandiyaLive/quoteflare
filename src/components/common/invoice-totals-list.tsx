@@ -1,3 +1,4 @@
+import { moneyIn, type DisplayCurrency } from '#/lib/currencies'
 import { formatMinor } from '#/lib/decimal'
 import type { InvoiceAdvance, InvoiceTotals } from '#/lib/invoices'
 
@@ -6,13 +7,16 @@ export function InvoiceTotalsList({
   currency,
   taxRateBps,
   advance = null,
+  display = null,
 }: {
   totals: InvoiceTotals
   currency: string
   taxRateBps: number
   advance?: InvoiceAdvance | null
+  /** Shows amounts in this currency, with a note giving the base total. */
+  display?: DisplayCurrency | null
 }) {
-  const money = (minor: number) => formatMinor(minor, currency)
+  const money = moneyIn(currency, display)
   const rows = [
     ['Subtotal', money(totals.subtotal)],
     [
@@ -51,6 +55,13 @@ export function InvoiceTotalsList({
             <dd className="tabular-nums">{money(advance.balanceAmount)}</dd>
           </div>
         </div>
+      )}
+      {display && (
+        <p className="border-t pt-2 text-xs text-muted-foreground">
+          Shown in {display.currency} at 1 {currency} = {display.rate}{' '}
+          {display.currency}. The invoice total is{' '}
+          {formatMinor(totals.total, currency)}.
+        </p>
       )}
     </dl>
   )

@@ -318,6 +318,8 @@ export async function convertQuoteToInvoice(
         issueDate: today,
         dueDate: addDays(today, business.paymentTermDays),
         currency: quote.currency,
+        displayCurrency: quote.displayCurrency,
+        displayRate: quote.displayRate,
         taxRateBps: business.taxRateBps,
       }),
       ...items.map((item, index) =>

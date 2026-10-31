@@ -133,6 +133,28 @@ export const invoiceSchema = z
         }
       }, 'Enter a full link starting with https://')
       .default(''),
+    // Currency the client sees amounts in. Empty means the base currency.
+    displayCurrency: z
+      .string()
+      .trim()
+      .default('')
+      .refine(
+        (value) => value === '' || /^[A-Z]{3}$/.test(value),
+        'Choose a currency',
+      )
+      .transform((value) => (value === '' ? null : value)),
+    // Units of the display currency per unit of the base currency.
+    displayRate: z
+      .string()
+      .trim()
+      .default('')
+      .refine(
+        (value) =>
+          value === '' ||
+          (/^\d{1,9}(\.\d{1,6})?$/.test(value) && Number(value) > 0),
+        'Enter a rate above 0 with up to six decimals',
+      )
+      .transform((value) => (value === '' ? null : Number(value))),
     items: z
       .array(invoiceItemSchema)
       .min(1, 'Add at least one line item')
@@ -142,6 +164,11 @@ export const invoiceSchema = z
     path: ['dueDate'],
     message: 'Due date cannot be before the issue date',
   })
+  .refine(
+    (invoice) =>
+      invoice.displayCurrency === null || invoice.displayRate !== null,
+    { path: ['displayRate'], message: 'Enter the exchange rate' },
+  )
 
 export type InvoiceFormValues = z.input<typeof invoiceSchema>
 export type InvoiceData = z.output<typeof invoiceSchema>

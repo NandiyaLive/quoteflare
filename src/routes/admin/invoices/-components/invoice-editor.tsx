@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/card'
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -62,6 +63,8 @@ const initialValues = (
       advance: '',
       notes: '',
       paymentLink: '',
+      displayCurrency: '',
+      displayRate: '',
       items: [{ ...emptyInvoiceItem }],
     }
   }
@@ -77,6 +80,11 @@ const initialValues = (
       : '',
     notes: invoice.invoice.notes,
     paymentLink: invoice.invoice.paymentLink,
+    displayCurrency: invoice.invoice.displayCurrency ?? '',
+    displayRate:
+      invoice.invoice.displayRate === null
+        ? ''
+        : String(invoice.invoice.displayRate),
     items: invoice.items.map((item) => ({
       description: item.description,
       quantity: String(item.quantity),
@@ -140,7 +148,13 @@ export function InvoiceEditor({
     serverErrors[key] ? [...errors, { message: serverErrors[key] }] : errors
 
   const textField = (
-    name: 'issueDate' | 'dueDate' | 'taxRate' | 'discount' | 'advance',
+    name:
+      | 'issueDate'
+      | 'dueDate'
+      | 'taxRate'
+      | 'discount'
+      | 'advance'
+      | 'displayRate',
     label: string,
     props: React.ComponentProps<typeof Input> = {},
   ) => (
@@ -258,6 +272,60 @@ export function InvoiceEditor({
                   inputMode: 'decimal',
                   placeholder: 'No advance',
                 })}
+                <form.Field name="displayCurrency">
+                  {(field) => {
+                    const errors = withServerError(
+                      'displayCurrency',
+                      field.state.meta.errors,
+                    )
+                    const invalid = errors.length > 0
+                    return (
+                      <Field data-invalid={invalid}>
+                        <FieldLabel htmlFor="invoice-display-currency">
+                          Show amounts in
+                        </FieldLabel>
+                        <SearchSelect
+                          id="invoice-display-currency"
+                          value={field.state.value || currency}
+                          invalid={invalid}
+                          placeholder="Choose a currency"
+                          options={[
+                            currency,
+                            ...context.approvedCurrencies,
+                          ].map((code) => ({ value: code, label: code }))}
+                          onValueChange={(code) => {
+                            const converted = code !== currency
+                            field.handleChange(converted ? code : '')
+                            form.setFieldValue(
+                              'displayRate',
+                              converted && context.rates[code]
+                                ? String(context.rates[code])
+                                : '',
+                            )
+                          }}
+                        />
+                        <FieldDescription>
+                          The invoice stays in {currency}. The client also sees
+                          amounts in this currency.
+                        </FieldDescription>
+                        {invalid && <FieldError errors={errors} />}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+                <form.Subscribe selector={(s) => s.values.displayCurrency}>
+                  {(displayCurrency) =>
+                    displayCurrency ? (
+                      <div>
+                        {textField(
+                          'displayRate',
+                          `Rate (1 ${currency} in ${displayCurrency})`,
+                          { inputMode: 'decimal' },
+                        )}
+                      </div>
+                    ) : null
+                  }
+                </form.Subscribe>
                 <form.Field name="paymentLink">
                   {(field) => {
                     const errors = withServerError(

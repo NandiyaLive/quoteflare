@@ -595,3 +595,82 @@ describe('advance payments', () => {
     ).not.toBeNull()
   })
 })
+
+describe('invoice display currency', () => {
+  const approve = () =>
+    db.update(schema.settings).set({ approvedCurrencies: ['EUR'] })
+
+  it('parses an empty currency and rate to null', () => {
+    const parsed = data()
+    expect(parsed.displayCurrency).toBeNull()
+    expect(parsed.displayRate).toBeNull()
+  })
+
+  it('needs a rate when a currency is chosen', () => {
+    const result = invoiceSchema.safeParse(form({ displayCurrency: 'EUR' }))
+    expect(result.success).toBe(false)
+    expect(
+      invoiceSchema.safeParse(
+        form({ displayCurrency: 'EUR', displayRate: '0' }),
+      ).success,
+    ).toBe(false)
+  })
+
+  it('stores an approved currency with its rate', async () => {
+    await approve()
+    const result = await createInvoice(
+      db,
+      data({ displayCurrency: 'EUR', displayRate: '0.003' }),
+    )
+    if (!result.ok) throw new Error(result.error)
+    const detail = await getInvoice(db, result.id)
+    expect(detail?.invoice).toMatchObject({
+      currency: 'LKR',
+      displayCurrency: 'EUR',
+      displayRate: 0.003,
+    })
+  })
+
+  it('rejects a currency that is not approved or is the base currency', async () => {
+    await approve()
+    expect(
+      await createInvoice(
+        db,
+        data({ displayCurrency: 'GBP', displayRate: '0.002' }),
+      ),
+    ).toMatchObject({ ok: false })
+    expect(
+      await createInvoice(
+        db,
+        data({ displayCurrency: 'LKR', displayRate: '1' }),
+      ),
+    ).toMatchObject({ ok: false })
+  })
+
+  it('clears the currency and rate when a draft goes back to the base currency', async () => {
+    await approve()
+    const created = await createInvoice(
+      db,
+      data({ displayCurrency: 'EUR', displayRate: '0.003' }),
+    )
+    if (!created.ok) throw new Error(created.error)
+    const updated = await updateInvoice(db, created.id, data())
+    expect(updated.ok).toBe(true)
+    const detail = await getInvoice(db, created.id)
+    expect(detail?.invoice.displayCurrency).toBeNull()
+    expect(detail?.invoice.displayRate).toBeNull()
+  })
+
+  it('shows the display currency on the public invoice', async () => {
+    await approve()
+    const created = await createInvoice(
+      db,
+      data({ displayCurrency: 'EUR', displayRate: '0.003' }),
+    )
+    if (!created.ok) throw new Error(created.error)
+    const sent = await changeInvoiceStatus(db, created.id, 'sent')
+    if (!sent.ok) throw new Error(sent.error)
+    const pub = await getPublicInvoice(db, sent.publicToken!)
+    expect(pub?.invoice.display).toEqual({ currency: 'EUR', rate: 0.003 })
+  })
+})

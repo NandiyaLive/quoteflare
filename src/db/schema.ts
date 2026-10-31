@@ -402,6 +402,10 @@ export const invoices = sqliteTable(
     issueDate: text('issue_date').notNull(),
     dueDate: text('due_date').notNull(),
     currency: text('currency').notNull(),
+    // Currency the client sees amounts in and the rate from `currency` to it.
+    // Both are null when the invoice is shown in `currency`.
+    displayCurrency: text('display_currency'),
+    displayRate: real('display_rate'),
     taxRateBps: integer('tax_rate_bps').notNull().default(0),
     discount: integer('discount').notNull().default(0),
     publicToken: text('public_token').unique(),

@@ -144,6 +144,22 @@ describe('converting a quote to an invoice', () => {
     expect(settings.nextInvoiceNumber).toBe(2)
   })
 
+  it('keeps the display currency and rate from the quote', async () => {
+    const quoteId = await submit()
+    await db
+      .update(schema.quotes)
+      .set({ displayCurrency: 'EUR', displayRate: 0.003 })
+      .where(eq(schema.quotes.id, quoteId))
+    const result = await convert(quoteId)
+    if (!result.ok) throw new Error(result.error)
+    const detail = await getInvoice(db, result.invoiceId)
+    expect(detail?.invoice).toMatchObject({
+      currency: 'LKR',
+      displayCurrency: 'EUR',
+      displayRate: 0.003,
+    })
+  })
+
   it('sets the due date from the payment term in settings', async () => {
     await db.update(schema.settings).set({ paymentTermDays: 30 })
     const result = await convert(await submit())
