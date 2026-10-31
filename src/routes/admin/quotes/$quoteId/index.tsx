@@ -190,6 +190,7 @@ function QuotePage() {
         title={`Quote from ${quote.contactName}`}
         description={
           <span className="inline-flex items-center gap-2">
+            {quote.number && <span>{quote.number}</span>}
             <QuoteStatusBadge status={quote.status} />
             {formatDate(quote.createdAt)}
           </span>

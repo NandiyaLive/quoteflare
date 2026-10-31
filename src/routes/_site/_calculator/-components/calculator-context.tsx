@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -9,6 +10,7 @@ import {
   baseState,
   deselectService,
   evaluate,
+  restoreSaved,
   selectService,
   stateForPackage,
   type CalculatorCatalog,
@@ -20,6 +22,17 @@ import { convertMinor, formatConverted } from '#/lib/currencies'
 import { formatMinor } from '#/lib/decimal'
 
 export const SCRATCH = 'scratch'
+
+const STORAGE_KEY = 'quoteflare:calculator:v1'
+
+// Storage can throw or be empty in private windows, so every access is guarded.
+export function clearSavedCalculator() {
+  try {
+    window.localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // Nothing to clear.
+  }
+}
 
 type CalculatorValue = {
   catalog: CalculatorCatalog
@@ -54,6 +67,35 @@ export function CalculatorProvider({
       ? picked
       : catalog.currency
   const evaluation = useMemo(() => evaluate(catalog, state), [catalog, state])
+  const [restored, setRestored] = useState(false)
+
+  // Storage is only readable after hydration, so restore in an effect.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY)
+      const saved = raw ? restoreSaved(catalog, JSON.parse(raw)) : null
+      if (saved) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setState(saved.state)
+        setChosen(saved.chosen)
+      }
+    } catch {
+      // A corrupt or blocked store leaves the default selection.
+    }
+    setRestored(true)
+  }, [catalog])
+
+  useEffect(() => {
+    if (!restored || chosen === null) return
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ state, chosen }),
+      )
+    } catch {
+      // The selection just is not saved.
+    }
+  }, [restored, state, chosen])
 
   const value = useMemo<CalculatorValue>(
     () => ({

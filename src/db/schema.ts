@@ -99,6 +99,7 @@ export const settings = sqliteTable(
     taxRateBps: integer('tax_rate_bps').notNull().default(0),
     invoicePrefix: text('invoice_prefix').notNull().default('INV'),
     nextInvoiceNumber: integer('next_invoice_number').notNull().default(1),
+    nextQuoteNumber: integer('next_quote_number').notNull().default(1),
     paymentInstructions: text('payment_instructions').notNull().default(''),
     bankName: text('bank_name').notNull().default(''),
     bankBranch: text('bank_branch').notNull().default(''),
@@ -296,6 +297,7 @@ export const quotes = sqliteTable(
   'quotes',
   {
     id: id(),
+    number: text('number').unique(),
     contactName: text('contact_name').notNull(),
     contactEmail: text('contact_email').notNull(),
     message: text('message').notNull().default(''),
@@ -401,6 +403,9 @@ export const emailLog = sqliteTable(
     invoiceId: text('invoice_id').references(() => invoices.id, {
       onDelete: 'set null',
     }),
+    quoteId: text('quote_id').references(() => quotes.id, {
+      onDelete: 'set null',
+    }),
     type: text('type').notNull(),
     toAddress: text('to_address').notNull(),
     status: text('status', { enum: emailStatuses }).notNull(),
@@ -411,6 +416,7 @@ export const emailLog = sqliteTable(
   (t) => [
     check('email_log_status', inList('status', emailStatuses)),
     index('email_log_invoice_type_idx').on(t.invoiceId, t.type),
+    index('email_log_quote_type_idx').on(t.quoteId, t.type),
     index('email_log_provider_idx').on(t.providerId),
   ],
 )

@@ -26,7 +26,11 @@ import {
   isDuplicateNumber,
 } from './invoices'
 
-const { quotes, invoices, invoiceItems, clients } = schema
+const { quotes, invoices, invoiceItems, clients, settings } = schema
+
+// Reads and increments the same row inside one batch, so two requests cannot
+// receive the same number. Without a settings row the number stays null.
+const quoteNumberSql = sql<string>`(select 'QUO-' || printf('%04d', ${settings.nextQuoteNumber}) from ${settings} where ${settings.id} = 'main')`
 
 export type SubmitQuoteResult =
   { ok: true; id: string } | { ok: false; error: string }
@@ -35,6 +39,7 @@ export async function submitQuote(
   db: Db,
   request: QuoteRequest,
   verifyHuman: () => Promise<boolean>,
+  onCreated?: (id: string) => Promise<void>,
 ): Promise<SubmitQuoteResult> {
   if (!(await verifyHuman())) {
     return { ok: false, error: 'The spam check failed. Please try again.' }
@@ -87,16 +92,24 @@ export async function submitQuote(
     recurring: result.recurring,
   }
   const id = createId()
-  await db.insert(quotes).values({
-    id,
-    contactName: request.name,
-    contactEmail: request.email,
-    message: request.message,
-    selection: requested,
-    breakdown,
-    currency: catalog.currency,
-    total: breakdown.total,
-  })
+  await batch(db, [
+    db.insert(quotes).values({
+      id,
+      number: quoteNumberSql,
+      contactName: request.name,
+      contactEmail: request.email,
+      message: request.message,
+      selection: requested,
+      breakdown,
+      currency: catalog.currency,
+      total: breakdown.total,
+    }),
+    db
+      .update(settings)
+      .set({ nextQuoteNumber: sql`${settings.nextQuoteNumber} + 1` })
+      .where(eq(settings.id, 'main')),
+  ])
+  await onCreated?.(id)
   return { ok: true, id }
 }
 

@@ -112,6 +112,41 @@ export function missingIncluded(
     .map((s) => ({ serviceId: s.id, quantity: s.minQuantity, optionIds: [] }))
 }
 
+export type SavedCalculator = { state: CalculatorState; chosen: string | null }
+
+/**
+ * Rebuilds a selection saved in the browser. The saved data is untrusted and
+ * may predate catalog changes, so it keeps only services and options that
+ * still exist and quantities that are digits. It returns null when nothing
+ * usable is left.
+ */
+export function restoreSaved(
+  catalog: CalculatorCatalog,
+  saved: unknown,
+): SavedCalculator | null {
+  if (!saved || typeof saved !== 'object') return null
+  const { state: raw, chosen } = saved as Record<string, unknown>
+  if (!raw || typeof raw !== 'object') return null
+
+  const state = baseState(catalog)
+  let restored = 0
+  for (const service of catalog.services) {
+    const entry = (raw as Record<string, unknown>)[service.id]
+    if (!entry || typeof entry !== 'object') continue
+    const { quantity, optionIds } = entry as Record<string, unknown>
+    if (typeof quantity !== 'string' || !QUANTITY_PATTERN.test(quantity))
+      continue
+    const known = new Set(service.options.map((o) => o.id))
+    const ids = Array.isArray(optionIds)
+      ? optionIds.filter((id): id is string => known.has(id as string))
+      : []
+    state[service.id] = { quantity, optionIds: ids }
+    restored++
+  }
+  if (restored === 0) return null
+  return { state, chosen: typeof chosen === 'string' ? chosen : null }
+}
+
 /**
  * Builds the selection a package starts from. Services that are no longer
  * in the catalog and options that no longer exist are skipped, and required

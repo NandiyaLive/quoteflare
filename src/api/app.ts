@@ -4,6 +4,7 @@ import { cors } from 'hono/cors'
 import { createDb } from '#/db'
 import { MAX_PUBLIC_BODY_BYTES, quoteRequestSchema } from '#/lib/quotes'
 import { loadCalculatorCatalog } from '#/server/calculator'
+import { sendQuoteEmails } from '#/server/quote-email'
 import { submitQuote } from '#/server/quotes'
 import { verifyTurnstile } from '#/server/turnstile'
 import { applyEmailEvent } from './email-events'
@@ -86,13 +87,28 @@ export function createApi({ fetcher = fetch }: Deps = {}) {
       )
     }
     const ip = c.req.header('cf-connecting-ip')
-    const result = await submitQuote(createDb(c.env.DB), parsed.data, () =>
-      verifyTurnstile(
-        c.env.TURNSTILE_SECRET,
-        parsed.data.turnstileToken,
-        ip,
-        fetcher,
-      ),
+    const db = createDb(c.env.DB)
+    const result = await submitQuote(
+      db,
+      parsed.data,
+      () =>
+        verifyTurnstile(
+          c.env.TURNSTILE_SECRET,
+          parsed.data.turnstileToken,
+          ip,
+          fetcher,
+        ),
+      (id) =>
+        sendQuoteEmails(
+          db,
+          {
+            apiKey: c.env.RESEND_API_KEY,
+            from: c.env.EMAIL_FROM,
+            origin: c.env.APP_ORIGIN || new URL(c.req.url).origin,
+            fetcher,
+          },
+          id,
+        ),
     )
     return c.json(result, result.ok ? 201 : 400)
   })

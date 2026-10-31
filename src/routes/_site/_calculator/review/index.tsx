@@ -25,7 +25,10 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { quoteDetailsSchema } from '#/lib/quotes'
 import { submitQuoteAction } from '#/server/quote-actions'
-import { useCalculator } from '../-components/calculator-context'
+import {
+  clearSavedCalculator,
+  useCalculator,
+} from '../-components/calculator-context'
 import { callAction } from '#/lib/action-errors'
 
 export const Route = createFileRoute('/_site/_calculator/review/')({
@@ -75,6 +78,7 @@ function ReviewPage() {
       }
       if (result.ok) {
         toast.success('Quote request sent.')
+        clearSavedCalculator()
         setSent(true)
         return
       }
@@ -90,7 +94,7 @@ function ReviewPage() {
         <CheckCircle2Icon />
         <AlertTitle>Quote request sent</AlertTitle>
         <AlertDescription>
-          Thank you. We will reply to the email address you gave.
+          Thank you. We sent a copy to your email address and will reply there.
         </AlertDescription>
       </Alert>
     )

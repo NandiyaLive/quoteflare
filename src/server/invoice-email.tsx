@@ -122,7 +122,7 @@ export async function sendInvoiceEmail(
   const claimed = await db
     .insert(emailLog)
     .select(
-      sql`select ${logId}, ${invoice.id}, 'invoice', ${to}, 'pending', null, null, strftime('%Y-%m-%dT%H:%M:%fZ', 'now') where not exists (select 1 from ${emailLog} where ${emailLog.invoiceId} = ${invoice.id} and ${emailLog.type} = 'invoice' and ${emailLog.status} = 'pending' and ${emailLog.createdAt} > ${inFlightSince})`,
+      sql`select ${logId}, ${invoice.id}, null, 'invoice', ${to}, 'pending', null, null, strftime('%Y-%m-%dT%H:%M:%fZ', 'now') where not exists (select 1 from ${emailLog} where ${emailLog.invoiceId} = ${invoice.id} and ${emailLog.type} = 'invoice' and ${emailLog.status} = 'pending' and ${emailLog.createdAt} > ${inFlightSince})`,
     )
     .returning({ id: emailLog.id })
   if (claimed.length === 0) {

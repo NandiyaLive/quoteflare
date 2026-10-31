@@ -5,6 +5,7 @@ import { createTestD1 } from '#/db/test-db'
 import { isCuid } from '#/lib/id'
 import { quoteRequestSchema } from '#/lib/quotes'
 import { serviceSchema } from '#/lib/services'
+import { sendQuoteEmails } from './quote-email'
 import { getQuote, listQuotes, setQuoteStatus, submitQuote } from './quotes'
 import { saveService, setServiceActive } from './services'
 import { verifyTurnstile } from './turnstile'
@@ -21,6 +22,7 @@ beforeAll(async () => {
 afterAll(() => dispose())
 
 beforeEach(async () => {
+  await db.delete(schema.emailLog)
   await db.delete(schema.quotes)
   await db.delete(schema.serviceDependencies)
   await db.delete(schema.serviceOptions)
@@ -77,6 +79,91 @@ const request = (selections: unknown[], extra: Record<string, unknown> = {}) =>
   })
 
 const human = () => Promise.resolve(true)
+
+describe('quote numbers and emails', () => {
+  const submit = async (id: string) => {
+    const result = await submitQuote(
+      db,
+      request([{ serviceId: id, quantity: 1, optionIds: [] }]),
+      human,
+    )
+    if (!result.ok) throw new Error(result.error)
+    return result.id
+  }
+
+  it('numbers quotes in order and advances the counter', async () => {
+    const id = await create('Web')
+    const first = await submit(id)
+    const second = await submit(id)
+    expect((await getQuote(db, first))?.number).toBe('QUO-0001')
+    expect((await getQuote(db, second))?.number).toBe('QUO-0002')
+    const settings = await db.query.settings.findFirst()
+    expect(settings?.nextQuoteNumber).toBe(3)
+  })
+
+  it('calls onCreated with the new id after the insert', async () => {
+    const id = await create('Web')
+    let seen: string | undefined
+    const result = await submitQuote(
+      db,
+      request([{ serviceId: id, quantity: 1, optionIds: [] }]),
+      human,
+      async (quoteId) => {
+        seen = quoteId
+        expect(await getQuote(db, quoteId)).toBeDefined()
+      },
+    )
+    expect(result).toMatchObject({ ok: true, id: seen })
+  })
+
+  it('emails the visitor and the business and logs both', async () => {
+    await db.update(schema.settings).set({ email: 'owner@example.com' })
+    const quoteId = await submit(await create('Web'))
+    const sent: { to: string[]; subject: string; reply_to?: string[] }[] = []
+    const fetcher = (async (_url: unknown, init?: RequestInit) => {
+      sent.push(JSON.parse(String(init?.body)))
+      return Response.json({ id: `msg-${sent.length}` })
+    }) as typeof fetch
+
+    await sendQuoteEmails(
+      db,
+      {
+        apiKey: 're_test',
+        from: 'Acme <a@example.test>',
+        origin: 'https://x.test',
+        fetcher,
+      },
+      quoteId,
+    )
+
+    expect(sent.map((m) => m.to)).toEqual([
+      ['jo@example.com'],
+      ['owner@example.com'],
+    ])
+    expect(sent[0].subject).toContain('QUO-0001')
+    expect(sent[1].reply_to).toEqual(['jo@example.com'])
+    const log = await db.select().from(schema.emailLog)
+    expect(log.map((l) => [l.type, l.status, l.quoteId])).toEqual([
+      ['quote_confirmation', 'sent', quoteId],
+      ['quote_notification', 'sent', quoteId],
+    ])
+  })
+
+  it('records a failed send without throwing', async () => {
+    const quoteId = await submit(await create('Web'))
+    await sendQuoteEmails(
+      db,
+      { apiKey: undefined, from: 'a@example.test', origin: 'https://x.test' },
+      quoteId,
+    )
+    const log = await db.select().from(schema.emailLog)
+    expect(log).toHaveLength(1)
+    expect(log[0]).toMatchObject({
+      status: 'failed',
+      type: 'quote_confirmation',
+    })
+  })
+})
 
 describe('submitting a quote', () => {
   it('stores the server-calculated total and a CUID', async () => {

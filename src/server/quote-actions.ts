@@ -1,5 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getRequest, getRequestHeader } from '@tanstack/react-start/server'
+import {
+  getRequest,
+  getRequestHeader,
+  getRequestUrl,
+} from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
 import { createDb } from '#/db'
 import { recurringIntervals } from '#/db/schema'
@@ -24,6 +28,7 @@ import {
   submitQuote,
   type SubmitQuoteResult,
 } from './quotes'
+import { sendQuoteEmails } from './quote-email'
 import { verifyTurnstile } from './turnstile'
 
 export const getQuoteConfig = createServerFn().handler(() => ({
@@ -62,8 +67,22 @@ export const submitQuoteAction = createServerFn({ method: 'POST' })
       }
     }
     const ip = getRequestHeader('cf-connecting-ip')
-    return submitQuote(createDb(env.DB), parsed.data, () =>
-      verifyTurnstile(env.TURNSTILE_SECRET, parsed.data.turnstileToken, ip),
+    const db = createDb(env.DB)
+    return submitQuote(
+      db,
+      parsed.data,
+      () =>
+        verifyTurnstile(env.TURNSTILE_SECRET, parsed.data.turnstileToken, ip),
+      (id) =>
+        sendQuoteEmails(
+          db,
+          {
+            apiKey: env.RESEND_API_KEY,
+            from: env.EMAIL_FROM,
+            origin: env.APP_ORIGIN || getRequestUrl().origin,
+          },
+          id,
+        ),
     )
   })
 

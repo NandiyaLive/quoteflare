@@ -6,6 +6,7 @@ import {
   missingIncluded,
   dependentsOf,
   evaluate,
+  restoreSaved,
   selectService,
   stateForPackage,
   type CalculatorCatalog,
@@ -251,5 +252,57 @@ describe('always included services', () => {
       { serviceId: 'fee', quantity: 3, optionIds: [] },
     ])
     expect(missingIncluded(c, includedServiceIds(c))).toEqual([])
+  })
+})
+
+describe('restoreSaved', () => {
+  const withOption = {
+    ...base,
+    options: [
+      {
+        id: 'o1',
+        groupId: null,
+        name: 'Rush',
+        modifierType: 'flat',
+        modifierValue: 500,
+        active: true,
+      },
+    ],
+  } as CalculatorService
+  const cat = catalog([withOption, { ...base, id: 'b', name: 'B' }])
+
+  it('keeps known services, quantities and options', () => {
+    const saved = restoreSaved(cat, {
+      state: { a: { quantity: '3', optionIds: ['o1'] } },
+      chosen: 'scratch',
+    })
+    expect(saved).toEqual({
+      state: { a: { quantity: '3', optionIds: ['o1'] } },
+      chosen: 'scratch',
+    })
+  })
+
+  it('drops removed services and options and bad quantities', () => {
+    const saved = restoreSaved(cat, {
+      state: {
+        a: { quantity: '2', optionIds: ['gone'] },
+        b: { quantity: '-1', optionIds: [] },
+        removed: { quantity: '1', optionIds: [] },
+      },
+      chosen: 5,
+    })
+    expect(saved).toEqual({
+      state: { a: { quantity: '2', optionIds: [] } },
+      chosen: null,
+    })
+  })
+
+  it('returns null for junk or an empty selection', () => {
+    expect(restoreSaved(cat, null)).toBeNull()
+    expect(restoreSaved(cat, 'x')).toBeNull()
+    expect(restoreSaved(cat, { state: {} })).toBeNull()
+    expect(
+      restoreSaved(cat, { state: { removed: { quantity: '1' } } }),
+    ).toBeNull()
   })
 })

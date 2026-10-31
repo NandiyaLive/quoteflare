@@ -26,7 +26,8 @@ function QuotesPage() {
     () => [
       {
         id: 'contact',
-        accessorFn: (quote) => `${quote.contactName} ${quote.contactEmail}`,
+        accessorFn: (quote) =>
+          `${quote.contactName} ${quote.contactEmail} ${quote.number ?? ''}`,
         header: ({ column }) => (
           <DataTableColumnHeader column={column} label="Contact" />
         ),
@@ -40,13 +41,14 @@ function QuotesPage() {
               {row.original.contactName}
             </Link>
             <div className="text-muted-foreground">
+              {row.original.number ? `${row.original.number} · ` : ''}
               {row.original.contactEmail}
             </div>
           </>
         ),
         meta: {
           label: 'Contact',
-          placeholder: 'Search by name or email',
+          placeholder: 'Search by name, email or number',
           variant: 'text',
           icon: SearchIcon,
         },
