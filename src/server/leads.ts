@@ -1,8 +1,9 @@
-import { and, asc, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq, gte } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { Db } from '#/db'
 import { schema } from '#/db'
 import { createId } from '#/lib/id'
+import { computeLeadStats } from '#/lib/lead-stats'
 import type {
   LeadActionInput,
   LeadClientInput,
@@ -66,6 +67,23 @@ export async function loadLeads(db: Db, now: Date) {
     maxFollowUps: leadSettings.leadMaxFollowUps,
     templates: await loadLeadTemplates(db),
   }
+}
+
+/** Per-platform step counts for the last `days` days, taken from `lead_events`. */
+export async function loadLeadStats(db: Db, days: number, now: Date) {
+  const since = new Date(now.getTime() - days * 86_400_000).toISOString()
+  const events = await db
+    .select({
+      leadId: leadEvents.leadId,
+      platform: leads.platform,
+      type: leadEvents.type,
+      detail: leadEvents.detail,
+      createdAt: leadEvents.createdAt,
+    })
+    .from(leadEvents)
+    .innerJoin(leads, eq(leads.id, leadEvents.leadId))
+    .where(gte(leadEvents.createdAt, since))
+  return computeLeadStats(events, now, days)
 }
 
 export async function loadLeadDetail(db: Db, id: string, now: Date) {

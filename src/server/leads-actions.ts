@@ -15,6 +15,7 @@ import {
   loadLeadDetail,
   findLeadByInput,
   loadLeads,
+  loadLeadStats,
   makeClientFromLead,
   saveLead,
   updateLeadDetails,
@@ -24,6 +25,13 @@ import {
 export const getLeads = createServerFn()
   .middleware([requireAdmin])
   .handler(() => loadLeads(createDb(env.DB), new Date()))
+
+export const getLeadStats = createServerFn()
+  .validator((input: unknown) =>
+    z.union([z.literal(30), z.literal(90), z.literal(365)]).parse(input),
+  )
+  .middleware([requireAdmin])
+  .handler(({ data }) => loadLeadStats(createDb(env.DB), data, new Date()))
 
 export const getLeadDetail = createServerFn()
   .validator((input: unknown) => z.string().min(1).max(64).parse(input))

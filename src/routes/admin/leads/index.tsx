@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { CircleDotIcon, GlobeIcon, PlusIcon, SearchIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import PageHeader from '@/components/common/page-header'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
@@ -21,6 +22,7 @@ import { formatDate } from '@/lib/format'
 import { PlatformBadge, StatusBadge } from './-components/lead-badges'
 import { CloseLeadDialog } from './-components/close-lead-dialog'
 import { AddLeadDialog } from './-components/add-lead-dialog'
+import { StatsPanel } from './-components/stats-panel'
 import { TodaySection } from './-components/today-section'
 import { useLeadActions } from './-components/use-lead-actions'
 
@@ -150,24 +152,45 @@ function LeadsPage() {
           Add lead
         </Button>
       </PageHeader>
-      <TodaySection
-        leads={leads}
-        today={today}
-        maxFollowUps={maxFollowUps}
-        templates={templates}
-        pendingId={pendingId}
-        onAction={(action) => void run(action)}
-        onCloseAsNoReply={(lead) => void closeAsNoReply(lead)}
-        onClose={setClosing}
-      />
-      <section className="flex flex-col gap-3" aria-labelledby="leads-all">
-        <h2 id="leads-all" className="text-xl font-semibold tracking-tight">
-          All leads
-        </h2>
-        <DataTable table={table}>
-          <DataTableToolbar table={table} />
-        </DataTable>
-      </section>
+      <Tabs defaultValue="leads" className="gap-6">
+        <TabsList
+          variant="line"
+          className="w-full justify-start gap-4 border-b p-0 group-data-[orientation=horizontal]/tabs:h-auto"
+        >
+          {['leads', 'stats'].map((value) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              className="h-auto flex-none px-0 pt-1 pb-1 font-semibold capitalize group-data-[orientation=horizontal]/tabs:after:-bottom-0.5 group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=horizontal]/tabs:after:bg-primary data-active:text-primary"
+            >
+              {value}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="leads" className="flex flex-col gap-6">
+          <TodaySection
+            leads={leads}
+            today={today}
+            maxFollowUps={maxFollowUps}
+            templates={templates}
+            pendingId={pendingId}
+            onAction={(action) => void run(action)}
+            onCloseAsNoReply={(lead) => void closeAsNoReply(lead)}
+            onClose={setClosing}
+          />
+          <section className="flex flex-col gap-3" aria-labelledby="leads-all">
+            <h2 id="leads-all" className="text-xl font-semibold tracking-tight">
+              All leads
+            </h2>
+            <DataTable table={table}>
+              <DataTableToolbar table={table} />
+            </DataTable>
+          </section>
+        </TabsContent>
+        <TabsContent value="stats">
+          <StatsPanel />
+        </TabsContent>
+      </Tabs>
       <AddLeadDialog open={adding} onClose={() => setAdding(false)} />
       <CloseLeadDialog
         lead={closing}
