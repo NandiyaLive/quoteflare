@@ -2,10 +2,41 @@
 
 All notable changes are listed here, newest first. Versions follow semver.
 
-## Unreleased
+## 1.7.0 - 2026-11-15
+
+Commits `193210c` to `594aa24`.
 
 ### Added
 
+- Lead tracking at `/admin/leads`. Save a social profile (Instagram, Facebook, TikTok, LinkedIn, X, WhatsApp or other) as a lead and move it through `saved`, `messaged`, `seen`, `replied`, `won` and `closed`. Each lead has a next action date, a follow-up count, a close reason and an event history. Duplicate profiles are rejected.
+- The leads page opens on a Today section that lists the leads due for action, and an Add lead dialog.
+- The web manifest declares a share target, so you can share a profile from your phone to `/admin/leads/new` to save it as a lead.
+- Opener and follow-up message templates, edited in settings, and a limit on follow-ups per lead (`lead_max_follow_ups`, default 2).
+- A daily lead digest email, which you can turn off in settings (`send_lead_digest`). The admin overview also shows lead counts.
+- A lead can be converted to a client or to a new quote, and the lead keeps a link to both.
+- A statistics panel on the leads page.
+- Web push notifications for the daily lead summary. Subscriptions are stored in `push_subscriptions`, and `scripts/generate-vapid-keys.ts` creates the VAPID keys. The setup steps are in `docs/guide.md`.
+- The admin settings page is split into tabs.
+
+### Changed
+
+- The web manifest configuration was updated.
+- The bun version is pinned to 1.4.4 and `packageManager` is set in `package.json`.
+
+## 1.6.0 - 2026-10-31
+
+Commits `eee6273` to `e1c2c92`.
+
+### Added
+
+- Services can be marked always included, so the calculator adds them to every quote.
+- Quotes have numbers, and quote emails are sent for new quotes.
+- Clients can open a public quote page at `/q/$token`. Quotes follow a lifecycle (`quotes.status`) that the daily job also updates, and the page has a confirmation dialog for accepting a quote.
+- Admins can edit a quote after it is created.
+- Quote requests have spam protection. The admin quote list can export CSV and dismiss quotes in bulk.
+- Confirmation dialogs on key actions in the admin quote and invoice pages.
+- Quotes can be saved and managed locally in the calculator.
+- The quote review page has a PDF download option.
 - The admin quote and invoice lists show the converted amount under the base total when a display currency is set. The quote and invoice detail pages also show the rate. The quote CSV export has `Display currency` and `Display rate` columns at the end.
 - Invoices can show amounts in an approved currency (`invoices.display_currency`, `invoices.display_rate`). The invoice editor has a "Show amounts in" picker that fills in the current rate, which you can edit. Invoices made from a quote inherit the quote's currency and rate. The public invoice page, invoice emails and reminders show the converted amount with the base amount beside it. Totals and stored amounts stay in the base currency.
 - Exchange rates are stored in `exchange_rates` and refreshed by the daily job and when settings are saved. If Frankfurter is down, the stored rates are used.
