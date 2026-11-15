@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { leadCloseReasons } from '#/db/schema'
 import type { LeadStatus } from '#/db/schema'
+import { clientSchema } from '#/lib/clients'
 import { isIsoDate, OPEN_LEAD_STATUSES } from '#/lib/leads'
 
 export const leadLinkSchema = z.strictObject({
@@ -51,6 +52,14 @@ export const leadActionSchema = z.discriminatedUnion('type', [
     date: z.string().refine(isIsoDate, 'Choose a valid date'),
   }),
 ])
+
+/** A new client made from a lead. The lead keeps the client's ID. */
+export const leadClientSchema = z.strictObject({
+  leadId,
+  client: clientSchema.omit({ id: true }),
+})
+
+export type LeadClientInput = z.infer<typeof leadClientSchema>
 
 export type LeadActionInput = z.infer<typeof leadActionSchema>
 

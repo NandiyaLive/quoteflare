@@ -31,8 +31,20 @@ const emptyItem = (): DraftItem => ({
   taxable: true,
 })
 
+type NewQuoteSearch = { clientId?: string; leadId?: string }
+
+const idParam = (value: unknown) =>
+  typeof value === 'string' && value.length > 0 && value.length <= 64
+    ? value
+    : undefined
+
 export const Route = createFileRoute('/admin/quotes/new/')({
   staticData: { breadcrumb: 'New quote' },
+  validateSearch: (search: Record<string, unknown>): NewQuoteSearch => {
+    const clientId = idParam(search.clientId)
+    const leadId = idParam(search.leadId)
+    return { ...(clientId && { clientId }), ...(leadId && { leadId }) }
+  },
   loader: () => getInvoiceFormContext(),
   component: NewQuotePage,
 })
@@ -41,10 +53,14 @@ function NewQuotePage() {
   const context = Route.useLoaderData()
   const { clients, services, currency, taxRateBps } = context
   const navigate = useNavigate()
+  const search = Route.useSearch()
+  const leadClient = clients.find((c) => c.id === search.clientId)
 
-  const [clientId, setClientId] = useState<string | null>(null)
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [clientId, setClientId] = useState<string | null>(
+    leadClient?.id ?? null,
+  )
+  const [name, setName] = useState(leadClient?.name ?? '')
+  const [email, setEmail] = useState(leadClient?.email ?? '')
   const [items, setItems] = useState<DraftItem[]>([emptyItem()])
   const [discount, setDiscount] = useState('0')
   const [note, setNote] = useState('')
@@ -93,7 +109,14 @@ function NewQuotePage() {
       const result = await callAction(
         () =>
           createQuoteAction({
-            data: { name, email, items, discount, adminNote: note },
+            data: {
+              name,
+              email,
+              items,
+              discount,
+              adminNote: note,
+              leadId: search.leadId,
+            },
           }),
         'Could not create the quote. Try again.',
       )

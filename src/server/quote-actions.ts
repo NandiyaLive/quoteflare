@@ -11,7 +11,7 @@ import {
   bulkDismissSchema,
   convertQuoteSchema,
   MAX_PUBLIC_BODY_BYTES,
-  quoteCreateSchema,
+  quoteCreateForLeadSchema,
   quoteFilterSchema,
   quoteEditSchema,
   quoteRequestSchema,
@@ -224,7 +224,7 @@ export const saveQuoteEditAction = createServerFn({ method: 'POST' })
   .handler(({ data }) => saveQuoteEdit(createDb(env.DB), data))
 
 export const createQuoteAction = createServerFn({ method: 'POST' })
-  .validator((input: unknown) => quoteCreateSchema.parse(input))
+  .validator((input: unknown) => quoteCreateForLeadSchema.parse(input))
   .middleware([requireAdmin])
   .handler(({ data }) => createQuote(createDb(env.DB), data))
 

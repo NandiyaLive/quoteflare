@@ -20,23 +20,31 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { clientSchema, emptyClient, type ClientFormValues } from '#/lib/clients'
 import { saveClientAction } from '#/server/clients-actions'
+import { makeClientFromLeadAction } from '#/server/leads-actions'
 import { toast } from 'sonner'
 import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 export function ClientDialog({
   open,
   client,
+  leadId,
   onClose,
 }: {
   open: boolean
   client: ClientFormValues | null
+  /** When set, saving creates the client from this lead and links the two. */
+  leadId?: string
   onClose: () => void
 }) {
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         {open && (
-          <ClientForm initial={client ?? emptyClient} onDone={onClose} />
+          <ClientForm
+            initial={client ?? emptyClient}
+            leadId={leadId}
+            onDone={onClose}
+          />
         )}
       </DialogContent>
     </Dialog>
@@ -45,9 +53,11 @@ export function ClientDialog({
 
 function ClientForm({
   initial,
+  leadId,
   onDone,
 }: {
   initial: ClientFormValues
+  leadId?: string
   onDone: () => void
 }) {
   const router = useRouter()
@@ -59,7 +69,21 @@ function ClientForm({
     onSubmit: async ({ value }) => {
       setServerErrors({})
       const result = await callAction(
-        () => saveClientAction({ data: value }),
+        () =>
+          leadId
+            ? makeClientFromLeadAction({
+                data: {
+                  leadId,
+                  client: {
+                    name: value.name,
+                    company: value.company,
+                    email: value.email,
+                    address: value.address,
+                    notes: value.notes,
+                  },
+                },
+              })
+            : saveClientAction({ data: value }),
         'Could not save the client. Try again.',
       )
       if (!result) return

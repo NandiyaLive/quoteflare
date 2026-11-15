@@ -15,10 +15,12 @@ import { Input } from '@/components/ui/input'
 import { formatDate } from '@/lib/format'
 import {
   isOpenLead,
+  leadClientPrefill,
   LEAD_CLOSE_REASON_LABELS,
   LEAD_EVENT_LABELS,
 } from '#/lib/leads'
 import { getLeadDetail } from '#/server/leads-actions'
+import { ClientDialog } from '../../clients/-components/client-dialog'
 import { CloseLeadDialog } from '../-components/close-lead-dialog'
 import { LeadActionButtons } from '../-components/lead-action-buttons'
 import { LeadDetailsForm } from '../-components/lead-details-form'
@@ -47,10 +49,11 @@ const formatStamp = (iso: string) =>
   })
 
 function LeadPage() {
-  const { lead, events, maxFollowUps } = Route.useLoaderData()
+  const { lead, client, quote, events, maxFollowUps } = Route.useLoaderData()
   const router = useRouter()
   const { run, closeAsNoReply, pendingId, dialog } = useLeadActions()
   const [closing, setClosing] = useState(false)
+  const [makingClient, setMakingClient] = useState(false)
   const [date, setDate] = useState(lead.nextActionOn ?? '')
   const busy = pendingId === lead.id
 
@@ -107,6 +110,28 @@ function LeadPage() {
             onCloseAsNoReply={() => void closeAsNoReply(lead)}
             onClose={() => setClosing(true)}
           />
+          {lead.status === 'replied' && !lead.clientId && (
+            <div>
+              <Button disabled={busy} onClick={() => setMakingClient(true)}>
+                Make client
+              </Button>
+            </div>
+          )}
+          {lead.status === 'replied' && lead.clientId && !lead.quoteId && (
+            <div>
+              <Button
+                nativeButton={false}
+                render={
+                  <Link
+                    to="/admin/quotes/new"
+                    search={{ clientId: lead.clientId, leadId: lead.id }}
+                  />
+                }
+              >
+                Create quote
+              </Button>
+            </div>
+          )}
           {!isOpenLead(lead.status) && (
             <div>
               <Button
@@ -146,6 +171,41 @@ function LeadPage() {
           )}
         </CardContent>
       </Card>
+
+      {(client || quote) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Client and quote</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 text-sm">
+            {client && (
+              <p>
+                Client:{' '}
+                <Link
+                  to="/admin/clients/$clientId"
+                  params={{ clientId: client.id }}
+                  className="font-medium underline-offset-4 hover:underline"
+                >
+                  {client.name}
+                </Link>
+                {client.archived && ' (archived)'}
+              </p>
+            )}
+            {quote && (
+              <p>
+                Quote:{' '}
+                <Link
+                  to="/admin/quotes/$quoteId"
+                  params={{ quoteId: quote.id }}
+                  className="font-medium underline-offset-4 hover:underline"
+                >
+                  {quote.number ?? 'Quote'}
+                </Link>
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <Card>
@@ -194,6 +254,12 @@ function LeadPage() {
           const ok = await run({ type: 'close', id, reason })
           if (ok) await router.invalidate()
         }}
+      />
+      <ClientDialog
+        open={makingClient}
+        client={leadClientPrefill(lead)}
+        leadId={lead.id}
+        onClose={() => setMakingClient(false)}
       />
       {dialog}
     </>

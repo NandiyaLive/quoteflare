@@ -266,6 +266,13 @@ export const quoteCreateSchema = quoteEditSchema
 
 export type QuoteCreateInput = z.infer<typeof quoteCreateSchema>
 
+/** A quote written for a lead. Creating it marks the lead as won. */
+export const quoteCreateForLeadSchema = quoteCreateSchema.extend({
+  leadId: z.string().min(1).max(64).optional(),
+})
+
+export type QuoteCreateForLeadInput = z.infer<typeof quoteCreateForLeadSchema>
+
 /**
  * Rebuilds a quote's one-time lines from edited items and totals them again.
  * Each item becomes a plain line, so options fold into the items the admin

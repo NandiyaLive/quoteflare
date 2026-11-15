@@ -642,3 +642,26 @@ export const shouldOfferClose = (
   lead.status !== 'replied' &&
   (lead.followUps >= settings.leadMaxFollowUps ||
     lead.unseenChecks >= MAX_UNSEEN_CHECKS)
+
+/**
+ * The client form values to start from when a lead becomes a client. The note
+ * records where the lead came from and keeps the lead's own note.
+ */
+export const leadClientPrefill = (lead: {
+  platform: LeadPlatform
+  handle: string
+  profileUrl: string
+  name: string
+  note: string
+}) => ({
+  name: lead.name.trim() || lead.handle,
+  company: '',
+  email: '',
+  address: '',
+  notes: [
+    `Lead from ${LEAD_PLATFORM_LABELS[lead.platform]}: ${lead.profileUrl}`,
+    lead.note.trim(),
+  ]
+    .filter(Boolean)
+    .join('\n\n'),
+})

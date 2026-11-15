@@ -1,9 +1,13 @@
-import { asc, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { Db } from '#/db'
 import { schema } from '#/db'
 import { createId } from '#/lib/id'
-import type { LeadActionInput, LeadDetailsValues } from '#/lib/lead-inputs'
+import type {
+  LeadActionInput,
+  LeadClientInput,
+  LeadDetailsValues,
+} from '#/lib/lead-inputs'
 import {
   localToday,
   nextLeadState,
@@ -13,7 +17,7 @@ import {
   type LeadState,
 } from '#/lib/leads'
 
-const { leads, leadEvents, settings } = schema
+const { leads, leadEvents, settings, clients, quotes } = schema
 
 export type LeadRow = typeof leads.$inferSelect
 export type LeadEventRow = typeof leadEvents.$inferSelect
@@ -69,16 +73,36 @@ export async function loadLeadDetail(db: Db, id: string, now: Date) {
     await db.select().from(leads).where(eq(leads.id, id)).limit(1)
   )[0]
   if (!lead) return null
-  const [events, leadSettings] = await Promise.all([
+  const [events, leadSettings, client, quote] = await Promise.all([
     db
       .select()
       .from(leadEvents)
       .where(eq(leadEvents.leadId, id))
       .orderBy(desc(leadEvents.createdAt), desc(leadEvents.id)),
     loadLeadSettings(db),
+    lead.clientId
+      ? db
+          .select({
+            id: clients.id,
+            name: clients.name,
+            archived: clients.archived,
+          })
+          .from(clients)
+          .where(eq(clients.id, lead.clientId))
+          .limit(1)
+      : [],
+    lead.quoteId
+      ? db
+          .select({ id: quotes.id, number: quotes.number })
+          .from(quotes)
+          .where(eq(quotes.id, lead.quoteId))
+          .limit(1)
+      : [],
   ])
   return {
     lead,
+    client: client[0] ?? null,
+    quote: quote[0] ?? null,
     events,
     today: localToday(now, leadSettings.timeZone),
     maxFollowUps: leadSettings.leadMaxFollowUps,
@@ -249,4 +273,87 @@ export async function updateLeadDetails(
   return updated.length > 0
     ? { ok: true }
     : { ok: false, error: 'Lead not found.' }
+}
+
+/**
+ * Creates a client from a `replied` lead and links it to the lead. The client
+ * and the link are written in one batch. A lead keeps one client.
+ */
+export async function makeClientFromLead(
+  db: Db,
+  input: LeadClientInput,
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const lead = (
+    await db.select().from(leads).where(eq(leads.id, input.leadId)).limit(1)
+  )[0]
+  if (!lead) return { ok: false, error: 'Lead not found.' }
+  if (lead.status !== 'replied') {
+    return { ok: false, error: 'Only a lead that replied can become a client.' }
+  }
+  if (lead.clientId) return { ok: false, error: 'This lead has a client.' }
+
+  const clientId = createId()
+  await batch(db, [
+    db.insert(clients).values({ id: clientId, ...input.client }),
+    db
+      .update(leads)
+      .set({ clientId })
+      .where(and(eq(leads.id, lead.id), eq(leads.status, 'replied'))),
+  ])
+  return { ok: true, id: clientId }
+}
+
+/**
+ * Checks that a lead can be won by a new quote and returns a function that
+ * builds the statements for that quote's batch. `nextLeadState` decides the
+ * new state, so the lead must be `replied` and have a client and no quote.
+ */
+export async function planLeadWin(
+  db: Db,
+  leadId: string,
+  now: Date,
+): Promise<
+  | { ok: true; statements: (quoteId: string) => BatchItem<'sqlite'>[] }
+  | { ok: false; error: string }
+> {
+  const lead = (
+    await db.select().from(leads).where(eq(leads.id, leadId)).limit(1)
+  )[0]
+  if (!lead) return { ok: false, error: 'Lead not found.' }
+  if (!lead.clientId) {
+    return { ok: false, error: 'Make this lead a client before a quote.' }
+  }
+  if (lead.quoteId) return { ok: false, error: 'This lead has a quote.' }
+
+  const leadSettings = await loadLeadSettings(db)
+  const today = localToday(now, leadSettings.timeZone)
+  const result = nextLeadState(
+    toState(lead),
+    { type: 'won' },
+    today,
+    leadSettings,
+  )
+  if (!result.ok) return { ok: false, error: result.error }
+
+  const { state } = result
+  return {
+    ok: true,
+    statements: (quoteId) => [
+      db
+        .update(leads)
+        .set({
+          quoteId,
+          status: state.status,
+          nextActionOn: state.nextActionOn,
+        })
+        .where(and(eq(leads.id, lead.id), eq(leads.status, lead.status))),
+      db.insert(leadEvents).values({
+        id: createId(),
+        leadId: lead.id,
+        type: result.event.type,
+        detail: result.event.detail,
+        createdAt: now.toISOString(),
+      }),
+    ],
+  }
 }

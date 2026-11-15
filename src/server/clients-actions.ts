@@ -10,6 +10,7 @@ import {
 import { requireAdmin } from './admin-middleware'
 import {
   getClient,
+  getClientLead,
   listClientInvoices,
   listClients,
   saveClient,
@@ -31,7 +32,11 @@ export const getClientDetail = createServerFn()
     const db = createDb(env.DB)
     const client = await getClient(db, data)
     if (!client) return null
-    return { client, invoices: await listClientInvoices(db, data) }
+    const [invoices, lead] = await Promise.all([
+      listClientInvoices(db, data),
+      getClientLead(db, data),
+    ])
+    return { client, invoices, lead }
   })
 
 export const saveClientAction = createServerFn({ method: 'POST' })

@@ -4,7 +4,7 @@ import { schema } from '#/db'
 import type { ClientFilter, ClientFormValues } from '#/lib/clients'
 import { createId } from '#/lib/id'
 
-const { clients, invoices } = schema
+const { clients, invoices, leads } = schema
 
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, '\\$&')
 
@@ -35,6 +35,24 @@ export function listActiveClients(db: Db) {
 
 export async function getClient(db: Db, id: string) {
   return (await db.select().from(clients).where(eq(clients.id, id)).limit(1))[0]
+}
+
+/** The lead this client came from, if any. */
+export async function getClientLead(db: Db, clientId: string) {
+  return (
+    (
+      await db
+        .select({
+          id: leads.id,
+          handle: leads.handle,
+          platform: leads.platform,
+          status: leads.status,
+        })
+        .from(leads)
+        .where(eq(leads.clientId, clientId))
+        .limit(1)
+    )[0] ?? null
+  )
 }
 
 export async function listClientInvoices(db: Db, clientId: string) {

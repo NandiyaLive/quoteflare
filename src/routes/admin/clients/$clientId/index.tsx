@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/table'
 import { formatDate } from '@/lib/format'
 import { toClientFormValues } from '#/lib/clients'
+import { LEAD_PLATFORM_LABELS } from '#/lib/leads'
 import { setClientArchivedAction } from '#/server/clients-actions'
 import { ClientDialog } from '../-components/client-dialog'
 import { callAction } from '#/lib/action-errors'
@@ -41,7 +42,7 @@ export const Route = createFileRoute('/admin/clients/$clientId/')({
 })
 
 function ClientPage() {
-  const { client, invoices } = Route.useLoaderData()
+  const { client, invoices, lead } = Route.useLoaderData()
   const router = useRouter()
   const [editing, setEditing] = useState(false)
 
@@ -166,6 +167,18 @@ function ClientPage() {
                 {client.address || 'No address.'}
               </p>
             </div>
+            {lead && (
+              <div>
+                <p className="mb-1 font-medium">Source lead</p>
+                <Link
+                  to="/admin/leads/$leadId"
+                  params={{ leadId: lead.id }}
+                  className="text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  {LEAD_PLATFORM_LABELS[lead.platform]} {lead.handle}
+                </Link>
+              </div>
+            )}
             <div>
               <p className="mb-1 font-medium">Notes</p>
               <p className="whitespace-pre-wrap text-muted-foreground">

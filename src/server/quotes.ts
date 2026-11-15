@@ -28,7 +28,7 @@ import {
   EDITABLE_QUOTE_STATUSES,
   INVOICEABLE_QUOTE_STATUSES,
   repriceQuote,
-  type QuoteCreateInput,
+  type QuoteCreateForLeadInput,
   type QuoteEditInput,
   PUBLIC_QUOTE_STATUSES,
   SENDABLE_QUOTE_STATUSES,
@@ -38,6 +38,7 @@ import {
   type QuoteStatusFilter,
 } from '#/lib/quotes'
 import { loadCalculatorCatalog } from './calculator'
+import { planLeadWin } from './leads'
 import {
   batch,
   incrementInvoiceNumber,
@@ -174,7 +175,8 @@ export type CreateQuoteResult =
  */
 export async function createQuote(
   db: Db,
-  input: QuoteCreateInput,
+  input: QuoteCreateForLeadInput,
+  now = new Date(),
 ): Promise<CreateQuoteResult> {
   const business = await db.query.settings.findFirst()
   if (!business) {
@@ -183,6 +185,10 @@ export async function createQuote(
       error: 'Save your business details in settings before creating quotes.',
     }
   }
+  // A quote for a lead also wins the lead. Check that first so a lead that
+  // cannot be won does not leave a quote behind.
+  const win = input.leadId ? await planLeadWin(db, input.leadId, now) : null
+  if (win && !win.ok) return win
   const breakdown = repriceQuote(input, [], business.taxRateBps, createId)
   const id = createId()
   await batch(db, [
@@ -204,6 +210,7 @@ export async function createQuote(
       .set({ nextQuoteNumber: sql`${settings.nextQuoteNumber} + 1` })
       .where(eq(settings.id, 'main')),
     logQuoteEvent(db, id, 'created'),
+    ...(win ? win.statements(id) : []),
   ])
   return { ok: true, id }
 }

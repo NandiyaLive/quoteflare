@@ -5,6 +5,7 @@ import { createDb } from '#/db'
 import { fieldErrors, firstSegment } from '#/lib/field-errors'
 import {
   leadActionSchema,
+  leadClientSchema,
   leadDetailsSchema,
   leadLinkSchema,
 } from '#/lib/lead-inputs'
@@ -14,6 +15,7 @@ import {
   loadLeadDetail,
   findLeadByInput,
   loadLeads,
+  makeClientFromLead,
   saveLead,
   updateLeadDetails,
   type LeadResult,
@@ -68,6 +70,29 @@ export const updateLeadDetailsAction = createServerFn({ method: 'POST' })
         return { ok: false, errors: fieldErrors(parsed.error, firstSegment) }
       }
       const result = await updateLeadDetails(createDb(env.DB), parsed.data)
+      return result.ok ? result : { ok: false, errors: { form: result.error } }
+    },
+  )
+
+export const makeClientFromLeadAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => input)
+  .middleware([requireAdmin])
+  .handler(
+    async ({
+      data,
+    }): Promise<
+      { ok: true; id: string } | { ok: false; errors: Record<string, string> }
+    > => {
+      const parsed = leadClientSchema.safeParse(data)
+      if (!parsed.success) {
+        return {
+          ok: false,
+          errors: fieldErrors(parsed.error, (path) =>
+            path[0] === 'client' ? String(path[1] ?? 'form') : 'form',
+          ),
+        }
+      }
+      const result = await makeClientFromLead(createDb(env.DB), parsed.data)
       return result.ok ? result : { ok: false, errors: { form: result.error } }
     },
   )
