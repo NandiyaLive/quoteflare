@@ -56,9 +56,12 @@ export const invoiceEmailTemplateSchema = z.strictObject({
 export type InvoiceEmailTemplate = z.infer<typeof invoiceEmailTemplateSchema>
 
 /** Replaces `{{name}}` placeholders. Unknown names are left as written. */
-export function fillTemplate(template: string, vars: TemplateVariables) {
+export function fillTemplate(
+  template: string,
+  vars: Readonly<Record<string, string>>,
+) {
   return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, name: string) =>
-    name in vars ? vars[name as keyof TemplateVariables] : match,
+    Object.hasOwn(vars, name) ? vars[name] : match,
   )
 }
 

@@ -30,7 +30,7 @@ export const Route = createFileRoute('/admin/leads/')({
 })
 
 function LeadsPage() {
-  const { leads, today, maxFollowUps } = Route.useLoaderData()
+  const { leads, today, maxFollowUps, templates } = Route.useLoaderData()
   const { run, closeAsNoReply, pendingId, dialog } = useLeadActions()
   const [closing, setClosing] = useState<LeadRow | null>(null)
   const [adding, setAdding] = useState(false)
@@ -154,6 +154,7 @@ function LeadsPage() {
         leads={leads}
         today={today}
         maxFollowUps={maxFollowUps}
+        templates={templates}
         pendingId={pendingId}
         onAction={(action) => void run(action)}
         onCloseAsNoReply={(lead) => void closeAsNoReply(lead)}

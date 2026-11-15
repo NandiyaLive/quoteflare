@@ -394,6 +394,74 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                     </Field>
                   )}
                 </form.Field>
+                <form.Field name="leadOpenerTemplate">
+                  {(field) => {
+                    const errors = fieldErrors(
+                      field.name,
+                      field.state.meta.errors,
+                    )
+                    const invalid = errors.length > 0
+                    return (
+                      <Field data-invalid={invalid}>
+                        <FieldLabel htmlFor="leadOpenerTemplate">
+                          Opener message
+                        </FieldLabel>
+                        <Textarea
+                          id="leadOpenerTemplate"
+                          name="leadOpenerTemplate"
+                          rows={4}
+                          placeholder={
+                            'Hi {{name}}, I came across your work and ...'
+                          }
+                          value={field.state.value}
+                          aria-invalid={invalid}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                        />
+                        <FieldDescription>
+                          {
+                            'The first message you send. Use {{name}} and {{handle}}. Leave it empty to hide the copy button.'
+                          }
+                        </FieldDescription>
+                        {invalid && <FieldError errors={errors} />}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+                <form.Field name="leadFollowUpTemplate">
+                  {(field) => {
+                    const errors = fieldErrors(
+                      field.name,
+                      field.state.meta.errors,
+                    )
+                    const invalid = errors.length > 0
+                    return (
+                      <Field data-invalid={invalid}>
+                        <FieldLabel htmlFor="leadFollowUpTemplate">
+                          Follow-up message
+                        </FieldLabel>
+                        <Textarea
+                          id="leadFollowUpTemplate"
+                          name="leadFollowUpTemplate"
+                          rows={4}
+                          placeholder={
+                            'Hi {{name}}, just checking you saw my last message ...'
+                          }
+                          value={field.state.value}
+                          aria-invalid={invalid}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                        />
+                        <FieldDescription>
+                          {
+                            'Sent when a lead has seen your message and not replied. Use {{name}} and {{handle}}. Leave it empty to hide the copy button.'
+                          }
+                        </FieldDescription>
+                        {invalid && <FieldError errors={errors} />}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
               </FieldGroup>
             </FieldSet>
             <FieldSet className="rounded-lg border p-4">

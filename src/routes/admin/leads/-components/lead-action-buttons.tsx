@@ -38,13 +38,18 @@ export function LeadActionButtons({
   return (
     <div className="flex flex-wrap gap-2">
       {offerClose && (
-        <Button disabled={busy} onClick={onCloseAsNoReply}>
+        <Button
+          className="max-sm:min-h-11"
+          disabled={busy}
+          onClick={onCloseAsNoReply}
+        >
           Close as no reply
         </Button>
       )}
       {steps.map((step, index) => (
         <Button
           key={step.type}
+          className="max-sm:min-h-11"
           variant={index === 0 && !offerClose ? 'default' : 'outline'}
           disabled={busy}
           onClick={() => onAction({ type: step.type, id: lead.id })}
@@ -53,7 +58,12 @@ export function LeadActionButtons({
         </Button>
       ))}
       {isOpenLead(lead.status) && (
-        <Button variant="outline" disabled={busy} onClick={onClose}>
+        <Button
+          variant="outline"
+          className="max-sm:min-h-11"
+          disabled={busy}
+          onClick={onClose}
+        >
           Close
         </Button>
       )}

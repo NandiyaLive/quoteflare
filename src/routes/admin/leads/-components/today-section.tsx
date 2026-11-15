@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { LeadActionButtons } from './lead-action-buttons'
-import { PlatformBadge } from './lead-badges'
+import { LeadSendActions } from './lead-send-actions'
 
 export const lastContactLabel = (lead: LeadRow, today: string) => {
   if (!lead.lastContactedAt) return 'Not contacted yet'
@@ -29,6 +29,7 @@ export function TodaySection({
   leads,
   today,
   maxFollowUps,
+  templates,
   pendingId,
   onAction,
   onCloseAsNoReply,
@@ -37,6 +38,7 @@ export function TodaySection({
   leads: LeadRow[]
   today: string
   maxFollowUps: number
+  templates: { opener: string; followUp: string }
   pendingId: string | null
   onAction: (action: LeadActionInput) => void
   onCloseAsNoReply: (lead: LeadRow) => void
@@ -73,39 +75,70 @@ export function TodaySection({
                     <li key={lead.id}>
                       <Card size="sm">
                         <CardContent className="flex flex-col gap-3">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Link
-                                to="/admin/leads/$leadId"
-                                params={{ leadId: lead.id }}
-                                className="font-medium underline-offset-4 hover:underline"
-                              >
-                                {lead.handle}
-                              </Link>
-                              <PlatformBadge platform={lead.platform} />
-                              {isOverdue(lead, today) && (
-                                <Badge variant="destructive">Overdue</Badge>
-                              )}
-                            </div>
-                            {(lead.name || lead.note) && (
-                              <p className="line-clamp-1 text-xs text-muted-foreground">
-                                {[lead.name, lead.note]
-                                  .filter(Boolean)
-                                  .join(' · ')}
-                              </p>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                              {lastContactLabel(lead, today)}
-                            </p>
-                          </div>
-                          <LeadActionButtons
-                            lead={lead}
-                            maxFollowUps={maxFollowUps}
-                            busy={pendingId === lead.id}
-                            onAction={onAction}
-                            onCloseAsNoReply={() => onCloseAsNoReply(lead)}
-                            onClose={() => onClose(lead)}
-                          />
+                          {group.id === 'first_message' ||
+                          group.id === 'follow_up' ? (
+                            <LeadSendActions
+                              lead={lead}
+                              template={
+                                group.id === 'first_message'
+                                  ? templates.opener
+                                  : templates.followUp
+                              }
+                              maxFollowUps={maxFollowUps}
+                              busy={pendingId === lead.id}
+                              onAction={onAction}
+                              onCloseAsNoReply={() => onCloseAsNoReply(lead)}
+                              onClose={() => onClose(lead)}
+                            >
+                              <div className="flex flex-col gap-0.5">
+                                <p className="truncate font-medium">
+                                  {lead.name || lead.handle}
+                                </p>
+                                <Link
+                                  to="/admin/leads/$leadId"
+                                  params={{ leadId: lead.id }}
+                                  className="truncate text-xs text-muted-foreground underline-offset-4 hover:underline"
+                                >
+                                  {lead.handle}
+                                </Link>
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{lastContactLabel(lead, today)}</span>
+                                  {isOverdue(lead, today) && (
+                                    <Badge variant="destructive">Overdue</Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </LeadSendActions>
+                          ) : (
+                            <>
+                              <div className="flex flex-col gap-0.5">
+                                <p className="truncate font-medium">
+                                  {lead.name || lead.handle}
+                                </p>
+                                <Link
+                                  to="/admin/leads/$leadId"
+                                  params={{ leadId: lead.id }}
+                                  className="truncate text-xs text-muted-foreground underline-offset-4 hover:underline"
+                                >
+                                  {lead.handle}
+                                </Link>
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{lastContactLabel(lead, today)}</span>
+                                  {isOverdue(lead, today) && (
+                                    <Badge variant="destructive">Overdue</Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <LeadActionButtons
+                                lead={lead}
+                                maxFollowUps={maxFollowUps}
+                                busy={pendingId === lead.id}
+                                onAction={onAction}
+                                onCloseAsNoReply={() => onCloseAsNoReply(lead)}
+                                onClose={() => onClose(lead)}
+                              />
+                            </>
+                          )}
                         </CardContent>
                       </Card>
                     </li>

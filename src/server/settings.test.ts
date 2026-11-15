@@ -51,6 +51,8 @@ const input = {
   calculatorDescription: '',
   sendReminders: false,
   sendLeadDigest: true,
+  leadOpenerTemplate: '',
+  leadFollowUpTemplate: '',
 }
 
 beforeEach(async () => {
@@ -99,6 +101,35 @@ describe('reminder toggle', () => {
   it('rejects a non-boolean value', () => {
     expect(
       settingsSchema.safeParse({ ...input, sendReminders: 'yes' }).success,
+    ).toBe(false)
+  })
+})
+
+describe('lead message templates', () => {
+  it('default to empty and persist when saved', async () => {
+    await saveSettings(db, settingsSchema.parse(input))
+    expect((await loadSettings(db)).values).toMatchObject({
+      leadOpenerTemplate: '',
+      leadFollowUpTemplate: '',
+    })
+    await saveSettings(
+      db,
+      settingsSchema.parse({
+        ...input,
+        leadOpenerTemplate: 'Hi {{name}}',
+        leadFollowUpTemplate: 'Hi again {{handle}}',
+      }),
+    )
+    expect((await loadSettings(db)).values).toMatchObject({
+      leadOpenerTemplate: 'Hi {{name}}',
+      leadFollowUpTemplate: 'Hi again {{handle}}',
+    })
+  })
+
+  it('rejects unknown placeholders', () => {
+    expect(
+      settingsSchema.safeParse({ ...input, leadOpenerTemplate: '{{total}}' })
+        .success,
     ).toBe(false)
   })
 })

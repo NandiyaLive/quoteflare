@@ -33,6 +33,20 @@ export async function loadLeadSettings(db: Db): Promise<LeadSettings> {
   }
 }
 
+/** The saved message templates. Empty strings mean none is set. */
+export async function loadLeadTemplates(db: Db) {
+  const row = (
+    await db
+      .select({
+        opener: settings.leadOpenerTemplate,
+        followUp: settings.leadFollowUpTemplate,
+      })
+      .from(settings)
+      .limit(1)
+  )[0]
+  return { opener: row?.opener ?? '', followUp: row?.followUp ?? '' }
+}
+
 /** Every lead, with the settings and today's date the pages need to group them. */
 export async function loadLeads(db: Db, now: Date) {
   const [rows, leadSettings] = await Promise.all([
@@ -46,6 +60,7 @@ export async function loadLeads(db: Db, now: Date) {
     leads: rows,
     today: localToday(now, leadSettings.timeZone),
     maxFollowUps: leadSettings.leadMaxFollowUps,
+    templates: await loadLeadTemplates(db),
   }
 }
 

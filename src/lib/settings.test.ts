@@ -23,6 +23,8 @@ const valid = {
   calculatorDescription: '',
   sendReminders: false,
   sendLeadDigest: true,
+  leadOpenerTemplate: '',
+  leadFollowUpTemplate: '',
 }
 
 const issuesFor = (patch: Record<string, unknown>) => {

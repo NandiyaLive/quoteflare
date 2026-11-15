@@ -263,6 +263,26 @@ describe('updateLeadDetails', () => {
 describe('loadLeads and Today groups', () => {
   it('uses the follow-up limit from settings and defaults to 2', async () => {
     expect((await loadLeads(db, MON)).maxFollowUps).toBe(2)
+  })
+
+  it('returns the saved message templates', async () => {
+    expect((await loadLeads(db, MON)).templates).toEqual({
+      opener: '',
+      followUp: '',
+    })
+    await db.insert(schema.settings).values({
+      id: 'main',
+      businessName: 'Test',
+      leadOpenerTemplate: 'Hi {{name}}',
+      leadFollowUpTemplate: 'Following up',
+    })
+    expect((await loadLeads(db, MON)).templates).toEqual({
+      opener: 'Hi {{name}}',
+      followUp: 'Following up',
+    })
+  })
+
+  it('reads a custom follow-up limit', async () => {
     await db
       .insert(schema.settings)
       .values({ id: 'main', businessName: 'Test', leadMaxFollowUps: 4 })

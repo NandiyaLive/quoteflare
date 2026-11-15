@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { percentToBps } from './decimal'
+import { leadTemplateSchema } from './lead-templates'
 
 export const DEFAULT_CURRENCY = 'USD'
 
@@ -112,6 +113,8 @@ export const settingsSchema = z.strictObject({
     .max(300, 'Description must be 300 characters or fewer'),
   sendReminders: z.boolean(),
   sendLeadDigest: z.boolean(),
+  leadOpenerTemplate: leadTemplateSchema,
+  leadFollowUpTemplate: leadTemplateSchema,
 })
 
 export type SettingsFormValues = z.input<typeof settingsSchema>
