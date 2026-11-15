@@ -1,8 +1,7 @@
-// Regenerates the PWA icons and iOS splash screens from public/favicon.svg.
+// Regenerates the PWA icons from public/favicon.svg.
 // Run with: bun scripts/generate-pwa-assets.ts
-import { mkdir, readFile } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import sharp from 'sharp'
-import { SPLASH_DEVICES, splashFile } from '../src/lib/pwa-splash'
 
 const BACKGROUND = '#ffffff'
 
@@ -49,13 +48,4 @@ await compose(512, 512, 0.76, 'public/icon-512.png')
 await compose(512, 512, 0.58, 'public/icon-maskable-512.png')
 await compose(180, 180, 0.7, 'public/apple-touch-icon.png')
 
-// Splash screens show the logo at 28% of the screen width on iPhone and 20%
-// on iPad.
-await mkdir('public/splash', { recursive: true })
-for (const d of SPLASH_DEVICES) {
-  const w = d.width * d.ratio
-  const h = d.height * d.ratio
-  const ratio = d.width >= 744 ? 0.2 : 0.28
-  await compose(w, h, ratio, `public${splashFile(d)}`)
-}
-console.log('Generated PWA icons and', SPLASH_DEVICES.length, 'splash screens')
+console.log('Generated PWA icons')
