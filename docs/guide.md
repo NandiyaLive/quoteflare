@@ -135,6 +135,42 @@ The file format is shown in `scripts/services.example.json`. Categories, option 
 
 `db:seed` loads the generic catalogue in `src/db/seed-services.json`. Keep your own catalogue in `local/services.json`, which git ignores, and import it with `bun run services:import local/services.json`.
 
+## Saving leads
+
+`/admin/leads/new` saves a profile from a shared link. It reads `url` and `text` from the query string, parses whichever holds a profile link, and shows the platform and handle. A profile that is already saved opens its lead with an "Already saved" message. Anything that is not a profile link shows an error and a field to correct it.
+
+Everything sits behind Cloudflare Access, so set the Access session duration for `/admin/*` to at least 7 days. A shorter session sends the share through a one-time PIN each time.
+
+### Android
+
+`public/site.webmanifest` declares a Web Share Target, so the installed app appears in the share menu.
+
+1. Open `https://<your domain>/admin` in Chrome and sign in.
+2. Open the menu and choose "Install app".
+3. In Instagram, Facebook, TikTok or LinkedIn, share a profile and pick Quoteflare, then tap Save.
+
+Chrome reads the share target when it installs the app. Reinstall the app after the manifest changes.
+
+### iPhone
+
+iOS Safari does not support Web Share Target (WebKit bug 194593), so the share goes through an Apple Shortcut.
+
+1. Open Shortcuts and create a new shortcut named "Save lead".
+2. In its settings turn on "Show in Share Sheet" and accept URLs and text.
+3. Add the "URL Encode" action, with "Shortcut Input" as its input.
+4. Add a "Text" action containing `https://<your domain>/admin/leads/new?url=` followed by the URL Encode result.
+5. Add the "Open URLs" action with that text.
+
+To share the shortcut, open its menu, choose Share, then "Copy iCloud Link".
+
+### Desktop bookmarklet
+
+Create a bookmark whose address is the line below, with your domain in place of `<your domain>`. Clicking it opens the save page for the profile in the current tab.
+
+```text
+javascript:(()=>{window.open('https://<your domain>/admin/leads/new?url='+encodeURIComponent(location.href),'_blank')})()
+```
+
 ## Email
 
 Invoices are emailed through Resend's REST API (`src/server/email.ts`). Setup:

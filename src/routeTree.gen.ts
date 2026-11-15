@@ -37,6 +37,7 @@ import { Route as AdminClientsClientIdIndexRouteImport } from './routes/admin/cl
 import { Route as AdminInvoicesInvoiceIdIndexRouteImport } from './routes/admin/invoices/$invoiceId/index'
 import { Route as AdminInvoicesNewIndexRouteImport } from './routes/admin/invoices/new/index'
 import { Route as AdminLeadsLeadIdIndexRouteImport } from './routes/admin/leads/$leadId/index'
+import { Route as AdminLeadsNewIndexRouteImport } from './routes/admin/leads/new/index'
 import { Route as AdminQuotesQuoteIdIndexRouteImport } from './routes/admin/quotes/$quoteId/index'
 import { Route as AdminQuotesNewIndexRouteImport } from './routes/admin/quotes/new/index'
 import { Route as AdminRecurringScheduleIdIndexRouteImport } from './routes/admin/recurring/$scheduleId/index'
@@ -185,6 +186,11 @@ const AdminLeadsLeadIdIndexRoute = AdminLeadsLeadIdIndexRouteImport.update({
   path: '/$leadId/',
   getParentRoute: () => AdminLeadsRouteRoute,
 } as any)
+const AdminLeadsNewIndexRoute = AdminLeadsNewIndexRouteImport.update({
+  id: '/new/',
+  path: '/new/',
+  getParentRoute: () => AdminLeadsRouteRoute,
+} as any)
 const AdminQuotesQuoteIdIndexRoute = AdminQuotesQuoteIdIndexRouteImport.update({
   id: '/$quoteId/',
   path: '/$quoteId/',
@@ -240,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/admin/invoices/$invoiceId/': typeof AdminInvoicesInvoiceIdIndexRoute
   '/admin/invoices/new/': typeof AdminInvoicesNewIndexRoute
   '/admin/leads/$leadId/': typeof AdminLeadsLeadIdIndexRoute
+  '/admin/leads/new/': typeof AdminLeadsNewIndexRoute
   '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
   '/admin/quotes/new/': typeof AdminQuotesNewIndexRoute
   '/admin/recurring/$scheduleId/': typeof AdminRecurringScheduleIdIndexRoute
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdIndexRoute
   '/admin/invoices/new': typeof AdminInvoicesNewIndexRoute
   '/admin/leads/$leadId': typeof AdminLeadsLeadIdIndexRoute
+  '/admin/leads/new': typeof AdminLeadsNewIndexRoute
   '/admin/quotes/$quoteId': typeof AdminQuotesQuoteIdIndexRoute
   '/admin/quotes/new': typeof AdminQuotesNewIndexRoute
   '/admin/recurring/$scheduleId': typeof AdminRecurringScheduleIdIndexRoute
@@ -302,6 +310,7 @@ export interface FileRoutesById {
   '/admin/invoices/$invoiceId/': typeof AdminInvoicesInvoiceIdIndexRoute
   '/admin/invoices/new/': typeof AdminInvoicesNewIndexRoute
   '/admin/leads/$leadId/': typeof AdminLeadsLeadIdIndexRoute
+  '/admin/leads/new/': typeof AdminLeadsNewIndexRoute
   '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
   '/admin/quotes/new/': typeof AdminQuotesNewIndexRoute
   '/admin/recurring/$scheduleId/': typeof AdminRecurringScheduleIdIndexRoute
@@ -337,6 +346,7 @@ export interface FileRouteTypes {
     | '/admin/invoices/$invoiceId/'
     | '/admin/invoices/new/'
     | '/admin/leads/$leadId/'
+    | '/admin/leads/new/'
     | '/admin/quotes/$quoteId/'
     | '/admin/quotes/new/'
     | '/admin/recurring/$scheduleId/'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/admin/invoices/$invoiceId'
     | '/admin/invoices/new'
     | '/admin/leads/$leadId'
+    | '/admin/leads/new'
     | '/admin/quotes/$quoteId'
     | '/admin/quotes/new'
     | '/admin/recurring/$scheduleId'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/admin/invoices/$invoiceId/'
     | '/admin/invoices/new/'
     | '/admin/leads/$leadId/'
+    | '/admin/leads/new/'
     | '/admin/quotes/$quoteId/'
     | '/admin/quotes/new/'
     | '/admin/recurring/$scheduleId/'
@@ -611,6 +623,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLeadsLeadIdIndexRouteImport
       parentRoute: typeof AdminLeadsRouteRoute
     }
+    '/admin/leads/new/': {
+      id: '/admin/leads/new/'
+      path: '/new'
+      fullPath: '/admin/leads/new/'
+      preLoaderRoute: typeof AdminLeadsNewIndexRouteImport
+      parentRoute: typeof AdminLeadsRouteRoute
+    }
     '/admin/quotes/$quoteId/': {
       id: '/admin/quotes/$quoteId/'
       path: '/$quoteId'
@@ -707,11 +726,13 @@ const AdminInvoicesRouteRouteWithChildren =
 interface AdminLeadsRouteRouteChildren {
   AdminLeadsIndexRoute: typeof AdminLeadsIndexRoute
   AdminLeadsLeadIdIndexRoute: typeof AdminLeadsLeadIdIndexRoute
+  AdminLeadsNewIndexRoute: typeof AdminLeadsNewIndexRoute
 }
 
 const AdminLeadsRouteRouteChildren: AdminLeadsRouteRouteChildren = {
   AdminLeadsIndexRoute: AdminLeadsIndexRoute,
   AdminLeadsLeadIdIndexRoute: AdminLeadsLeadIdIndexRoute,
+  AdminLeadsNewIndexRoute: AdminLeadsNewIndexRoute,
 }
 
 const AdminLeadsRouteRouteWithChildren = AdminLeadsRouteRoute._addFileChildren(

@@ -12,6 +12,7 @@ import { requireAdmin } from './admin-middleware'
 import {
   applyLeadAction,
   loadLeadDetail,
+  findLeadByInput,
   loadLeads,
   saveLead,
   updateLeadDetails,
@@ -38,8 +39,15 @@ export const saveLeadAction = createServerFn({ method: 'POST' })
         error: fieldErrors(parsed.error, firstSegment).input ?? 'Invalid link.',
       }
     }
-    return saveLead(createDb(env.DB), parsed.data.input, new Date())
+    const { input, name, note } = parsed.data
+    return saveLead(createDb(env.DB), input, new Date(), { name, note })
   })
+
+/** Looks up the lead for a shared link without saving anything. */
+export const findLeadAction = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => z.string().max(2000).parse(input))
+  .middleware([requireAdmin])
+  .handler(({ data }) => findLeadByInput(createDb(env.DB), data))
 
 export const leadAction = createServerFn({ method: 'POST' })
   .validator((input: unknown) => leadActionSchema.parse(input))

@@ -82,6 +82,21 @@ const toState = (lead: LeadRow): LeadState => ({
   closeReason: lead.closeReason,
 })
 
+/** Returns the ID of the saved lead for a link, or null when there is none. */
+export async function findLeadByInput(
+  db: Db,
+  input: string,
+): Promise<string | null> {
+  const parsed = parseProfileUrl(input)
+  if (!parsed.ok) return null
+  const rows = await db
+    .select({ id: leads.id })
+    .from(leads)
+    .where(eq(leads.profileKey, parsed.profileKey))
+    .limit(1)
+  return rows[0]?.id ?? null
+}
+
 /**
  * Saves a profile from a pasted link, shared text or `@handle`. A profile that
  * is already saved returns the existing lead's ID instead of an error.

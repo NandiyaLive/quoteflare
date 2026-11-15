@@ -9,6 +9,16 @@ export const leadLinkSchema = z.strictObject({
     .trim()
     .min(1, 'Paste a profile link or an @handle')
     .max(2000),
+  name: z
+    .string()
+    .trim()
+    .max(120, 'Name must be 120 characters or fewer')
+    .optional(),
+  note: z
+    .string()
+    .trim()
+    .max(5000, 'Note must be 5000 characters or fewer')
+    .optional(),
 })
 
 export const leadDetailsSchema = z.strictObject({

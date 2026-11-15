@@ -8,11 +8,13 @@ import {
   isOverdue,
   leadActionSchema,
   leadDetailsSchema,
+  leadLinkSchema,
 } from '#/lib/lead-inputs'
 import {
   applyLeadAction,
   loadLeadDetail,
   loadLeads,
+  findLeadByInput,
   saveLead,
   updateLeadDetails,
 } from './leads'
@@ -89,6 +91,39 @@ describe('saveLead', () => {
     const result = await saveLead(db, 'hello there', MON)
     expect(result.ok).toBe(false)
     expect(await db.select().from(schema.leads)).toHaveLength(0)
+  })
+})
+
+describe('capture from a shared link', () => {
+  it('finds nothing before the save and the lead after it, from any link form', async () => {
+    const link = 'https://www.instagram.com/Studio_X/?igsh=abc'
+    expect(await findLeadByInput(db, link)).toBeNull()
+    const id = await save(link)
+    expect(await findLeadByInput(db, link)).toBe(id)
+    expect(await findLeadByInput(db, '@studio_x')).toBe(id)
+    expect(await findLeadByInput(db, 'not a profile')).toBeNull()
+  })
+
+  it('stores the optional name and note', async () => {
+    const result = await saveLead(db, '@studio_x', MON, {
+      name: 'Studio X',
+      note: 'Wedding photographer',
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(await getLead(result.id)).toMatchObject({
+      name: 'Studio X',
+      note: 'Wedding photographer',
+    })
+  })
+
+  it('accepts a name and note in the link schema and rejects extra fields', () => {
+    expect(
+      leadLinkSchema.safeParse({ input: '@a', name: 'A', note: 'b' }).success,
+    ).toBe(true)
+    expect(
+      leadLinkSchema.safeParse({ input: '@a', status: 'won' }).success,
+    ).toBe(false)
   })
 })
 
