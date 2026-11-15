@@ -1,0 +1,102 @@
+import { Link } from '@tanstack/react-router'
+import {
+  daysSince,
+  groupTodayLeads,
+  isOverdue,
+  type LeadActionInput,
+} from '#/lib/lead-inputs'
+import { localToday } from '#/lib/leads'
+import type { LeadRow } from '#/server/leads'
+import { Badge } from '@/components/ui/badge'
+import { LeadActionButtons } from './lead-action-buttons'
+import { PlatformBadge } from './lead-badges'
+
+export const lastContactLabel = (lead: LeadRow, today: string) => {
+  if (!lead.lastContactedAt) return 'Not contacted yet'
+  const days = daysSince(localToday(new Date(lead.lastContactedAt)), today)
+  if (days === 0) return 'Contacted today'
+  return `Contacted ${days} ${days === 1 ? 'day' : 'days'} ago`
+}
+
+export function TodaySection({
+  leads,
+  today,
+  maxFollowUps,
+  pendingId,
+  onAction,
+  onCloseAsNoReply,
+  onClose,
+}: {
+  leads: LeadRow[]
+  today: string
+  maxFollowUps: number
+  pendingId: string | null
+  onAction: (action: LeadActionInput) => void
+  onCloseAsNoReply: (lead: LeadRow) => void
+  onClose: (lead: LeadRow) => void
+}) {
+  const groups = groupTodayLeads(leads, today)
+  const total = groups.reduce((sum, group) => sum + group.leads.length, 0)
+
+  return (
+    <section className="flex flex-col gap-4" aria-labelledby="leads-today">
+      <h2 id="leads-today" className="text-xl font-semibold tracking-tight">
+        Today{' '}
+        <span className="text-base font-normal text-muted-foreground">
+          {total === 0 ? 'Nothing due' : `${total} due`}
+        </span>
+      </h2>
+      {groups.map((group) => (
+        <div key={group.id} className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium text-muted-foreground">
+            {group.title} ({group.leads.length})
+          </h3>
+          {group.leads.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{group.empty}</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {group.leads.map((lead) => (
+                <li
+                  key={lead.id}
+                  className="flex flex-col gap-3 rounded-lg border p-3"
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        to="/admin/leads/$leadId"
+                        params={{ leadId: lead.id }}
+                        className="font-medium underline-offset-4 hover:underline"
+                      >
+                        {lead.handle}
+                      </Link>
+                      <PlatformBadge platform={lead.platform} />
+                      {isOverdue(lead, today) && (
+                        <Badge variant="destructive">Overdue</Badge>
+                      )}
+                    </div>
+                    {(lead.name || lead.note) && (
+                      <p className="text-sm text-muted-foreground">
+                        {[lead.name, lead.note].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {lastContactLabel(lead, today)}
+                    </p>
+                  </div>
+                  <LeadActionButtons
+                    lead={lead}
+                    maxFollowUps={maxFollowUps}
+                    busy={pendingId === lead.id}
+                    onAction={onAction}
+                    onCloseAsNoReply={() => onCloseAsNoReply(lead)}
+                    onClose={() => onClose(lead)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </section>
+  )
+}

@@ -500,6 +500,9 @@ export type LeadTransition =
 const isOpen = (status: LeadStatus) =>
   (OPEN_LEAD_STATUSES as readonly LeadStatus[]).includes(status)
 
+/** True for the statuses that still need work. */
+export const isOpenLead = isOpen
+
 const invalid = (action: string, status: LeadStatus): LeadTransition => ({
   ok: false,
   error: `Cannot ${action} a lead that is ${status}.`,

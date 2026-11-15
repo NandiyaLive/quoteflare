@@ -15,12 +15,14 @@ import { Route as SiteCalculatorRouteRouteImport } from './routes/_site/_calcula
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminClientsRouteRouteImport } from './routes/admin/clients/route'
 import { Route as AdminInvoicesRouteRouteImport } from './routes/admin/invoices/route'
+import { Route as AdminLeadsRouteRouteImport } from './routes/admin/leads/route'
 import { Route as AdminPackagesRouteRouteImport } from './routes/admin/packages/route'
 import { Route as AdminQuotesRouteRouteImport } from './routes/admin/quotes/route'
 import { Route as AdminRecurringRouteRouteImport } from './routes/admin/recurring/route'
 import { Route as SiteCalculatorIndexRouteImport } from './routes/_site/_calculator/index'
 import { Route as AdminClientsIndexRouteImport } from './routes/admin/clients/index'
 import { Route as AdminInvoicesIndexRouteImport } from './routes/admin/invoices/index'
+import { Route as AdminLeadsIndexRouteImport } from './routes/admin/leads/index'
 import { Route as AdminPackagesIndexRouteImport } from './routes/admin/packages/index'
 import { Route as AdminQuotesIndexRouteImport } from './routes/admin/quotes/index'
 import { Route as AdminRecurringIndexRouteImport } from './routes/admin/recurring/index'
@@ -34,6 +36,7 @@ import { Route as SiteCalculatorScopeIndexRouteImport } from './routes/_site/_ca
 import { Route as AdminClientsClientIdIndexRouteImport } from './routes/admin/clients/$clientId/index'
 import { Route as AdminInvoicesInvoiceIdIndexRouteImport } from './routes/admin/invoices/$invoiceId/index'
 import { Route as AdminInvoicesNewIndexRouteImport } from './routes/admin/invoices/new/index'
+import { Route as AdminLeadsLeadIdIndexRouteImport } from './routes/admin/leads/$leadId/index'
 import { Route as AdminQuotesQuoteIdIndexRouteImport } from './routes/admin/quotes/$quoteId/index'
 import { Route as AdminQuotesNewIndexRouteImport } from './routes/admin/quotes/new/index'
 import { Route as AdminRecurringScheduleIdIndexRouteImport } from './routes/admin/recurring/$scheduleId/index'
@@ -68,6 +71,11 @@ const AdminInvoicesRouteRoute = AdminInvoicesRouteRouteImport.update({
   path: '/invoices',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminLeadsRouteRoute = AdminLeadsRouteRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminPackagesRouteRoute = AdminPackagesRouteRouteImport.update({
   id: '/packages',
   path: '/packages',
@@ -97,6 +105,11 @@ const AdminInvoicesIndexRoute = AdminInvoicesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminInvoicesRouteRoute,
+} as any)
+const AdminLeadsIndexRoute = AdminLeadsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminLeadsRouteRoute,
 } as any)
 const AdminPackagesIndexRoute = AdminPackagesIndexRouteImport.update({
   id: '/',
@@ -167,6 +180,11 @@ const AdminInvoicesNewIndexRoute = AdminInvoicesNewIndexRouteImport.update({
   path: '/new/',
   getParentRoute: () => AdminInvoicesRouteRoute,
 } as any)
+const AdminLeadsLeadIdIndexRoute = AdminLeadsLeadIdIndexRouteImport.update({
+  id: '/$leadId/',
+  path: '/$leadId/',
+  getParentRoute: () => AdminLeadsRouteRoute,
+} as any)
 const AdminQuotesQuoteIdIndexRoute = AdminQuotesQuoteIdIndexRouteImport.update({
   id: '/$quoteId/',
   path: '/$quoteId/',
@@ -200,12 +218,14 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/clients': typeof AdminClientsRouteRouteWithChildren
   '/admin/invoices': typeof AdminInvoicesRouteRouteWithChildren
+  '/admin/leads': typeof AdminLeadsRouteRouteWithChildren
   '/admin/packages': typeof AdminPackagesRouteRouteWithChildren
   '/admin/quotes': typeof AdminQuotesRouteRouteWithChildren
   '/admin/recurring': typeof AdminRecurringRouteRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/admin/clients/': typeof AdminClientsIndexRoute
   '/admin/invoices/': typeof AdminInvoicesIndexRoute
+  '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/packages/': typeof AdminPackagesIndexRoute
   '/admin/quotes/': typeof AdminQuotesIndexRoute
   '/admin/recurring/': typeof AdminRecurringIndexRoute
@@ -219,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/admin/clients/$clientId/': typeof AdminClientsClientIdIndexRoute
   '/admin/invoices/$invoiceId/': typeof AdminInvoicesInvoiceIdIndexRoute
   '/admin/invoices/new/': typeof AdminInvoicesNewIndexRoute
+  '/admin/leads/$leadId/': typeof AdminLeadsLeadIdIndexRoute
   '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
   '/admin/quotes/new/': typeof AdminQuotesNewIndexRoute
   '/admin/recurring/$scheduleId/': typeof AdminRecurringScheduleIdIndexRoute
@@ -230,6 +251,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/admin/clients': typeof AdminClientsIndexRoute
   '/admin/invoices': typeof AdminInvoicesIndexRoute
+  '/admin/leads': typeof AdminLeadsIndexRoute
   '/admin/packages': typeof AdminPackagesIndexRoute
   '/admin/quotes': typeof AdminQuotesIndexRoute
   '/admin/recurring': typeof AdminRecurringIndexRoute
@@ -243,6 +265,7 @@ export interface FileRoutesByTo {
   '/admin/clients/$clientId': typeof AdminClientsClientIdIndexRoute
   '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdIndexRoute
   '/admin/invoices/new': typeof AdminInvoicesNewIndexRoute
+  '/admin/leads/$leadId': typeof AdminLeadsLeadIdIndexRoute
   '/admin/quotes/$quoteId': typeof AdminQuotesQuoteIdIndexRoute
   '/admin/quotes/new': typeof AdminQuotesNewIndexRoute
   '/admin/recurring/$scheduleId': typeof AdminRecurringScheduleIdIndexRoute
@@ -256,6 +279,7 @@ export interface FileRoutesById {
   '/_site/_calculator': typeof SiteCalculatorRouteRouteWithChildren
   '/admin/clients': typeof AdminClientsRouteRouteWithChildren
   '/admin/invoices': typeof AdminInvoicesRouteRouteWithChildren
+  '/admin/leads': typeof AdminLeadsRouteRouteWithChildren
   '/admin/packages': typeof AdminPackagesRouteRouteWithChildren
   '/admin/quotes': typeof AdminQuotesRouteRouteWithChildren
   '/admin/recurring': typeof AdminRecurringRouteRouteWithChildren
@@ -263,6 +287,7 @@ export interface FileRoutesById {
   '/_site/_calculator/': typeof SiteCalculatorIndexRoute
   '/admin/clients/': typeof AdminClientsIndexRoute
   '/admin/invoices/': typeof AdminInvoicesIndexRoute
+  '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/packages/': typeof AdminPackagesIndexRoute
   '/admin/quotes/': typeof AdminQuotesIndexRoute
   '/admin/recurring/': typeof AdminRecurringIndexRoute
@@ -276,6 +301,7 @@ export interface FileRoutesById {
   '/admin/clients/$clientId/': typeof AdminClientsClientIdIndexRoute
   '/admin/invoices/$invoiceId/': typeof AdminInvoicesInvoiceIdIndexRoute
   '/admin/invoices/new/': typeof AdminInvoicesNewIndexRoute
+  '/admin/leads/$leadId/': typeof AdminLeadsLeadIdIndexRoute
   '/admin/quotes/$quoteId/': typeof AdminQuotesQuoteIdIndexRoute
   '/admin/quotes/new/': typeof AdminQuotesNewIndexRoute
   '/admin/recurring/$scheduleId/': typeof AdminRecurringScheduleIdIndexRoute
@@ -289,12 +315,14 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/clients'
     | '/admin/invoices'
+    | '/admin/leads'
     | '/admin/packages'
     | '/admin/quotes'
     | '/admin/recurring'
     | '/admin/'
     | '/admin/clients/'
     | '/admin/invoices/'
+    | '/admin/leads/'
     | '/admin/packages/'
     | '/admin/quotes/'
     | '/admin/recurring/'
@@ -308,6 +336,7 @@ export interface FileRouteTypes {
     | '/admin/clients/$clientId/'
     | '/admin/invoices/$invoiceId/'
     | '/admin/invoices/new/'
+    | '/admin/leads/$leadId/'
     | '/admin/quotes/$quoteId/'
     | '/admin/quotes/new/'
     | '/admin/recurring/$scheduleId/'
@@ -319,6 +348,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/clients'
     | '/admin/invoices'
+    | '/admin/leads'
     | '/admin/packages'
     | '/admin/quotes'
     | '/admin/recurring'
@@ -332,6 +362,7 @@ export interface FileRouteTypes {
     | '/admin/clients/$clientId'
     | '/admin/invoices/$invoiceId'
     | '/admin/invoices/new'
+    | '/admin/leads/$leadId'
     | '/admin/quotes/$quoteId'
     | '/admin/quotes/new'
     | '/admin/recurring/$scheduleId'
@@ -344,6 +375,7 @@ export interface FileRouteTypes {
     | '/_site/_calculator'
     | '/admin/clients'
     | '/admin/invoices'
+    | '/admin/leads'
     | '/admin/packages'
     | '/admin/quotes'
     | '/admin/recurring'
@@ -351,6 +383,7 @@ export interface FileRouteTypes {
     | '/_site/_calculator/'
     | '/admin/clients/'
     | '/admin/invoices/'
+    | '/admin/leads/'
     | '/admin/packages/'
     | '/admin/quotes/'
     | '/admin/recurring/'
@@ -364,6 +397,7 @@ export interface FileRouteTypes {
     | '/admin/clients/$clientId/'
     | '/admin/invoices/$invoiceId/'
     | '/admin/invoices/new/'
+    | '/admin/leads/$leadId/'
     | '/admin/quotes/$quoteId/'
     | '/admin/quotes/new/'
     | '/admin/recurring/$scheduleId/'
@@ -423,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminInvoicesRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/leads': {
+      id: '/admin/leads'
+      path: '/leads'
+      fullPath: '/admin/leads'
+      preLoaderRoute: typeof AdminLeadsRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/packages': {
       id: '/admin/packages'
       path: '/packages'
@@ -464,6 +505,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/invoices/'
       preLoaderRoute: typeof AdminInvoicesIndexRouteImport
       parentRoute: typeof AdminInvoicesRouteRoute
+    }
+    '/admin/leads/': {
+      id: '/admin/leads/'
+      path: '/'
+      fullPath: '/admin/leads/'
+      preLoaderRoute: typeof AdminLeadsIndexRouteImport
+      parentRoute: typeof AdminLeadsRouteRoute
     }
     '/admin/packages/': {
       id: '/admin/packages/'
@@ -555,6 +603,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/invoices/new/'
       preLoaderRoute: typeof AdminInvoicesNewIndexRouteImport
       parentRoute: typeof AdminInvoicesRouteRoute
+    }
+    '/admin/leads/$leadId/': {
+      id: '/admin/leads/$leadId/'
+      path: '/$leadId'
+      fullPath: '/admin/leads/$leadId/'
+      preLoaderRoute: typeof AdminLeadsLeadIdIndexRouteImport
+      parentRoute: typeof AdminLeadsRouteRoute
     }
     '/admin/quotes/$quoteId/': {
       id: '/admin/quotes/$quoteId/'
@@ -649,6 +704,20 @@ const AdminInvoicesRouteRouteChildren: AdminInvoicesRouteRouteChildren = {
 const AdminInvoicesRouteRouteWithChildren =
   AdminInvoicesRouteRoute._addFileChildren(AdminInvoicesRouteRouteChildren)
 
+interface AdminLeadsRouteRouteChildren {
+  AdminLeadsIndexRoute: typeof AdminLeadsIndexRoute
+  AdminLeadsLeadIdIndexRoute: typeof AdminLeadsLeadIdIndexRoute
+}
+
+const AdminLeadsRouteRouteChildren: AdminLeadsRouteRouteChildren = {
+  AdminLeadsIndexRoute: AdminLeadsIndexRoute,
+  AdminLeadsLeadIdIndexRoute: AdminLeadsLeadIdIndexRoute,
+}
+
+const AdminLeadsRouteRouteWithChildren = AdminLeadsRouteRoute._addFileChildren(
+  AdminLeadsRouteRouteChildren,
+)
+
 interface AdminPackagesRouteRouteChildren {
   AdminPackagesIndexRoute: typeof AdminPackagesIndexRoute
 }
@@ -695,6 +764,7 @@ const AdminRecurringRouteRouteWithChildren =
 interface AdminRouteRouteChildren {
   AdminClientsRouteRoute: typeof AdminClientsRouteRouteWithChildren
   AdminInvoicesRouteRoute: typeof AdminInvoicesRouteRouteWithChildren
+  AdminLeadsRouteRoute: typeof AdminLeadsRouteRouteWithChildren
   AdminPackagesRouteRoute: typeof AdminPackagesRouteRouteWithChildren
   AdminQuotesRouteRoute: typeof AdminQuotesRouteRouteWithChildren
   AdminRecurringRouteRoute: typeof AdminRecurringRouteRouteWithChildren
@@ -706,6 +776,7 @@ interface AdminRouteRouteChildren {
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminClientsRouteRoute: AdminClientsRouteRouteWithChildren,
   AdminInvoicesRouteRoute: AdminInvoicesRouteRouteWithChildren,
+  AdminLeadsRouteRoute: AdminLeadsRouteRouteWithChildren,
   AdminPackagesRouteRoute: AdminPackagesRouteRouteWithChildren,
   AdminQuotesRouteRoute: AdminQuotesRouteRouteWithChildren,
   AdminRecurringRouteRoute: AdminRecurringRouteRouteWithChildren,

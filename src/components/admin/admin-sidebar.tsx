@@ -19,6 +19,7 @@ import {
   InboxIcon,
   LayersIcon,
   LayoutDashboardIcon,
+  MegaphoneIcon,
   LogOutIcon,
   PackageIcon,
   ReceiptTextIcon,
@@ -34,6 +35,7 @@ type NavItem = {
     | '/admin'
     | '/admin/clients'
     | '/admin/invoices'
+    | '/admin/leads'
     | '/admin/packages'
     | '/admin/quotes'
     | '/admin/recurring'
@@ -53,6 +55,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
         icon: LayoutDashboardIcon,
         exact: true,
       },
+      { title: 'Leads', to: '/admin/leads', icon: MegaphoneIcon },
       { title: 'Quotes', to: '/admin/quotes', icon: InboxIcon },
       { title: 'Invoices', to: '/admin/invoices', icon: ReceiptTextIcon },
       { title: 'Recurring', to: '/admin/recurring', icon: RepeatIcon },
