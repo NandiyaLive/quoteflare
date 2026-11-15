@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { CircleDotIcon, GlobeIcon, SearchIcon } from 'lucide-react'
+import { CircleDotIcon, GlobeIcon, PlusIcon, SearchIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import PageHeader from '@/components/common/page-header'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
@@ -19,7 +20,7 @@ import { getLeads } from '#/server/leads-actions'
 import { formatDate } from '@/lib/format'
 import { PlatformBadge, StatusBadge } from './-components/lead-badges'
 import { CloseLeadDialog } from './-components/close-lead-dialog'
-import { PasteLinkForm } from './-components/paste-link-form'
+import { AddLeadDialog } from './-components/add-lead-dialog'
 import { TodaySection } from './-components/today-section'
 import { useLeadActions } from './-components/use-lead-actions'
 
@@ -32,6 +33,7 @@ function LeadsPage() {
   const { leads, today, maxFollowUps } = Route.useLoaderData()
   const { run, closeAsNoReply, pendingId, dialog } = useLeadActions()
   const [closing, setClosing] = useState<LeadRow | null>(null)
+  const [adding, setAdding] = useState(false)
 
   const columns = useMemo<ColumnDef<DataTableFeatures, LeadRow>[]>(
     () => [
@@ -142,8 +144,12 @@ function LeadsPage() {
       <PageHeader
         title="Leads"
         description="Profiles you saved to message, and where each one stands."
-      />
-      <PasteLinkForm />
+      >
+        <Button onClick={() => setAdding(true)}>
+          <PlusIcon />
+          Add lead
+        </Button>
+      </PageHeader>
       <TodaySection
         leads={leads}
         today={today}
@@ -161,6 +167,7 @@ function LeadsPage() {
           <DataTableToolbar table={table} />
         </DataTable>
       </section>
+      <AddLeadDialog open={adding} onClose={() => setAdding(false)} />
       <CloseLeadDialog
         lead={closing}
         onClose={() => setClosing(null)}
