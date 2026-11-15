@@ -3,13 +3,13 @@
 import { readFile } from 'node:fs/promises'
 import sharp from 'sharp'
 
-const BACKGROUND = '#ffffff'
+// Matches --background in dark mode (oklch(0.145 0 0)) and the manifest.
+const BACKGROUND = '#0a0a0a'
 
-// favicon.svg switches its navy to white in dark mode. Render the light version.
-const svg = (await readFile('public/favicon.svg', 'utf8')).replace(
-  /@media\s*\(prefers-color-scheme:dark\)\{[^}]*\{[^}]*\}\}/,
-  '',
-)
+// The icons sit on a dark background, so draw the navy parts of the logo white.
+const svg = (await readFile('public/favicon.svg', 'utf8'))
+  .replace(/@media\s*\(prefers-color-scheme:dark\)\{[^}]*\{[^}]*\}\}/, '')
+  .replace('.n{fill:#02163f}', '.n{fill:#fff}')
 
 // Render large, then trim transparent margins so scaling is relative to the
 // artwork itself.
