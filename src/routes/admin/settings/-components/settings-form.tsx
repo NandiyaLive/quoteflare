@@ -54,7 +54,34 @@ function RequiredMark() {
   )
 }
 
-export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
+export type SettingsSection = 'general' | 'invoicing' | 'leads'
+
+const SECTION_COPY: Record<
+  SettingsSection,
+  { title: string; description: string }
+> = {
+  general: {
+    title: 'General',
+    description:
+      'How your business appears on invoices and the public calculator.',
+  },
+  invoicing: {
+    title: 'Invoicing',
+    description: 'Invoice defaults and where clients pay you.',
+  },
+  leads: {
+    title: 'Leads',
+    description: 'Daily summary and the messages you copy to leads.',
+  },
+}
+
+export function SettingsForm({
+  initial,
+  section,
+}: {
+  initial: SettingsFormValues
+  section: SettingsSection
+}) {
   const router = useRouter()
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({})
 
@@ -125,11 +152,8 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Business details</CardTitle>
-        <CardDescription>
-          Manage how your business appears on invoices, and where clients pay
-          you.
-        </CardDescription>
+        <CardTitle>{SECTION_COPY[section].title}</CardTitle>
+        <CardDescription>{SECTION_COPY[section].description}</CardDescription>
       </CardHeader>
       <form
         noValidate
@@ -141,385 +165,397 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
       >
         <CardContent>
           <FieldGroup>
-            <FieldSet className="rounded-lg border p-4">
-              <FieldLegend>Business</FieldLegend>
-              <FieldDescription>
-                Your name and contact details as they appear on invoices.
-              </FieldDescription>
-              <FieldGroup className="md:grid md:grid-cols-2">
-                {text('businessName', 'Business name', {
-                  required: true,
-                  autoComplete: 'organization',
-                  placeholder: 'Acme Studio',
-                })}
-                {text('email', 'Email', {
-                  type: 'email',
-                  autoComplete: 'email',
-                  placeholder: 'hello@acme.example',
-                })}
-                {text(
-                  'replyToEmail',
-                  'Reply-to email',
-                  { type: 'email', placeholder: 'billing@acme.example' },
-                  'Replies to invoice emails go here.',
-                )}
-                <form.Field name="address">
-                  {(field) => {
-                    const errors = fieldErrors(
-                      field.name,
-                      field.state.meta.errors,
-                    )
-                    const invalid = errors.length > 0
-                    return (
-                      <Field data-invalid={invalid} className="md:col-span-2">
-                        <FieldLabel htmlFor="address">Address</FieldLabel>
-                        <Textarea
-                          id="address"
-                          name="address"
-                          rows={3}
-                          placeholder={'12 Example Street\nSpringfield\nUSA'}
-                          value={field.state.value}
-                          aria-invalid={invalid}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                        />
-                        {invalid && <FieldError errors={errors} />}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
-              </FieldGroup>
-            </FieldSet>
-            <FieldSet className="rounded-lg border p-4">
-              <FieldLegend>Public calculator</FieldLegend>
-              <FieldDescription>
-                The heading and browser tab title on the page clients use to
-                build an estimate.
-              </FieldDescription>
-              <FieldGroup>
-                {text(
-                  'calculatorTitle',
-                  'Title',
-                  { placeholder: DEFAULT_CALCULATOR_TITLE },
-                  'Leave empty to use the default.',
-                )}
-                <form.Field name="calculatorDescription">
-                  {(field) => {
-                    const errors = fieldErrors(
-                      field.name,
-                      field.state.meta.errors,
-                    )
-                    const invalid = errors.length > 0
-                    return (
-                      <Field data-invalid={invalid}>
-                        <FieldLabel htmlFor="calculatorDescription">
-                          Description
-                        </FieldLabel>
-                        <Textarea
-                          id="calculatorDescription"
-                          name="calculatorDescription"
-                          rows={2}
-                          placeholder={DEFAULT_CALCULATOR_DESCRIPTION}
-                          value={field.state.value}
-                          aria-invalid={invalid}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                        />
-                        <FieldDescription>
-                          Shown under the title and used as the search result
-                          description. Leave empty to use the default.
-                        </FieldDescription>
-                        {invalid && <FieldError errors={errors} />}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
-              </FieldGroup>
-            </FieldSet>
-            <FieldSet className="rounded-lg border p-4">
-              <FieldLegend>Invoicing</FieldLegend>
-              <FieldDescription>
-                Defaults applied to new invoices.
-              </FieldDescription>
-              <FieldGroup className="md:grid md:grid-cols-2">
-                <form.Field name="currency">
-                  {(field) => (
-                    <Field>
-                      <FieldLabel htmlFor="currency">
-                        Base currency
-                        <RequiredMark />
-                      </FieldLabel>
-                      <SearchSelect
-                        id="currency"
-                        value={field.state.value}
-                        options={currencyOptions}
-                        placeholder="Search currencies"
-                        emptyText="No currency found."
-                        onValueChange={field.handleChange}
-                      />
-                      <FieldDescription>
-                        Prices, invoices and quotes are in this currency.
-                      </FieldDescription>
-                    </Field>
+            {section === 'general' && (
+              <FieldSet className="rounded-lg border p-4">
+                <FieldLegend>Business</FieldLegend>
+                <FieldDescription>
+                  Your name and contact details as they appear on invoices.
+                </FieldDescription>
+                <FieldGroup className="md:grid md:grid-cols-2">
+                  {text('businessName', 'Business name', {
+                    required: true,
+                    autoComplete: 'organization',
+                    placeholder: 'Acme Studio',
+                  })}
+                  {text('email', 'Email', {
+                    type: 'email',
+                    autoComplete: 'email',
+                    placeholder: 'hello@acme.example',
+                  })}
+                  {text(
+                    'replyToEmail',
+                    'Reply-to email',
+                    { type: 'email', placeholder: 'billing@acme.example' },
+                    'Replies to invoice emails go here.',
                   )}
-                </form.Field>
-                <form.Subscribe selector={(s) => s.values.currency}>
-                  {(base) => (
-                    <form.Field name="approvedCurrencies">
-                      {(field) => (
-                        <Field>
-                          <FieldLabel htmlFor="approvedCurrencies">
-                            Approved currencies
-                          </FieldLabel>
-                          <MultiSelect
-                            values={field.state.value.filter((c) => c !== base)}
-                            onValuesChange={field.handleChange}
-                          >
-                            <MultiSelectTrigger
-                              id="approvedCurrencies"
-                              className="w-full"
-                            >
-                              <MultiSelectValue
-                                placeholder="None"
-                                overflowBehavior="cutoff"
-                              />
-                            </MultiSelectTrigger>
-                            <MultiSelectContent
-                              search={{
-                                placeholder: 'Search currencies',
-                                emptyMessage: 'No currency found.',
-                              }}
-                            >
-                              {CURRENCY_OPTIONS.filter(
-                                (c) => c.code !== base,
-                              ).map((c) => (
-                                <MultiSelectItem
-                                  key={c.code}
-                                  value={c.code}
-                                  badgeLabel={c.code}
-                                  keywords={[c.name]}
-                                >
-                                  {c.code} - {c.name}
-                                </MultiSelectItem>
-                              ))}
-                            </MultiSelectContent>
-                          </MultiSelect>
-                          <FieldDescription>
-                            Clients can view prices in these currencies,
-                            converted at the daily rate from Frankfurter. A
-                            quote keeps the rate the client saw, and its total
-                            stays in the base currency.
-                          </FieldDescription>
+                  <form.Field name="address">
+                    {(field) => {
+                      const errors = fieldErrors(
+                        field.name,
+                        field.state.meta.errors,
+                      )
+                      const invalid = errors.length > 0
+                      return (
+                        <Field data-invalid={invalid} className="md:col-span-2">
+                          <FieldLabel htmlFor="address">Address</FieldLabel>
+                          <Textarea
+                            id="address"
+                            name="address"
+                            rows={3}
+                            placeholder={'12 Example Street\nSpringfield\nUSA'}
+                            value={field.state.value}
+                            aria-invalid={invalid}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                          />
+                          {invalid && <FieldError errors={errors} />}
                         </Field>
-                      )}
-                    </form.Field>
+                      )
+                    }}
+                  </form.Field>
+                </FieldGroup>
+              </FieldSet>
+            )}
+            {section === 'general' && (
+              <FieldSet className="rounded-lg border p-4">
+                <FieldLegend>Public calculator</FieldLegend>
+                <FieldDescription>
+                  The heading and browser tab title on the page clients use to
+                  build an estimate.
+                </FieldDescription>
+                <FieldGroup>
+                  {text(
+                    'calculatorTitle',
+                    'Title',
+                    { placeholder: DEFAULT_CALCULATOR_TITLE },
+                    'Leave empty to use the default.',
                   )}
-                </form.Subscribe>
-                {text(
-                  'taxRate',
-                  'Tax rate (%)',
-                  { required: true, inputMode: 'decimal', placeholder: '15' },
-                  'Default for new invoices, for example 15 or 7.5.',
-                )}
-                {text('invoicePrefix', 'Invoice prefix', {
-                  required: true,
-                  placeholder: 'INV',
-                })}
-                {text(
-                  'nextInvoiceNumber',
-                  'Next invoice number',
-                  { required: true, inputMode: 'numeric', placeholder: '1' },
-                  'Lowering this below a number already issued will cause a duplicate.',
-                )}
-                {text(
-                  'paymentTermDays',
-                  'Payment term (days)',
-                  { required: true, inputMode: 'numeric', placeholder: '14' },
-                  'Days between the issue date and the due date on recurring invoices.',
-                )}
-                {text(
-                  'quoteValidityDays',
-                  'Quote validity (days)',
-                  { required: true, inputMode: 'numeric', placeholder: '30' },
-                  'How long a quote you send stays open for acceptance.',
-                )}
-                <form.Field name="sendReminders">
-                  {(field) => (
-                    <Field orientation="horizontal" className="md:col-span-2">
-                      <Checkbox
-                        id="sendReminders"
-                        name="sendReminders"
-                        checked={field.state.value}
-                        onCheckedChange={(checked) =>
-                          field.handleChange(checked === true)
-                        }
-                      />
-                      <div className="flex flex-col gap-1">
-                        <FieldLabel htmlFor="sendReminders">
-                          Send automatic reminders
+                  <form.Field name="calculatorDescription">
+                    {(field) => {
+                      const errors = fieldErrors(
+                        field.name,
+                        field.state.meta.errors,
+                      )
+                      const invalid = errors.length > 0
+                      return (
+                        <Field data-invalid={invalid}>
+                          <FieldLabel htmlFor="calculatorDescription">
+                            Description
+                          </FieldLabel>
+                          <Textarea
+                            id="calculatorDescription"
+                            name="calculatorDescription"
+                            rows={2}
+                            placeholder={DEFAULT_CALCULATOR_DESCRIPTION}
+                            value={field.state.value}
+                            aria-invalid={invalid}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                          />
+                          <FieldDescription>
+                            Shown under the title and used as the search result
+                            description. Leave empty to use the default.
+                          </FieldDescription>
+                          {invalid && <FieldError errors={errors} />}
+                        </Field>
+                      )
+                    }}
+                  </form.Field>
+                </FieldGroup>
+              </FieldSet>
+            )}
+            {section === 'invoicing' && (
+              <FieldSet className="rounded-lg border p-4">
+                <FieldLegend>Invoicing</FieldLegend>
+                <FieldDescription>
+                  Defaults applied to new invoices.
+                </FieldDescription>
+                <FieldGroup className="md:grid md:grid-cols-2">
+                  <form.Field name="currency">
+                    {(field) => (
+                      <Field>
+                        <FieldLabel htmlFor="currency">
+                          Base currency
+                          <RequiredMark />
                         </FieldLabel>
-                        <FieldDescription>
-                          Emails the client 3 days before the due date and 3 and
-                          10 days after it, once each.
-                        </FieldDescription>
-                      </div>
-                    </Field>
-                  )}
-                </form.Field>
-              </FieldGroup>
-            </FieldSet>
-            <FieldSet className="rounded-lg border p-4">
-              <FieldLegend>Leads</FieldLegend>
-              <FieldGroup>
-                <form.Field name="sendLeadDigest">
-                  {(field) => (
-                    <Field orientation="horizontal">
-                      <Checkbox
-                        id="sendLeadDigest"
-                        name="sendLeadDigest"
-                        checked={field.state.value}
-                        onCheckedChange={(checked) =>
-                          field.handleChange(checked === true)
-                        }
-                      />
-                      <div className="flex flex-col gap-1">
-                        <FieldLabel htmlFor="sendLeadDigest">
-                          Send a morning lead summary
-                        </FieldLabel>
-                        <FieldDescription>
-                          Emails you at 09:00 with the leads due today. Nothing
-                          is sent on days with no leads due.
-                        </FieldDescription>
-                      </div>
-                    </Field>
-                  )}
-                </form.Field>
-                <form.Field name="leadOpenerTemplate">
-                  {(field) => {
-                    const errors = fieldErrors(
-                      field.name,
-                      field.state.meta.errors,
-                    )
-                    const invalid = errors.length > 0
-                    return (
-                      <Field data-invalid={invalid}>
-                        <FieldLabel htmlFor="leadOpenerTemplate">
-                          Opener message
-                        </FieldLabel>
-                        <Textarea
-                          id="leadOpenerTemplate"
-                          name="leadOpenerTemplate"
-                          rows={4}
-                          placeholder={
-                            'Hi {{name}}, I came across your work and ...'
-                          }
+                        <SearchSelect
+                          id="currency"
                           value={field.state.value}
-                          aria-invalid={invalid}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
+                          options={currencyOptions}
+                          placeholder="Search currencies"
+                          emptyText="No currency found."
+                          onValueChange={field.handleChange}
                         />
                         <FieldDescription>
-                          {
-                            'The first message you send. Use {{name}} and {{handle}}. Leave it empty to hide the copy button.'
-                          }
+                          Prices, invoices and quotes are in this currency.
                         </FieldDescription>
-                        {invalid && <FieldError errors={errors} />}
                       </Field>
-                    )
-                  }}
-                </form.Field>
-                <form.Field name="leadFollowUpTemplate">
-                  {(field) => {
-                    const errors = fieldErrors(
-                      field.name,
-                      field.state.meta.errors,
-                    )
-                    const invalid = errors.length > 0
-                    return (
-                      <Field data-invalid={invalid}>
-                        <FieldLabel htmlFor="leadFollowUpTemplate">
-                          Follow-up message
-                        </FieldLabel>
-                        <Textarea
-                          id="leadFollowUpTemplate"
-                          name="leadFollowUpTemplate"
-                          rows={4}
-                          placeholder={
-                            'Hi {{name}}, just checking you saw my last message ...'
+                    )}
+                  </form.Field>
+                  <form.Subscribe selector={(s) => s.values.currency}>
+                    {(base) => (
+                      <form.Field name="approvedCurrencies">
+                        {(field) => (
+                          <Field>
+                            <FieldLabel htmlFor="approvedCurrencies">
+                              Approved currencies
+                            </FieldLabel>
+                            <MultiSelect
+                              values={field.state.value.filter(
+                                (c) => c !== base,
+                              )}
+                              onValuesChange={field.handleChange}
+                            >
+                              <MultiSelectTrigger
+                                id="approvedCurrencies"
+                                className="w-full"
+                              >
+                                <MultiSelectValue
+                                  placeholder="None"
+                                  overflowBehavior="cutoff"
+                                />
+                              </MultiSelectTrigger>
+                              <MultiSelectContent
+                                search={{
+                                  placeholder: 'Search currencies',
+                                  emptyMessage: 'No currency found.',
+                                }}
+                              >
+                                {CURRENCY_OPTIONS.filter(
+                                  (c) => c.code !== base,
+                                ).map((c) => (
+                                  <MultiSelectItem
+                                    key={c.code}
+                                    value={c.code}
+                                    badgeLabel={c.code}
+                                    keywords={[c.name]}
+                                  >
+                                    {c.code} - {c.name}
+                                  </MultiSelectItem>
+                                ))}
+                              </MultiSelectContent>
+                            </MultiSelect>
+                            <FieldDescription>
+                              Clients can view prices in these currencies,
+                              converted at the daily rate from Frankfurter. A
+                              quote keeps the rate the client saw, and its total
+                              stays in the base currency.
+                            </FieldDescription>
+                          </Field>
+                        )}
+                      </form.Field>
+                    )}
+                  </form.Subscribe>
+                  {text(
+                    'taxRate',
+                    'Tax rate (%)',
+                    { required: true, inputMode: 'decimal', placeholder: '15' },
+                    'Default for new invoices, for example 15 or 7.5.',
+                  )}
+                  {text('invoicePrefix', 'Invoice prefix', {
+                    required: true,
+                    placeholder: 'INV',
+                  })}
+                  {text(
+                    'nextInvoiceNumber',
+                    'Next invoice number',
+                    { required: true, inputMode: 'numeric', placeholder: '1' },
+                    'Lowering this below a number already issued will cause a duplicate.',
+                  )}
+                  {text(
+                    'paymentTermDays',
+                    'Payment term (days)',
+                    { required: true, inputMode: 'numeric', placeholder: '14' },
+                    'Days between the issue date and the due date on recurring invoices.',
+                  )}
+                  {text(
+                    'quoteValidityDays',
+                    'Quote validity (days)',
+                    { required: true, inputMode: 'numeric', placeholder: '30' },
+                    'How long a quote you send stays open for acceptance.',
+                  )}
+                  <form.Field name="sendReminders">
+                    {(field) => (
+                      <Field orientation="horizontal" className="md:col-span-2">
+                        <Checkbox
+                          id="sendReminders"
+                          name="sendReminders"
+                          checked={field.state.value}
+                          onCheckedChange={(checked) =>
+                            field.handleChange(checked === true)
                           }
-                          value={field.state.value}
-                          aria-invalid={invalid}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
                         />
-                        <FieldDescription>
-                          {
-                            'Sent when a lead has seen your message and not replied. Use {{name}} and {{handle}}. Leave it empty to hide the copy button.'
+                        <div className="flex flex-col gap-1">
+                          <FieldLabel htmlFor="sendReminders">
+                            Send automatic reminders
+                          </FieldLabel>
+                          <FieldDescription>
+                            Emails the client 3 days before the due date and 3
+                            and 10 days after it, once each.
+                          </FieldDescription>
+                        </div>
+                      </Field>
+                    )}
+                  </form.Field>
+                </FieldGroup>
+              </FieldSet>
+            )}
+            {section === 'leads' && (
+              <FieldSet className="rounded-lg border p-4">
+                <FieldLegend>Leads</FieldLegend>
+                <FieldGroup>
+                  <form.Field name="sendLeadDigest">
+                    {(field) => (
+                      <Field orientation="horizontal">
+                        <Checkbox
+                          id="sendLeadDigest"
+                          name="sendLeadDigest"
+                          checked={field.state.value}
+                          onCheckedChange={(checked) =>
+                            field.handleChange(checked === true)
                           }
-                        </FieldDescription>
-                        {invalid && <FieldError errors={errors} />}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
-              </FieldGroup>
-            </FieldSet>
-            <FieldSet className="rounded-lg border p-4">
-              <FieldLegend>Bank details</FieldLegend>
-              <FieldDescription>
-                Shown to clients on the invoice so they know where to pay.
-              </FieldDescription>
-              <FieldGroup className="md:grid md:grid-cols-2">
-                {text('bankName', 'Bank name', {
-                  placeholder: 'Commercial Bank',
-                })}
-                {text('bankBranch', 'Branch', { placeholder: 'Main Street' })}
-                {text('bankAccountName', 'Account name', {
-                  placeholder: 'Acme Studio (Pvt) Ltd',
-                })}
-                {text('bankAccountNumber', 'Account number', {
-                  inputMode: 'numeric',
-                  placeholder: '1234567890',
-                })}
-                {text(
-                  'bankSwiftCode',
-                  'SWIFT code',
-                  { placeholder: 'CCEYLKLX' },
-                  'Optional. Needed for payments from abroad.',
-                )}
-                <form.Field name="paymentInstructions">
-                  {(field) => {
-                    const errors = fieldErrors(
-                      field.name,
-                      field.state.meta.errors,
-                    )
-                    const invalid = errors.length > 0
-                    return (
-                      <Field data-invalid={invalid} className="md:col-span-2">
-                        <FieldLabel htmlFor="paymentInstructions">
-                          Payment instructions
-                        </FieldLabel>
-                        <Textarea
-                          id="paymentInstructions"
-                          name="paymentInstructions"
-                          rows={4}
-                          placeholder="Please use the invoice number as the payment reference."
-                          value={field.state.value}
-                          aria-invalid={invalid}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
                         />
-                        <FieldDescription>
-                          Shown on each invoice below the bank details, for
-                          example a payment reference.
-                        </FieldDescription>
-                        {invalid && <FieldError errors={errors} />}
+                        <div className="flex flex-col gap-1">
+                          <FieldLabel htmlFor="sendLeadDigest">
+                            Send a morning lead summary
+                          </FieldLabel>
+                          <FieldDescription>
+                            Emails you at 09:00 with the leads due today.
+                            Nothing is sent on days with no leads due.
+                          </FieldDescription>
+                        </div>
                       </Field>
-                    )
-                  }}
-                </form.Field>
-              </FieldGroup>
-            </FieldSet>
+                    )}
+                  </form.Field>
+                  <form.Field name="leadOpenerTemplate">
+                    {(field) => {
+                      const errors = fieldErrors(
+                        field.name,
+                        field.state.meta.errors,
+                      )
+                      const invalid = errors.length > 0
+                      return (
+                        <Field data-invalid={invalid}>
+                          <FieldLabel htmlFor="leadOpenerTemplate">
+                            Opener message
+                          </FieldLabel>
+                          <Textarea
+                            id="leadOpenerTemplate"
+                            name="leadOpenerTemplate"
+                            rows={4}
+                            placeholder={
+                              'Hi {{name}}, I came across your work and ...'
+                            }
+                            value={field.state.value}
+                            aria-invalid={invalid}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                          />
+                          <FieldDescription>
+                            {
+                              'The first message you send. Use {{name}} and {{handle}}. Leave it empty to hide the copy button.'
+                            }
+                          </FieldDescription>
+                          {invalid && <FieldError errors={errors} />}
+                        </Field>
+                      )
+                    }}
+                  </form.Field>
+                  <form.Field name="leadFollowUpTemplate">
+                    {(field) => {
+                      const errors = fieldErrors(
+                        field.name,
+                        field.state.meta.errors,
+                      )
+                      const invalid = errors.length > 0
+                      return (
+                        <Field data-invalid={invalid}>
+                          <FieldLabel htmlFor="leadFollowUpTemplate">
+                            Follow-up message
+                          </FieldLabel>
+                          <Textarea
+                            id="leadFollowUpTemplate"
+                            name="leadFollowUpTemplate"
+                            rows={4}
+                            placeholder={
+                              'Hi {{name}}, just checking you saw my last message ...'
+                            }
+                            value={field.state.value}
+                            aria-invalid={invalid}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                          />
+                          <FieldDescription>
+                            {
+                              'Sent when a lead has seen your message and not replied. Use {{name}} and {{handle}}. Leave it empty to hide the copy button.'
+                            }
+                          </FieldDescription>
+                          {invalid && <FieldError errors={errors} />}
+                        </Field>
+                      )
+                    }}
+                  </form.Field>
+                </FieldGroup>
+              </FieldSet>
+            )}
+            {section === 'invoicing' && (
+              <FieldSet className="rounded-lg border p-4">
+                <FieldLegend>Bank details</FieldLegend>
+                <FieldDescription>
+                  Shown to clients on the invoice so they know where to pay.
+                </FieldDescription>
+                <FieldGroup className="md:grid md:grid-cols-2">
+                  {text('bankName', 'Bank name', {
+                    placeholder: 'Commercial Bank',
+                  })}
+                  {text('bankBranch', 'Branch', { placeholder: 'Main Street' })}
+                  {text('bankAccountName', 'Account name', {
+                    placeholder: 'Acme Studio (Pvt) Ltd',
+                  })}
+                  {text('bankAccountNumber', 'Account number', {
+                    inputMode: 'numeric',
+                    placeholder: '1234567890',
+                  })}
+                  {text(
+                    'bankSwiftCode',
+                    'SWIFT code',
+                    { placeholder: 'CCEYLKLX' },
+                    'Optional. Needed for payments from abroad.',
+                  )}
+                  <form.Field name="paymentInstructions">
+                    {(field) => {
+                      const errors = fieldErrors(
+                        field.name,
+                        field.state.meta.errors,
+                      )
+                      const invalid = errors.length > 0
+                      return (
+                        <Field data-invalid={invalid} className="md:col-span-2">
+                          <FieldLabel htmlFor="paymentInstructions">
+                            Payment instructions
+                          </FieldLabel>
+                          <Textarea
+                            id="paymentInstructions"
+                            name="paymentInstructions"
+                            rows={4}
+                            placeholder="Please use the invoice number as the payment reference."
+                            value={field.state.value}
+                            aria-invalid={invalid}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                          />
+                          <FieldDescription>
+                            Shown on each invoice below the bank details, for
+                            example a payment reference.
+                          </FieldDescription>
+                          {invalid && <FieldError errors={errors} />}
+                        </Field>
+                      )
+                    }}
+                  </form.Field>
+                </FieldGroup>
+              </FieldSet>
+            )}
           </FieldGroup>
         </CardContent>
         <CardFooter className="gap-3">

@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import PageHeader from '@/components/common/page-header'
 import { getPushPublicKey } from '#/server/push-actions'
 import { getInvoiceEmailTemplate, getSettings } from '#/server/settings-actions'
@@ -29,18 +30,37 @@ function SettingsPage() {
             : 'Your business details and invoice numbering.'
         }
       />
-      <div className="grid items-start gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <SettingsForm initial={settings.values} />
-        </div>
-        <div className="flex flex-col gap-6">
+      <Tabs defaultValue="general" className="gap-6">
+        <TabsList
+          variant="line"
+          className="w-full justify-start gap-4 border-b p-0 group-data-[orientation=horizontal]/tabs:h-auto"
+        >
+          {['general', 'invoicing', 'leads'].map((value) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              className="h-auto flex-none px-0 pt-1 pb-1 font-semibold capitalize group-data-[orientation=horizontal]/tabs:after:-bottom-0.5 group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=horizontal]/tabs:after:bg-primary data-active:text-primary"
+            >
+              {value}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="general" className="flex max-w-3xl flex-col gap-6">
+          <SettingsForm initial={settings.values} section="general" />
           {settings.logoStorage && <LogoUpload logoKey={settings.logoKey} />}
-          <PushNotifications publicKey={pushPublicKey} />
-        </div>
-        <div className="xl:col-span-2">
+        </TabsContent>
+        <TabsContent
+          value="invoicing"
+          className="flex max-w-3xl flex-col gap-6"
+        >
+          <SettingsForm initial={settings.values} section="invoicing" />
           <InvoiceEmailEditor initial={emailTemplate} />
-        </div>
-      </div>
+        </TabsContent>
+        <TabsContent value="leads" className="flex max-w-3xl flex-col gap-6">
+          <SettingsForm initial={settings.values} section="leads" />
+          <PushNotifications publicKey={pushPublicKey} />
+        </TabsContent>
+      </Tabs>
     </>
   )
 }
