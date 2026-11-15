@@ -2,6 +2,7 @@ import { and, eq, lt } from 'drizzle-orm'
 import { createDb, schema, type Db } from '#/db'
 import { toIsoDate } from '#/lib/invoices'
 import { sendLeadDigest } from '#/server/lead-email'
+import { sendLeadPush } from '#/server/lead-push'
 import { sendQuoteReminders } from '#/server/quote-email'
 import { refreshRates } from '#/server/exchange-rates'
 import { expireQuotes } from '#/server/quotes'
@@ -10,6 +11,8 @@ import { runRecurringSchedules } from './recurring'
 
 export type DailyEnv = Pick<Env, 'DB' | 'RESEND_API_KEY' | 'EMAIL_FROM'> & {
   APP_ORIGIN: string
+  VAPID_PUBLIC_KEY?: string
+  VAPID_PRIVATE_KEY?: string
 }
 
 export interface DailyJobResult {
@@ -17,6 +20,8 @@ export interface DailyJobResult {
   quotesExpired: number
   quoteRemindersSent: number
   leadDigestSent: boolean
+  leadPushSent: number
+  leadPushRemoved: number
   remindersSent: number
   remindersFailed: number
   recurringCreated: number
@@ -92,6 +97,20 @@ async function executeDailyJobs(
     `daily: lead digest ${leadDigest.sent ? 'sent' : `skipped (${leadDigest.reason})`}`,
   )
 
+  const leadPush = await sendLeadPush(
+    db,
+    {
+      vapidPublicKey: env.VAPID_PUBLIC_KEY,
+      vapidPrivateKey: env.VAPID_PRIVATE_KEY,
+      origin: env.APP_ORIGIN,
+      fetcher,
+    },
+    now,
+  )
+  console.log(
+    `daily: lead push sent ${leadPush.sent}, ${leadPush.failed} failed, ${leadPush.removed} removed${leadPush.skipped ? ` (skipped: ${leadPush.skipped})` : ''}`,
+  )
+
   const reminders = await sendDueReminders(
     db,
     {
@@ -125,6 +144,8 @@ async function executeDailyJobs(
     quotesExpired,
     quoteRemindersSent: quoteReminders.sent,
     leadDigestSent: leadDigest.sent,
+    leadPushSent: leadPush.sent,
+    leadPushRemoved: leadPush.removed,
     remindersSent: reminders.sent,
     remindersFailed: reminders.failed,
     recurringCreated: recurring.created,

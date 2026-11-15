@@ -43,6 +43,8 @@ enabled = true
 # EMAIL_FROM = ""  # a domain verified in Resend
 # APP_ORIGIN = "http://localhost:3000"  # base URL for invoice links in cron emails
 # ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:5173"  # comma separated, for /api/public/*
+# VAPID_PUBLIC_KEY = ""  # optional, Web Push key from `bun scripts/generate-vapid-keys.ts`
+# The private key is a secret: `wrangler secret put VAPID_PRIVATE_KEY`.
 
 # When you create the D1 database yourself, add database_id.
 [[d1_databases]]

@@ -594,3 +594,16 @@ export const leadEvents = sqliteTable(
     index('lead_events_lead_idx').on(t.leadId, t.createdAt),
   ],
 )
+
+export const pushSubscriptions = sqliteTable('push_subscriptions', {
+  id: id(),
+  // The push service URL for one browser on one device. Unique per device.
+  endpoint: text('endpoint').notNull().unique(),
+  // Base64url keys the browser gave us for encrypting the payload.
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  userAgent: text('user_agent').notNull().default(''),
+  // `YYYY-MM-DD` in the lead time zone of the last digest sent to this device.
+  lastPushedOn: text('last_pushed_on'),
+  createdAt: createdAt(),
+})

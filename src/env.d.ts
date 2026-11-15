@@ -8,6 +8,8 @@ declare namespace Cloudflare {
     EMAIL_FROM: string
     APP_ORIGIN: string
     ALLOWED_ORIGINS: string
+    VAPID_PUBLIC_KEY?: string
+    VAPID_PRIVATE_KEY?: string
   }
 }
 
@@ -17,4 +19,6 @@ interface Env {
   EMAIL_FROM: string
   APP_ORIGIN: string
   ALLOWED_ORIGINS: string
+  VAPID_PUBLIC_KEY?: string
+  VAPID_PRIVATE_KEY?: string
 }

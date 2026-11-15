@@ -171,6 +171,17 @@ Create a bookmark whose address is the line below, with your domain in place of 
 javascript:(()=>{window.open('https://<your domain>/admin/leads/new?url='+encodeURIComponent(location.href),'_blank')})()
 ```
 
+### Lead notifications on your phone (optional)
+
+The morning lead summary can also arrive as a push notification. It goes out in the same daily step as the email, once a day per device, and only when a lead is due and the "Send a morning lead summary" switch is on.
+
+1. Generate a key pair with `bun scripts/generate-vapid-keys.ts`.
+2. Set `VAPID_PUBLIC_KEY` as a variable in the Cloudflare dashboard, or in `wrangler.production.toml`.
+3. Store the private key with `bunx wrangler secret put VAPID_PRIVATE_KEY -c wrangler.production.toml`, and deploy.
+4. On each device, open Settings and tap "Enable notifications on this device". On an iPhone, add Quoteflare to the Home Screen first and open it from there, because iOS only allows push for installed apps.
+
+A device that revokes permission or uninstalls the app is removed after the next send, when the push service answers 404 or 410. "Turn off notifications on this device" removes it at once. For local testing, put both keys in `.dev.vars`.
+
 ## Email
 
 Invoices are emailed through Resend's REST API (`src/server/email.ts`). Setup:

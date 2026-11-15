@@ -321,3 +321,22 @@ describe('adding leads', () => {
     await fresh.dispose()
   })
 })
+
+describe('push subscriptions migration', () => {
+  it('creates the table with a unique endpoint', async () => {
+    await apply('0026_push_subscriptions.sql')
+    const insert = (endpoint: string) =>
+      d1
+        .prepare(
+          "insert into push_subscriptions (id, endpoint, p256dh, auth) values (?, ?, 'k', 'a')",
+        )
+        .bind(createId(), endpoint)
+        .run()
+    await insert('https://push.example.test/a')
+    await expect(insert('https://push.example.test/a')).rejects.toThrow()
+    const row = await d1
+      .prepare('select * from push_subscriptions')
+      .first<Record<string, unknown>>()
+    expect(row).toMatchObject({ user_agent: '', last_pushed_on: null })
+  })
+})
