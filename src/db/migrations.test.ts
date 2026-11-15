@@ -217,3 +217,107 @@ describe('adding the quote source', () => {
     await fresh.dispose()
   })
 })
+
+describe('adding leads', () => {
+  const migrate = async () => {
+    const files = readdirSync(migrationsDir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort()
+    const target = files.findIndex((f) => f.startsWith('0025_'))
+    const fresh = new Miniflare({
+      modules: true,
+      script: 'export default { fetch() { return new Response(null) } }',
+      d1Databases: { DB: createId() },
+    })
+    const db = await fresh.getD1Database('DB')
+    const run = async (file: string) => {
+      const statements = readFileSync(join(migrationsDir, file), 'utf8')
+        .split('--> statement-breakpoint')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      await db.batch(statements.map((s) => db.prepare(s)))
+    }
+    for (const file of files.slice(0, target)) await run(file)
+    return { fresh, db, run, file: files[target] }
+  }
+
+  it('keeps the settings row, defaults the new columns and enforces the checks', async () => {
+    const { fresh, db, run, file } = await migrate()
+    await db
+      .prepare(
+        "insert into settings (id, business_name, send_reminders) values ('main', 'Acme', 1)",
+      )
+      .run()
+
+    await run(file)
+
+    expect(
+      await db.prepare("select * from settings where id = 'main'").first(),
+    ).toMatchObject({
+      business_name: 'Acme',
+      send_reminders: 1,
+      lead_opener_template: '',
+      lead_follow_up_template: '',
+      lead_max_follow_ups: 2,
+      send_lead_digest: 1,
+    })
+
+    const leadId = createId()
+    const insertLead = (id: string) =>
+      db
+        .prepare(
+          "insert into leads (id, platform, handle, profile_url, profile_key) values (?, 'instagram', 'a', 'https://x', 'instagram:a')",
+        )
+        .bind(id)
+    await insertLead(leadId).run()
+    expect(
+      await db.prepare('select * from leads where id = ?').bind(leadId).first(),
+    ).toMatchObject({
+      status: 'saved',
+      next_action_on: null,
+      follow_ups: 0,
+      unseen_checks: 0,
+      close_reason: null,
+    })
+    await expect(insertLead(createId()).run()).rejects.toThrow()
+    await expect(
+      db
+        .prepare("update leads set status = 'lost' where id = ?")
+        .bind(leadId)
+        .run(),
+    ).rejects.toThrow()
+    await expect(
+      db
+        .prepare("update leads set platform = 'myspace' where id = ?")
+        .bind(leadId)
+        .run(),
+    ).rejects.toThrow()
+    await expect(
+      db
+        .prepare("update leads set close_reason = 'rude' where id = ?")
+        .bind(leadId)
+        .run(),
+    ).rejects.toThrow()
+
+    await db
+      .prepare(
+        "insert into lead_events (id, lead_id, type) values (?, ?, 'saved')",
+      )
+      .bind(createId(), leadId)
+      .run()
+    await expect(
+      db
+        .prepare(
+          "insert into lead_events (id, lead_id, type) values (?, ?, 'ghosted')",
+        )
+        .bind(createId(), leadId)
+        .run(),
+    ).rejects.toThrow()
+    await db.exec('PRAGMA foreign_keys = ON')
+    await db.prepare('delete from leads where id = ?').bind(leadId).run()
+    expect(
+      await db.prepare('select count(*) as n from lead_events').first(),
+    ).toEqual({ n: 0 })
+    await fresh.dispose()
+  })
+})

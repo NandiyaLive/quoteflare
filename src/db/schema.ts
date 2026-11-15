@@ -72,6 +72,48 @@ export const quoteEventTypes = [
   'converted',
 ] as const
 
+export const leadPlatforms = [
+  'instagram',
+  'facebook',
+  'tiktok',
+  'linkedin',
+  'x',
+  'whatsapp',
+  'other',
+] as const
+export const leadStatuses = [
+  'saved',
+  'messaged',
+  'seen',
+  'replied',
+  'won',
+  'closed',
+] as const
+export const leadCloseReasons = [
+  'no_reply',
+  'not_interested',
+  'bad_fit',
+  'other',
+] as const
+export const leadEventTypes = [
+  'saved',
+  'messaged',
+  'checked_unseen',
+  'checked_seen',
+  'followed_up',
+  'replied',
+  'rescheduled',
+  'won',
+  'closed',
+  'reopened',
+  'note',
+] as const
+
+export type LeadPlatform = (typeof leadPlatforms)[number]
+export type LeadStatus = (typeof leadStatuses)[number]
+export type LeadCloseReason = (typeof leadCloseReasons)[number]
+export type LeadEventType = (typeof leadEventTypes)[number]
+
 export type QuoteEventType = (typeof quoteEventTypes)[number]
 export type InvoiceStatus = (typeof invoiceStatuses)[number]
 export type QuoteStatus = (typeof quoteStatuses)[number]
@@ -143,6 +185,12 @@ export const settings = sqliteTable(
     quoteValidityDays: integer('quote_validity_days').notNull().default(30),
     calculatorTitle: text('calculator_title').notNull().default(''),
     calculatorDescription: text('calculator_description').notNull().default(''),
+    leadOpenerTemplate: text('lead_opener_template').notNull().default(''),
+    leadFollowUpTemplate: text('lead_follow_up_template').notNull().default(''),
+    leadMaxFollowUps: integer('lead_max_follow_ups').notNull().default(2),
+    sendLeadDigest: integer('send_lead_digest', { mode: 'boolean' })
+      .notNull()
+      .default(true),
   },
   (t) => [
     check('settings_single_row', sql`${t.id} = 'main'`),
@@ -494,5 +542,55 @@ export const emailLog = sqliteTable(
     index('email_log_invoice_type_idx').on(t.invoiceId, t.type),
     index('email_log_quote_type_idx').on(t.quoteId, t.type),
     index('email_log_provider_idx').on(t.providerId),
+  ],
+)
+
+export const leads = sqliteTable(
+  'leads',
+  {
+    id: id(),
+    platform: text('platform', { enum: leadPlatforms }).notNull(),
+    handle: text('handle').notNull(),
+    profileUrl: text('profile_url').notNull(),
+    // Unique per profile, for example `instagram:studio_x`.
+    profileKey: text('profile_key').notNull().unique(),
+    name: text('name').notNull().default(''),
+    note: text('note').notNull().default(''),
+    status: text('status', { enum: leadStatuses }).notNull().default('saved'),
+    // `YYYY-MM-DD`. Null once the lead is won or closed.
+    nextActionOn: text('next_action_on'),
+    followUps: integer('follow_ups').notNull().default(0),
+    unseenChecks: integer('unseen_checks').notNull().default(0),
+    lastContactedAt: text('last_contacted_at'),
+    closeReason: text('close_reason', { enum: leadCloseReasons }),
+    clientId: text('client_id').references(() => clients.id),
+    quoteId: text('quote_id').references(() => quotes.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check('leads_platform', inList('platform', leadPlatforms)),
+    check('leads_status', inList('status', leadStatuses)),
+    check(
+      'leads_close_reason',
+      sql`${t.closeReason} is null or ${inList('close_reason', leadCloseReasons)}`,
+    ),
+    index('leads_status_next_idx').on(t.status, t.nextActionOn),
+  ],
+)
+
+export const leadEvents = sqliteTable(
+  'lead_events',
+  {
+    id: id(),
+    leadId: text('lead_id')
+      .notNull()
+      .references(() => leads.id, { onDelete: 'cascade' }),
+    type: text('type', { enum: leadEventTypes }).notNull(),
+    detail: text('detail').notNull().default(''),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check('lead_events_type', inList('type', leadEventTypes)),
+    index('lead_events_lead_idx').on(t.leadId, t.createdAt),
   ],
 )
