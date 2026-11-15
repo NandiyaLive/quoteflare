@@ -1,6 +1,9 @@
 import { DEFAULT_CURRENCY } from '#/lib/settings'
 import type { Db } from '#/db'
+import { schema } from '#/db'
 import { invoiceStatuses, type InvoiceStatus } from '#/db/schema'
+import { groupTodayLeads } from '#/lib/lead-inputs'
+import { localToday } from '#/lib/leads'
 import { listInvoices, type InvoiceListRow } from './invoices'
 import { listQuotes, type QuoteRow } from './quotes'
 import { listSchedules, type RecurringRow } from './recurring'
@@ -45,6 +48,7 @@ export type Overview = {
   overdue: { amount: number; count: number }
   drafts: { amount: number; count: number }
   newQuotes: { amount: number; count: number }
+  leadsDue: number
   months: { month: string; invoiced: number; paid: number }[]
   statuses: OverviewStatus[]
   unpaid: OverviewInvoice[]
@@ -79,6 +83,7 @@ export function buildOverview(input: {
   schedules: RecurringRow[]
   currency: string
   today: string
+  leadsDue?: number
 }): Overview {
   const { currency, today } = input
   const invoices = input.invoices.filter((i) => i.currency === currency)
@@ -119,6 +124,7 @@ export function buildOverview(input: {
     overdue: tally(unpaid.filter(isOverdue)),
     drafts: tally(invoices.filter((i) => i.status === 'draft')),
     newQuotes: tally(newQuotes),
+    leadsDue: input.leadsDue ?? 0,
     months,
     statuses,
     unpaid: [...unpaid]
@@ -152,18 +158,29 @@ export function buildOverview(input: {
   }
 }
 
-export async function loadOverview(db: Db, today: string): Promise<Overview> {
-  const [invoices, quotes, schedules, settings] = await Promise.all([
+export async function loadOverview(
+  db: Db,
+  today: string,
+  now: Date = new Date(),
+): Promise<Overview> {
+  const [invoices, quotes, schedules, settings, leads] = await Promise.all([
     listInvoices(db),
     listQuotes(db, 'all'),
     listSchedules(db),
     db.query.settings.findFirst(),
+    db.select().from(schema.leads),
   ])
+  // The same grouping the Today section uses, so the two counts always match.
+  const leadsDue = groupTodayLeads(leads, localToday(now)).reduce(
+    (sum, group) => sum + group.leads.length,
+    0,
+  )
   return buildOverview({
     invoices,
     quotes,
     schedules,
     currency: settings?.currency ?? DEFAULT_CURRENCY,
     today,
+    leadsDue,
   })
 }

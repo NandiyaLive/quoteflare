@@ -1,6 +1,7 @@
 import { and, eq, lt } from 'drizzle-orm'
 import { createDb, schema, type Db } from '#/db'
 import { toIsoDate } from '#/lib/invoices'
+import { sendLeadDigest } from '#/server/lead-email'
 import { sendQuoteReminders } from '#/server/quote-email'
 import { refreshRates } from '#/server/exchange-rates'
 import { expireQuotes } from '#/server/quotes'
@@ -15,6 +16,7 @@ export interface DailyJobResult {
   markedOverdue: number
   quotesExpired: number
   quoteRemindersSent: number
+  leadDigestSent: boolean
   remindersSent: number
   remindersFailed: number
   recurringCreated: number
@@ -76,6 +78,20 @@ async function executeDailyJobs(
     `daily: sent ${quoteReminders.sent} quote reminders, ${quoteReminders.failed} failed`,
   )
 
+  const leadDigest = await sendLeadDigest(
+    db,
+    {
+      apiKey: env.RESEND_API_KEY,
+      from: env.EMAIL_FROM,
+      origin: env.APP_ORIGIN,
+      fetcher,
+    },
+    now,
+  )
+  console.log(
+    `daily: lead digest ${leadDigest.sent ? 'sent' : `skipped (${leadDigest.reason})`}`,
+  )
+
   const reminders = await sendDueReminders(
     db,
     {
@@ -108,6 +124,7 @@ async function executeDailyJobs(
     markedOverdue,
     quotesExpired,
     quoteRemindersSent: quoteReminders.sent,
+    leadDigestSent: leadDigest.sent,
     remindersSent: reminders.sent,
     remindersFailed: reminders.failed,
     recurringCreated: recurring.created,

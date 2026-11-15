@@ -160,3 +160,132 @@ describe('runDailyJobs', () => {
     spy.mockRestore()
   })
 })
+
+describe('lead digest', () => {
+  type Sent = { to: string[]; subject: string; text: string }
+
+  const fakeResend = () => {
+    const sent: Sent[] = []
+    const fetcher = (async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body))
+      sent.push({ to: body.to, subject: body.subject, text: body.text })
+      return Response.json({ id: `re_${sent.length}` })
+    }) as typeof fetch
+    return { sent, fetcher }
+  }
+
+  const setDigest = async (on: boolean) => {
+    await db.delete(schema.settings)
+    await db.insert(schema.settings).values({
+      id: 'main',
+      businessName: 'Studio',
+      email: 'owner@example.test',
+      currency: 'LKR',
+      sendLeadDigest: on,
+    })
+  }
+
+  const addLead = (
+    handle: string,
+    status: (typeof schema.leads.$inferInsert)['status'],
+    nextActionOn: string | null,
+  ) =>
+    db.insert(schema.leads).values({
+      platform: 'instagram',
+      handle,
+      profileUrl: `https://www.instagram.com/${handle}/`,
+      profileKey: `instagram:${handle}`,
+      status,
+      nextActionOn,
+    })
+
+  beforeEach(async () => {
+    await db.delete(schema.emailLog)
+    await db.delete(schema.leads)
+    await setDigest(true)
+  })
+
+  it('sends one digest with the right counts and handles', async () => {
+    await addLead('first_a', 'saved', '2026-06-15')
+    await addLead('first_b', 'saved', '2026-06-10')
+    await addLead('check_a', 'messaged', '2026-06-15')
+    await addLead('later', 'saved', '2026-06-16')
+    await addLead('done', 'won', null)
+    const { sent, fetcher } = fakeResend()
+
+    const result = await runDailyJobs(env(), now, fetcher)
+
+    expect(result.leadDigestSent).toBe(true)
+    expect(sent).toHaveLength(1)
+    expect(sent[0].to).toEqual(['owner@example.test'])
+    expect(sent[0].subject).toBe('3 leads due today')
+    expect(sent[0].text).toContain('Send first message (2)')
+    expect(sent[0].text).toContain('Check if they saw it (1)')
+    expect(sent[0].text).not.toContain('Follow up')
+    expect(sent[0].text).toContain('first_a')
+    expect(sent[0].text).toContain('first_b')
+    expect(sent[0].text).toContain('check_a')
+    expect(sent[0].text).not.toContain('later')
+    expect(sent[0].text).toContain('https://invoices.example.test/admin/leads')
+    const logged = await db.select().from(schema.emailLog)
+    expect(logged).toHaveLength(1)
+    expect(logged[0]).toMatchObject({ type: 'lead_digest', status: 'sent' })
+  })
+
+  it('lists at most 10 handles per group and counts the rest', async () => {
+    for (let i = 0; i < 12; i++)
+      await addLead(`lead_${i}`, 'saved', '2026-06-15')
+    const { sent, fetcher } = fakeResend()
+    await runDailyJobs(env(), now, fetcher)
+    expect(sent[0].text).toContain('Send first message (12)')
+    expect(sent[0].text).toContain('and 2 more')
+    expect(sent[0].text.match(/lead_\d+/g)).toHaveLength(10)
+  })
+
+  it('sends nothing the second time on the same day', async () => {
+    await addLead('first_a', 'saved', '2026-06-15')
+    const { sent, fetcher } = fakeResend()
+    expect((await runDailyJobs(env(), now, fetcher)).leadDigestSent).toBe(true)
+    expect((await runDailyJobs(env(), now, fetcher)).leadDigestSent).toBe(false)
+    expect(sent).toHaveLength(1)
+  })
+
+  it('sends again the next day', async () => {
+    await addLead('first_a', 'saved', '2026-06-15')
+    const { sent, fetcher } = fakeResend()
+    await runDailyJobs(env(), now, fetcher)
+    await runDailyJobs(env(), new Date('2026-06-16T03:30:00Z'), fetcher)
+    expect(sent).toHaveLength(2)
+  })
+
+  it('sends nothing when no lead is due', async () => {
+    await addLead('later', 'saved', '2026-06-16')
+    await addLead('done', 'closed', null)
+    const { sent, fetcher } = fakeResend()
+    expect((await runDailyJobs(env(), now, fetcher)).leadDigestSent).toBe(false)
+    expect(sent).toHaveLength(0)
+    expect(await db.select().from(schema.emailLog)).toHaveLength(0)
+  })
+
+  it('sends nothing when the switch is off', async () => {
+    await setDigest(false)
+    await addLead('first_a', 'saved', '2026-06-15')
+    const { sent, fetcher } = fakeResend()
+    expect((await runDailyJobs(env(), now, fetcher)).leadDigestSent).toBe(false)
+    expect(sent).toHaveLength(0)
+  })
+
+  it('retries after a failed send but not after a sent one', async () => {
+    await addLead('first_a', 'saved', '2026-06-15')
+    const failing = (async () =>
+      Response.json({ message: 'rejected' }, { status: 422 })) as typeof fetch
+    expect((await runDailyJobs(env(), now, failing)).leadDigestSent).toBe(false)
+    const { sent, fetcher } = fakeResend()
+    expect((await runDailyJobs(env(), now, fetcher)).leadDigestSent).toBe(true)
+    expect(sent).toHaveLength(1)
+    const statuses = (await db.select().from(schema.emailLog)).map(
+      (r) => r.status,
+    )
+    expect(statuses.sort()).toEqual(['failed', 'sent'])
+  })
+})

@@ -50,6 +50,7 @@ const input = {
   calculatorTitle: '',
   calculatorDescription: '',
   sendReminders: false,
+  sendLeadDigest: true,
 }
 
 beforeEach(async () => {

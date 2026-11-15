@@ -55,7 +55,7 @@ function Stat({
   label: string
   value: string
   detail: string
-  to: '/admin/invoices' | '/admin/quotes'
+  to: '/admin/invoices' | '/admin/quotes' | '/admin/leads'
   tone?: 'danger'
 }) {
   return (
@@ -355,6 +355,15 @@ function AdminHome() {
           value={formatMinor(overview.newQuotes.amount, currency)}
           detail={`${count(overview.newQuotes.count, 'request')} to review`}
           to="/admin/quotes"
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat
+          label="Leads due today"
+          value={String(overview.leadsDue)}
+          detail={`${count(overview.leadsDue, 'lead')} to act on`}
+          to="/admin/leads"
         />
       </div>
 

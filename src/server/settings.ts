@@ -40,6 +40,7 @@ const emptySettings: SettingsFormValues = {
   calculatorTitle: '',
   calculatorDescription: '',
   sendReminders: false,
+  sendLeadDigest: true,
 }
 
 export async function loadSettings(db: Db) {
@@ -66,6 +67,7 @@ export async function loadSettings(db: Db) {
     calculatorTitle: row.calculatorTitle,
     calculatorDescription: row.calculatorDescription,
     sendReminders: row.sendReminders,
+    sendLeadDigest: row.sendLeadDigest,
   }
   return { values, logoKey: row.logoKey }
 }
@@ -103,6 +105,7 @@ export async function saveSettings(db: Db, data: SettingsData) {
     calculatorTitle: data.calculatorTitle,
     calculatorDescription: data.calculatorDescription,
     sendReminders: data.sendReminders,
+    sendLeadDigest: data.sendLeadDigest,
   }
   await db
     .insert(settings)

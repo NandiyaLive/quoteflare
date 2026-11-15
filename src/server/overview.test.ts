@@ -124,3 +124,13 @@ describe('buildOverview', () => {
     expect(overview.schedules.map((s) => s.id)).toEqual(['x'])
   })
 })
+
+describe('leadsDue', () => {
+  it('defaults to zero and passes the given count through', () => {
+    const none = buildOverview({ ...base, invoices: [] })
+    expect(none.leadsDue).toBe(0)
+    expect(buildOverview({ ...base, invoices: [], leadsDue: 4 }).leadsDue).toBe(
+      4,
+    )
+  })
+})

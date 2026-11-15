@@ -70,41 +70,44 @@ export function TodaySection({
               ) : (
                 <ul className="flex flex-col gap-2">
                   {group.leads.map((lead) => (
-                    <li
-                      key={lead.id}
-                      className="flex flex-col gap-2 rounded-md border p-2 text-sm"
-                    >
-                      <div className="flex flex-col gap-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Link
-                            to="/admin/leads/$leadId"
-                            params={{ leadId: lead.id }}
-                            className="font-medium underline-offset-4 hover:underline"
-                          >
-                            {lead.handle}
-                          </Link>
-                          <PlatformBadge platform={lead.platform} />
-                          {isOverdue(lead, today) && (
-                            <Badge variant="destructive">Overdue</Badge>
-                          )}
-                        </div>
-                        {(lead.name || lead.note) && (
-                          <p className="line-clamp-1 text-xs text-muted-foreground">
-                            {[lead.name, lead.note].filter(Boolean).join(' · ')}
-                          </p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          {lastContactLabel(lead, today)}
-                        </p>
-                      </div>
-                      <LeadActionButtons
-                        lead={lead}
-                        maxFollowUps={maxFollowUps}
-                        busy={pendingId === lead.id}
-                        onAction={onAction}
-                        onCloseAsNoReply={() => onCloseAsNoReply(lead)}
-                        onClose={() => onClose(lead)}
-                      />
+                    <li key={lead.id}>
+                      <Card size="sm">
+                        <CardContent className="flex flex-col gap-3">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Link
+                                to="/admin/leads/$leadId"
+                                params={{ leadId: lead.id }}
+                                className="font-medium underline-offset-4 hover:underline"
+                              >
+                                {lead.handle}
+                              </Link>
+                              <PlatformBadge platform={lead.platform} />
+                              {isOverdue(lead, today) && (
+                                <Badge variant="destructive">Overdue</Badge>
+                              )}
+                            </div>
+                            {(lead.name || lead.note) && (
+                              <p className="line-clamp-1 text-xs text-muted-foreground">
+                                {[lead.name, lead.note]
+                                  .filter(Boolean)
+                                  .join(' · ')}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              {lastContactLabel(lead, today)}
+                            </p>
+                          </div>
+                          <LeadActionButtons
+                            lead={lead}
+                            maxFollowUps={maxFollowUps}
+                            busy={pendingId === lead.id}
+                            onAction={onAction}
+                            onCloseAsNoReply={() => onCloseAsNoReply(lead)}
+                            onClose={() => onClose(lead)}
+                          />
+                        </CardContent>
+                      </Card>
                     </li>
                   ))}
                 </ul>

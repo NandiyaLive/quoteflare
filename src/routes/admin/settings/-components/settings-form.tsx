@@ -43,7 +43,7 @@ import { callAction, toastFormErrors } from '#/lib/action-errors'
 
 type FieldName = Exclude<
   keyof SettingsFormValues,
-  'sendReminders' | 'approvedCurrencies'
+  'sendReminders' | 'sendLeadDigest' | 'approvedCurrencies'
 >
 
 function RequiredMark() {
@@ -361,6 +361,34 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
                         <FieldDescription>
                           Emails the client 3 days before the due date and 3 and
                           10 days after it, once each.
+                        </FieldDescription>
+                      </div>
+                    </Field>
+                  )}
+                </form.Field>
+              </FieldGroup>
+            </FieldSet>
+            <FieldSet className="rounded-lg border p-4">
+              <FieldLegend>Leads</FieldLegend>
+              <FieldGroup>
+                <form.Field name="sendLeadDigest">
+                  {(field) => (
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id="sendLeadDigest"
+                        name="sendLeadDigest"
+                        checked={field.state.value}
+                        onCheckedChange={(checked) =>
+                          field.handleChange(checked === true)
+                        }
+                      />
+                      <div className="flex flex-col gap-1">
+                        <FieldLabel htmlFor="sendLeadDigest">
+                          Send a morning lead summary
+                        </FieldLabel>
+                        <FieldDescription>
+                          Emails you at 09:00 with the leads due today. Nothing
+                          is sent on days with no leads due.
                         </FieldDescription>
                       </div>
                     </Field>

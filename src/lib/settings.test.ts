@@ -22,6 +22,7 @@ const valid = {
   calculatorTitle: 'Get a quote',
   calculatorDescription: '',
   sendReminders: false,
+  sendLeadDigest: true,
 }
 
 const issuesFor = (patch: Record<string, unknown>) => {

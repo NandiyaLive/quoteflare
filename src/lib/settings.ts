@@ -111,6 +111,7 @@ export const settingsSchema = z.strictObject({
     .trim()
     .max(300, 'Description must be 300 characters or fewer'),
   sendReminders: z.boolean(),
+  sendLeadDigest: z.boolean(),
 })
 
 export type SettingsFormValues = z.input<typeof settingsSchema>
